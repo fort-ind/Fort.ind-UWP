@@ -6,4 +6,9 @@
 Public NotInheritable Class MainPage
     Inherits Page
 
+    Private Sub LatestNews_Click(sender As Object, e As RoutedEventArgs)
+        ' Show the Latest News panel
+        LatestNewsPanel.Visibility = Visibility.Visible
+    End Sub
+
 End Class
