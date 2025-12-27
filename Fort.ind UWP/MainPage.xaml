@@ -118,12 +118,12 @@
 
                 <!-- About Content -->
                 <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
-                    <TextBlock Text="About"
+                    <TextBlock Text="about fort,desktop (UWP)"
                                FontSize="32"
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Learn more about Fort.ind and our mission."
+                    <TextBlock Text="0.1 beta :p"
                                FontSize="18"
                                TextWrapping="Wrap"/>
                 </StackPanel>
