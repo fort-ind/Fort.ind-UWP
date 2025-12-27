@@ -5,35 +5,55 @@
     xmlns:local="using:Fort.ind_UWP"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
-    <Grid>
+    <muxc:NavigationView x:Name="NavView"
+                         PaneDisplayMode="Left"
+                         IsBackButtonVisible="Collapsed"
+                         IsSettingsVisible="True"
+                         ItemInvoked="NavView_ItemInvoked"
+                         Loaded="NavView_Loaded">
 
-        <!-- PURPLE SIDEBAR -->
-        <Grid Width="220" Background="#6A0DAD" HorizontalAlignment="Left">
-            <StackPanel Margin="10" VerticalAlignment="Stretch">
+        <muxc:NavigationView.MenuItems>
+            <muxc:NavigationViewItem Content="Latest News" Tag="LatestNews">
+                <muxc:NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Home"/>
+                </muxc:NavigationViewItem.Icon>
+            </muxc:NavigationViewItem>
+            <muxc:NavigationViewItem Content="Games" Tag="Games">
+                <muxc:NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Play"/>
+                </muxc:NavigationViewItem.Icon>
+            </muxc:NavigationViewItem>
+            <muxc:NavigationViewItem Content="Betas" Tag="Betas">
+                <muxc:NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="PreviewLink"/>
+                </muxc:NavigationViewItem.Icon>
+            </muxc:NavigationViewItem>
+            <muxc:NavigationViewItem Content="Contacts" Tag="Contacts">
+                <muxc:NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Contact"/>
+                </muxc:NavigationViewItem.Icon>
+            </muxc:NavigationViewItem>
+            <muxc:NavigationViewItem Content="Social" Tag="Social">
+                <muxc:NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="People"/>
+                </muxc:NavigationViewItem.Icon>
+            </muxc:NavigationViewItem>
+            <muxc:NavigationViewItem Content="About" Tag="About">
+                <muxc:NavigationViewItem.Icon>
+                    <SymbolIcon Symbol="Help"/>
+                </muxc:NavigationViewItem.Icon>
+            </muxc:NavigationViewItem>
+        </muxc:NavigationView.MenuItems>
 
-                <TextBlock Text="Menu"
-                           FontSize="22"
-                           Foreground="White"
-                           Margin="0,0,0,20"/>
-
-                <Button Content="Latest News" Click="LatestNews_Click" Margin="0,5"/>
-                <Button Content="Games" Margin="0,5"/>
-                <Button Content="Betas" Margin="0,5"/>
-                <Button Content="Contacts" Margin="0,5"/>
-                <Button Content="Social" Margin="0,5"/>
-                <Button Content="About" Margin="0,5"/>
-            </StackPanel>
-        </Grid>
-
-        <!-- MAIN CONTENT AREA -->
-        <Grid Margin="220,0,0,0">
-
-            <!-- Latest News Content -->
-            <ScrollViewer x:Name="LatestNewsPanel" Visibility="Collapsed">
-                <StackPanel Padding="20">
+        <!-- Content Area -->
+        <ScrollViewer>
+            <StackPanel x:Name="ContentPanel" Padding="20">
+                <!-- Latest News Content (default view) -->
+                <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
                     <TextBlock Text="Fort.ind App – Beta Release"
                                FontSize="32"
                                FontWeight="Bold"
@@ -43,15 +63,84 @@
                                FontSize="18"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="This early version includes basic features such as quick navigation, preview pages, and simple interface layouts. 
-We are actively working on stability improvements and new design enhancements. Thank you for testing the beta version of Fort.ind!"
+                    <TextBlock Text="This early version includes basic features such as quick navigation, preview pages, and simple interface layouts. We are actively working on stability improvements and new design enhancements. Thank you for testing the beta version of Fort.ind!"
                                TextWrapping="Wrap" 
                                FontSize="16"/>
-
                 </StackPanel>
-            </ScrollViewer>
 
-        </Grid>
+                <!-- Games Content -->
+                <StackPanel x:Name="GamesPanel" Visibility="Collapsed">
+                    <TextBlock Text="Games"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
 
-    </Grid>
+                    <TextBlock Text="Explore our collection of games."
+                               FontSize="18"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Betas Content -->
+                <StackPanel x:Name="BetasPanel" Visibility="Collapsed">
+                    <TextBlock Text="Betas"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Access beta versions and test new features."
+                               FontSize="18"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Contacts Content -->
+                <StackPanel x:Name="ContactsPanel" Visibility="Collapsed">
+                    <TextBlock Text="Contacts"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Get in touch with us."
+                               FontSize="18"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Social Content -->
+                <StackPanel x:Name="SocialPanel" Visibility="Collapsed">
+                    <TextBlock Text="Social"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Connect with us on social media."
+                               FontSize="18"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- About Content -->
+                <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
+                    <TextBlock Text="About"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Learn more about Fort.ind and our mission."
+                               FontSize="18"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+
+                <!-- Settings Content -->
+                <StackPanel x:Name="SettingsPanel" Visibility="Collapsed">
+                    <TextBlock Text="Settings"
+                               FontSize="32"
+                               FontWeight="Bold"
+                               Margin="0,0,0,10"/>
+
+                    <TextBlock Text="Configure your app preferences."
+                               FontSize="18"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </StackPanel>
+        </ScrollViewer>
+
+    </muxc:NavigationView>
 </Page>
