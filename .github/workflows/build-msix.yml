@@ -111,43 +111,20 @@ jobs:
           /p:GenerateAppxPackageOnBuild=true `
           /restore
 
-    - name: Create Install Script and Copy Certificate
+    - name: Copy Install Script and Certificate to Package
       shell: pwsh
       run: |
         $packageDir = Get-ChildItem -Path "Fort.ind UWP\AppPackages" -Directory | Select-Object -First 1
         if ($packageDir) {
+          # Copy the installer script
+          Copy-Item "scripts\Install.ps1" -Destination "$($packageDir.FullName)\Install.ps1"
+          Write-Host "Copied Install.ps1 to package directory"
+          
+          # Copy certificate if it exists
           if (Test-Path "Fort.ind UWP\Fort.ind_UWP.cer") {
             Copy-Item "Fort.ind UWP\Fort.ind_UWP.cer" -Destination "$($packageDir.FullName)\Fort.ind_UWP.cer"
             Write-Host "Copied certificate to package directory"
           }
-          
-          $scriptContent = @"
-        # Fort.ind UWP Installer Script
-        `$ErrorActionPreference = "Stop"
-        Write-Host "Fort.ind UWP Installer" -ForegroundColor Cyan
-        `$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-        if (-not `$isAdmin) {
-            Write-Host "Restarting as Administrator..." -ForegroundColor Yellow
-            Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File ```"`$PSCommandPath```""
-            exit
-        }
-        `$certFile = Get-ChildItem -Path `$PSScriptRoot -Filter "*.cer" | Select-Object -First 1
-        if (`$certFile) {
-            Write-Host "Installing certificate..." -ForegroundColor Yellow
-            Import-Certificate -FilePath `$certFile.FullName -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
-            Write-Host "Certificate installed!" -ForegroundColor Green
-        }
-        `$msixFile = Get-ChildItem -Path `$PSScriptRoot -Filter "*.msix" | Select-Object -First 1
-        if (-not `$msixFile) { `$msixFile = Get-ChildItem -Path `$PSScriptRoot -Filter "*.appx" | Select-Object -First 1 }
-        if (`$msixFile) {
-            Write-Host "Installing app..." -ForegroundColor Yellow
-            Add-AppxPackage -Path `$msixFile.FullName
-            Write-Host "Installation complete! Find Fort.ind UWP in Start menu." -ForegroundColor Green
-        }
-        Read-Host "Press Enter to exit"
-        "@
-          $scriptContent | Out-File -FilePath "$($packageDir.FullName)\Install.ps1" -Encoding UTF8
-          Write-Host "Created Install.ps1"
         }
 
     - name: Upload MSIX Package
