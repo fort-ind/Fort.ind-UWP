@@ -1,0 +1,137 @@
+name: Build MSIX Package
+
+on:
+  push:
+    branches: [ master ]
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:  # Allows manual trigger
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    strategy:
+      matrix:
+        platform: [x86, x64, ARM64]
+        configuration: [Release]
+
+    env:
+      Solution_Name: Fort.ind UWP.sln
+      Project_Path: Fort.ind UWP\Fort.ind UWP.vbproj
+      Manifest_Path: Fort.ind UWP\Package.appxmanifest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Setup NuGet
+      uses: NuGet/setup-nuget@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore "${{ env.Solution_Name }}"
+
+    # Version bumping - extracts version from tag or generates from run number
+    - name: Update manifest version
+      run: |
+        # Get version from tag or generate from run number
+        if ("${{ github.ref }}" -match "refs/tags/v(.+)") {
+          $version = $matches[1]
+          # Ensure 4-part version (add .0 if needed)
+          $parts = $version.Split('.')
+          while ($parts.Count -lt 4) {
+            $parts += "0"
+          }
+          $version = $parts[0..3] -join '.'
+        } else {
+          # Auto-generate version: 1.0.{run_number}.0
+          $version = "1.0.${{ github.run_number }}.0"
+        }
+        
+        Write-Host "Setting version to: $version"
+        
+        # Update Package.appxmanifest
+        $manifestPath = "${{ env.Manifest_Path }}"
+        [xml]$manifest = Get-Content $manifestPath
+        $manifest.Package.Identity.Version = $version
+        $manifest.Save($manifestPath)
+        
+        Write-Host "Updated manifest version to $version"
+        echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+
+    # Decode and install certificate for signing
+    - name: Decode signing certificate
+      if: ${{ github.event_name != 'pull_request' && secrets.SIGNING_CERTIFICATE != '' }}
+      run: |
+        $pfxPath = "${{ runner.temp }}\SigningCertificate.pfx"
+        $certBytes = [Convert]::FromBase64String("${{ secrets.SIGNING_CERTIFICATE }}")
+        [IO.File]::WriteAllBytes($pfxPath, $certBytes)
+        echo "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
+
+    - name: Build MSIX Package (Signed)
+      if: ${{ github.event_name != 'pull_request' && secrets.SIGNING_CERTIFICATE != '' }}
+      run: |
+        msbuild "${{ env.Project_Path }}" `
+          /p:Configuration=${{ matrix.configuration }} `
+          /p:Platform=${{ matrix.platform }} `
+          /p:UapAppxPackageBuildMode=SideloadOnly `
+          /p:AppxBundle=Never `
+          /p:AppxPackageSigningEnabled=true `
+          /p:PackageCertificateKeyFile="${{ env.PFX_PATH }}" `
+          /p:PackageCertificatePassword="${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" `
+          /p:GenerateAppxPackageOnBuild=true
+
+    - name: Build MSIX Package (Unsigned)
+      if: ${{ github.event_name == 'pull_request' || secrets.SIGNING_CERTIFICATE == '' }}
+      run: |
+        msbuild "${{ env.Project_Path }}" `
+          /p:Configuration=${{ matrix.configuration }} `
+          /p:Platform=${{ matrix.platform }} `
+          /p:UapAppxPackageBuildMode=SideloadOnly `
+          /p:AppxBundle=Never `
+          /p:AppxPackageSigningEnabled=false `
+          /p:GenerateAppxPackageOnBuild=true
+
+    # Clean up certificate
+    - name: Remove signing certificate
+      if: ${{ always() && env.PFX_PATH != '' }}
+      run: |
+        if (Test-Path "${{ env.PFX_PATH }}") {
+          Remove-Item "${{ env.PFX_PATH }}" -Force
+        }
+
+    - name: Upload MSIX Package
+      uses: actions/upload-artifact@v4
+      with:
+        name: MSIX-${{ matrix.platform }}-${{ matrix.configuration }}-v${{ env.APP_VERSION }}
+        path: |
+          Fort.ind UWP\AppPackages\**\*.msix
+          Fort.ind UWP\AppPackages\**\*.appx
+        if-no-files-found: warn
+
+  # Create GitHub Release when a version tag is pushed
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+    
+    steps:
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: artifacts/**/*
+        generate_release_notes: true
+        draft: false
+        prerelease: ${{ contains(github.ref, '-beta') || contains(github.ref, '-alpha') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
