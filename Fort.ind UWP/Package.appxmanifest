@@ -14,8 +14,8 @@
   <mp:PhoneIdentity PhoneProductId="842aa337-86c0-43da-82da-a0aa21c2fc6d" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>Fort.ind_UWP</DisplayName>
-    <PublisherDisplayName>koold</PublisherDisplayName>
+    <DisplayName>Fort.ind for UWP</DisplayName>
+    <PublisherDisplayName>fort.ind</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -32,13 +32,20 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="Fort.ind_UWP.App">
       <uap:VisualElements
-        DisplayName="Fort.ind_UWP"
+        DisplayName="fort.ind desktop for UWP"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="Fort.ind_UWP"
+        Description="a version of fort.desktop made for arm platforms and UWP"
         BackgroundColor="transparent">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"/>
+		  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square310x310Logo="Assets\Square310x310Logo.png" ShortName="fort.uwp">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo"/>
+            <uap:ShowOn Tile="wide310x150Logo"/>
+            <uap:ShowOn Tile="square310x310Logo"/>
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile >
         <uap:SplashScreen Image="Assets\SplashScreen.png" />
+		  <uap:LockScreen BadgeLogo="Assets\BadgeLogo.png" Notification="badge"/>
       </uap:VisualElements>
     </Application>
   </Applications>

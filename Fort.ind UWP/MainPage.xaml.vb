@@ -56,4 +56,7 @@ Public NotInheritable Class MainPage
         End Select
     End Sub
 
+    Private Sub TextBlock_SelectionChanged(sender As Object, e As RoutedEventArgs)
+
+    End Sub
 End Class

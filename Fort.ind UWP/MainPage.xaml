@@ -17,7 +17,7 @@
                          Loaded="NavView_Loaded">
 
         <muxc:NavigationView.MenuItems>
-            <muxc:NavigationViewItem Content="Latest News" Tag="LatestNews">
+            <muxc:NavigationViewItem Content="Home" Tag="LatestNews">
                 <muxc:NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Home"/>
                 </muxc:NavigationViewItem.Icon>
@@ -27,12 +27,12 @@
                     <SymbolIcon Symbol="Play"/>
                 </muxc:NavigationViewItem.Icon>
             </muxc:NavigationViewItem>
-            <muxc:NavigationViewItem Content="Betas" Tag="Betas">
+            <muxc:NavigationViewItem Content="doo dads" Tag="Betas">
                 <muxc:NavigationViewItem.Icon>
                     <SymbolIcon Symbol="PreviewLink"/>
                 </muxc:NavigationViewItem.Icon>
             </muxc:NavigationViewItem>
-            <muxc:NavigationViewItem Content="Contacts" Tag="Contacts">
+            <muxc:NavigationViewItem Content="Your Profile (wip)" Tag="Contacts">
                 <muxc:NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Contact"/>
                 </muxc:NavigationViewItem.Icon>
@@ -54,16 +54,16 @@
             <StackPanel x:Name="ContentPanel" Padding="20">
                 <!-- Latest News Content (default view) -->
                 <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
-                    <TextBlock Text="Fort.ind App – Beta Release"
+                    <TextBlock Text="uhhh brick :3"
                                FontSize="32"
                                FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+                               Margin="0,0,0,10" SelectionChanged="TextBlock_SelectionChanged"/>
 
-                    <TextBlock Text="Our app is now officially in beta! 🎉"
+                    <TextBlock Text="yey 🎉"
                                FontSize="18"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="This early version includes basic features such as quick navigation, preview pages, and simple interface layouts. We are actively working on stability improvements and new design enhancements. Thank you for testing the beta version of Fort.ind!"
+                    <TextBlock Text="I HATE UWP I HATE IT I HATE ITTTTTTTTT WHY IS ThIS SO HARD IM GONNA DIEEEE"
                                TextWrapping="Wrap" 
                                FontSize="16"/>
                 </StackPanel>
