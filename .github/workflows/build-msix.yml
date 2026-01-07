@@ -66,15 +66,26 @@ jobs:
 
     # Decode and install certificate for signing
     - name: Decode signing certificate
-      if: ${{ github.event_name != 'pull_request' && secrets.SIGNING_CERTIFICATE != '' }}
+      if: github.event_name != 'pull_request'
+      env:
+        SIGNING_CERT: ${{ secrets.SIGNING_CERTIFICATE }}
       run: |
-        $pfxPath = "${{ runner.temp }}\SigningCertificate.pfx"
-        $certBytes = [Convert]::FromBase64String("${{ secrets.SIGNING_CERTIFICATE }}")
-        [IO.File]::WriteAllBytes($pfxPath, $certBytes)
-        echo "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
+        if ([string]::IsNullOrEmpty($env:SIGNING_CERT)) {
+          Write-Host "No signing certificate found, will build unsigned"
+          echo "HAS_CERTIFICATE=false" >> $env:GITHUB_ENV
+        } else {
+          $pfxPath = "${{ runner.temp }}\SigningCertificate.pfx"
+          $certBytes = [Convert]::FromBase64String($env:SIGNING_CERT)
+          [IO.File]::WriteAllBytes($pfxPath, $certBytes)
+          echo "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
+          echo "HAS_CERTIFICATE=true" >> $env:GITHUB_ENV
+          Write-Host "Certificate decoded successfully"
+        }
 
     - name: Build MSIX Package (Signed)
-      if: ${{ github.event_name != 'pull_request' && secrets.SIGNING_CERTIFICATE != '' }}
+      if: github.event_name != 'pull_request' && env.HAS_CERTIFICATE == 'true'
+      env:
+        CERT_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
       run: |
         msbuild "${{ env.Project_Path }}" `
           /p:Configuration=${{ matrix.configuration }} `
@@ -83,11 +94,11 @@ jobs:
           /p:AppxBundle=Never `
           /p:AppxPackageSigningEnabled=true `
           /p:PackageCertificateKeyFile="${{ env.PFX_PATH }}" `
-          /p:PackageCertificatePassword="${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}" `
+          /p:PackageCertificatePassword="$env:CERT_PASSWORD" `
           /p:GenerateAppxPackageOnBuild=true
 
     - name: Build MSIX Package (Unsigned)
-      if: ${{ github.event_name == 'pull_request' || secrets.SIGNING_CERTIFICATE == '' }}
+      if: github.event_name == 'pull_request' || env.HAS_CERTIFICATE != 'true'
       run: |
         msbuild "${{ env.Project_Path }}" `
           /p:Configuration=${{ matrix.configuration }} `
@@ -99,9 +110,9 @@ jobs:
 
     # Clean up certificate
     - name: Remove signing certificate
-      if: ${{ always() && env.PFX_PATH != '' }}
+      if: always()
       run: |
-        if (Test-Path "${{ env.PFX_PATH }}") {
+        if ($env:PFX_PATH -and (Test-Path "${{ env.PFX_PATH }}")) {
           Remove-Item "${{ env.PFX_PATH }}" -Force
         }
 
