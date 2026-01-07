@@ -74,12 +74,13 @@ jobs:
           Write-Host "No signing certificate found, will build unsigned"
           echo "HAS_CERTIFICATE=false" >> $env:GITHUB_ENV
         } else {
-          $pfxPath = "${{ runner.temp }}\SigningCertificate.pfx"
+          # Save certificate to the project folder, replacing the temporary key
+          $pfxPath = "Fort.ind UWP\Fort.ind UWP_TemporaryKey.pfx"
           $certBytes = [Convert]::FromBase64String($env:SIGNING_CERT)
           [IO.File]::WriteAllBytes($pfxPath, $certBytes)
           echo "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
           echo "HAS_CERTIFICATE=true" >> $env:GITHUB_ENV
-          Write-Host "Certificate decoded successfully"
+          Write-Host "Certificate decoded successfully to: $pfxPath"
         }
 
     - name: Build MSIX Package (Signed)
@@ -93,7 +94,7 @@ jobs:
           /p:UapAppxPackageBuildMode=SideloadOnly `
           /p:AppxBundle=Never `
           /p:AppxPackageSigningEnabled=true `
-          /p:PackageCertificateKeyFile="${{ env.PFX_PATH }}" `
+          /p:PackageCertificateKeyFile="Fort.ind UWP_TemporaryKey.pfx" `
           /p:PackageCertificatePassword="$env:CERT_PASSWORD" `
           /p:GenerateAppxPackageOnBuild=true
 
@@ -108,13 +109,13 @@ jobs:
           /p:AppxPackageSigningEnabled=false `
           /p:GenerateAppxPackageOnBuild=true
 
-    # Clean up certificate
+    # Clean up certificate (restore original if needed)
     - name: Remove signing certificate
       if: always()
       run: |
-        if ($env:PFX_PATH -and (Test-Path "${{ env.PFX_PATH }}")) {
-          Remove-Item "${{ env.PFX_PATH }}" -Force
-        }
+        # Restore original git state for the certificate file
+        git checkout -- "Fort.ind UWP\Fort.ind UWP_TemporaryKey.pfx" 2>$null
+        Write-Host "Certificate file restored"
 
     - name: Upload MSIX Package
       uses: actions/upload-artifact@v4
