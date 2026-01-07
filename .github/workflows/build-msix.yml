@@ -36,7 +36,7 @@ jobs:
     - name: Setup Visual Studio shell
       uses: egor-tensin/vs-shell@v2
       with:
-        arch: ${{ matrix.platform }}
+        arch: x64
 
     - name: Restore NuGet packages
       run: nuget restore "${{ env.Solution_Name }}"
