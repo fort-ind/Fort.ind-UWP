@@ -117,14 +117,6 @@ jobs:
           /p:GenerateAppxPackageOnBuild=true `
           /restore
 
-    # Clean up certificate (restore original if needed)
-    - name: Remove signing certificate
-      if: always()
-      run: |
-        # Restore original git state for the certificate file
-        git checkout -- "Fort.ind UWP\Fort.ind UWP_TemporaryKey.pfx" 2>$null
-        Write-Host "Certificate file restored"
-
     - name: Upload MSIX Package
       uses: actions/upload-artifact@v4
       with:
