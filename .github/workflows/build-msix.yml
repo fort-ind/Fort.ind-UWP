@@ -14,8 +14,9 @@ jobs:
     runs-on: windows-2022
     
     strategy:
+      fail-fast: false  # Don't cancel other builds if one fails
       matrix:
-        platform: [x86, x64, ARM64]
+        platform: [x86, x64]
         configuration: [Release]
 
     env:
