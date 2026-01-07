@@ -10,7 +10,10 @@
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
     <muxc:NavigationView x:Name="NavView"
-                         PaneDisplayMode="Left"
+                         PaneDisplayMode="LeftCompact"
+                         CompactModeThresholdWidth="0"
+                         ExpandedModeThresholdWidth="0"
+                         OpenPaneLength="256"
                          IsBackButtonVisible="Collapsed"
                          IsSettingsVisible="True"
                          ItemInvoked="NavView_ItemInvoked"
