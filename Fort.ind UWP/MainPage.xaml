@@ -138,6 +138,7 @@
                     <TextBlock Text="Configure."
                                FontSize="18"
                                TextWrapping="Wrap"/>
+                    <Button x:Name="AboutButton" Content="About this app" Click="AboutButton_Click" Margin="0,20,0,0"/>
                 </StackPanel>
             </StackPanel>
         </ScrollViewer>

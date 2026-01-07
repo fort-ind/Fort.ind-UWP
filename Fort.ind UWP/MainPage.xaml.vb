@@ -59,4 +59,15 @@ Public NotInheritable Class MainPage
     Private Sub TextBlock_SelectionChanged(sender As Object, e As RoutedEventArgs)
 
     End Sub
+
+    Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
+        Dim aboutDialog As New ContentDialog()
+        aboutDialog.Title = "About"
+        aboutDialog.Content = "Fort.ind desktop for UWP, version 0.4 beta"
+        aboutDialog.PrimaryButtonText = "OK"
+        aboutDialog.DefaultButton = ContentDialogButton.Primary
+        aboutDialog.XamlRoot = Me.XamlRoot
+
+        Await aboutDialog.ShowAsync()
+    End Sub
 End Class
