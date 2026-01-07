@@ -4,17 +4,17 @@ on:
   push:
     branches: [ master ]
     tags:
-      - 'v*'  # Trigger on version tags like v1.0.0
+      - 'v*'
   pull_request:
     branches: [ master ]
-  workflow_dispatch:  # Allows manual trigger
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-2022
     
     strategy:
-      fail-fast: false  # Don't cancel other builds if one fails
+      fail-fast: false
       matrix:
         platform: [x86, x64]
         configuration: [Release]
@@ -42,35 +42,23 @@ jobs:
     - name: Restore NuGet packages
       run: nuget restore "${{ env.Solution_Name }}"
 
-    # Version bumping - extracts version from tag or generates from run number
     - name: Update manifest version
       run: |
-        # Get version from tag or generate from run number
         if ("${{ github.ref }}" -match "refs/tags/v(.+)") {
           $version = $matches[1]
-          # Ensure 4-part version (add .0 if needed)
           $parts = $version.Split('.')
-          while ($parts.Count -lt 4) {
-            $parts += "0"
-          }
+          while ($parts.Count -lt 4) { $parts += "0" }
           $version = $parts[0..3] -join '.'
         } else {
-          # Auto-generate version: 1.0.{run_number}.0
           $version = "1.0.${{ github.run_number }}.0"
         }
-        
         Write-Host "Setting version to: $version"
-        
-        # Update Package.appxmanifest
         $manifestPath = "${{ env.Manifest_Path }}"
         [xml]$manifest = Get-Content $manifestPath
         $manifest.Package.Identity.Version = $version
         $manifest.Save($manifestPath)
-        
-        Write-Host "Updated manifest version to $version"
         echo "APP_VERSION=$version" >> $env:GITHUB_ENV
 
-    # Decode and install certificate for signing
     - name: Decode signing certificate
       if: github.event_name != 'pull_request'
       env:
@@ -81,23 +69,18 @@ jobs:
           Write-Host "No signing certificate found, will build unsigned"
           echo "HAS_CERTIFICATE=false" >> $env:GITHUB_ENV
         } else {
-          # Save certificate to the project folder, replacing the temporary key
           $pfxPath = "Fort.ind UWP\Fort.ind UWP_TemporaryKey.pfx"
           $certBytes = [Convert]::FromBase64String($env:SIGNING_CERT)
           [IO.File]::WriteAllBytes($pfxPath, $certBytes)
-          
-          # Export .cer file from PFX for users to install
           $pfxFullPath = (Resolve-Path $pfxPath).Path
           $securePassword = ConvertTo-SecureString -String $env:CERT_PASSWORD -Force -AsPlainText
           $cert = Get-PfxCertificate -FilePath $pfxFullPath -Password $securePassword
           $cerPath = "Fort.ind UWP\Fort.ind_UWP.cer"
           Export-Certificate -Cert $cert -FilePath $cerPath -Type CERT | Out-Null
           Write-Host "Exported public certificate to: $cerPath"
-          
           echo "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
           echo "CER_PATH=$cerPath" >> $env:GITHUB_ENV
           echo "HAS_CERTIFICATE=true" >> $env:GITHUB_ENV
-          Write-Host "Certificate decoded successfully to: $pfxPath"
         }
 
     - name: Build MSIX Package (Signed)
@@ -128,89 +111,43 @@ jobs:
           /p:GenerateAppxPackageOnBuild=true `
           /restore
 
-    # Copy certificate and create Install script
     - name: Create Install Script and Copy Certificate
+      shell: pwsh
       run: |
         $packageDir = Get-ChildItem -Path "Fort.ind UWP\AppPackages" -Directory | Select-Object -First 1
         if ($packageDir) {
-          # Copy .cer file to package directory
           if (Test-Path "Fort.ind UWP\Fort.ind_UWP.cer") {
             Copy-Item "Fort.ind UWP\Fort.ind_UWP.cer" -Destination "$($packageDir.FullName)\Fort.ind_UWP.cer"
             Write-Host "Copied certificate to package directory"
           }
           
-          # Create Install script
-          $installScript = @'
-# Fort.ind UWP Installer Script
-# Run this script as Administrator to install the app
-
-$ErrorActionPreference = "Stop"
-
-Write-Host ""
-Write-Host "================================" -ForegroundColor Cyan
-Write-Host "  Fort.ind UWP Installer" -ForegroundColor Cyan
-Write-Host "================================" -ForegroundColor Cyan
-Write-Host ""
-
-# Check for admin rights
-$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
-
-if (-not $isAdmin) {
-    Write-Host "This script requires Administrator privileges." -ForegroundColor Yellow
-    Write-Host "Restarting as Administrator..." -ForegroundColor Yellow
-    Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$PSCommandPath`""
-    exit
-}
-
-# Find certificate file
-$certFile = Get-ChildItem -Path $PSScriptRoot -Filter "*.cer" | Select-Object -First 1
-if ($certFile) {
-    Write-Host "[1/2] Installing certificate..." -ForegroundColor Yellow
-    try {
-        Import-Certificate -FilePath $certFile.FullName -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
-        Write-Host "      Certificate installed successfully!" -ForegroundColor Green
-    } catch {
-        Write-Host "      Warning: Could not install certificate. You may need Developer Mode enabled." -ForegroundColor Yellow
-    }
-} else {
-    Write-Host "[1/2] No certificate file found. Skipping..." -ForegroundColor Yellow
-}
-
-Write-Host ""
-
-# Find and install MSIX
-$msixFile = Get-ChildItem -Path $PSScriptRoot -Filter "*.msix" | Select-Object -First 1
-if (-not $msixFile) {
-    $msixFile = Get-ChildItem -Path $PSScriptRoot -Filter "*.appx" | Select-Object -First 1
-}
-
-if ($msixFile) {
-    Write-Host "[2/2] Installing Fort.ind UWP..." -ForegroundColor Yellow
-    try {
-        Add-AppxPackage -Path $msixFile.FullName
-        Write-Host "      App installed successfully!" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "================================" -ForegroundColor Green
-        Write-Host "  Installation Complete!" -ForegroundColor Green
-        Write-Host "================================" -ForegroundColor Green
-        Write-Host ""
-        Write-Host "You can find Fort.ind UWP in your Start menu." -ForegroundColor Cyan
-    } catch {
-        Write-Host "      Error: $($_.Exception.Message)" -ForegroundColor Red
-        Write-Host ""
-        Write-Host "Try enabling Developer Mode in Windows Settings:" -ForegroundColor Yellow
-        Write-Host "Settings > Privacy & Security > For developers > Developer Mode" -ForegroundColor Yellow
-    }
-} else {
-    Write-Host "[2/2] Error: No MSIX/APPX package found!" -ForegroundColor Red
-}
-
-Write-Host ""
-Write-Host "Press any key to exit..."
-$null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-'@
-          $installScript | Out-File -FilePath "$($packageDir.FullName)\Install.ps1" -Encoding UTF8
-          Write-Host "Created Install.ps1 in $($packageDir.FullName)"
+          $scriptContent = @"
+        # Fort.ind UWP Installer Script
+        `$ErrorActionPreference = "Stop"
+        Write-Host "Fort.ind UWP Installer" -ForegroundColor Cyan
+        `$isAdmin = ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+        if (-not `$isAdmin) {
+            Write-Host "Restarting as Administrator..." -ForegroundColor Yellow
+            Start-Process PowerShell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File ```"`$PSCommandPath```""
+            exit
+        }
+        `$certFile = Get-ChildItem -Path `$PSScriptRoot -Filter "*.cer" | Select-Object -First 1
+        if (`$certFile) {
+            Write-Host "Installing certificate..." -ForegroundColor Yellow
+            Import-Certificate -FilePath `$certFile.FullName -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
+            Write-Host "Certificate installed!" -ForegroundColor Green
+        }
+        `$msixFile = Get-ChildItem -Path `$PSScriptRoot -Filter "*.msix" | Select-Object -First 1
+        if (-not `$msixFile) { `$msixFile = Get-ChildItem -Path `$PSScriptRoot -Filter "*.appx" | Select-Object -First 1 }
+        if (`$msixFile) {
+            Write-Host "Installing app..." -ForegroundColor Yellow
+            Add-AppxPackage -Path `$msixFile.FullName
+            Write-Host "Installation complete! Find Fort.ind UWP in Start menu." -ForegroundColor Green
+        }
+        Read-Host "Press Enter to exit"
+        "@
+          $scriptContent | Out-File -FilePath "$($packageDir.FullName)\Install.ps1" -Encoding UTF8
+          Write-Host "Created Install.ps1"
         }
 
     - name: Upload MSIX Package
@@ -224,7 +161,6 @@ $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
           Fort.ind UWP\AppPackages\**\Install.ps1
         if-no-files-found: warn
 
-  # Create GitHub Release when a version tag is pushed
   release:
     needs: build
     if: startsWith(github.ref, 'refs/tags/v')
