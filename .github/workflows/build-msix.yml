@@ -11,7 +11,7 @@ on:
 
 jobs:
   build:
-    runs-on: windows-latest
+    runs-on: windows-2022
     
     strategy:
       matrix:
@@ -32,6 +32,11 @@ jobs:
 
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
+
+    - name: Setup Visual Studio shell
+      uses: egor-tensin/vs-shell@v2
+      with:
+        arch: ${{ matrix.platform }}
 
     - name: Restore NuGet packages
       run: nuget restore "${{ env.Solution_Name }}"
@@ -96,7 +101,8 @@ jobs:
           /p:AppxPackageSigningEnabled=true `
           /p:PackageCertificateKeyFile="Fort.ind UWP_TemporaryKey.pfx" `
           /p:PackageCertificatePassword="$env:CERT_PASSWORD" `
-          /p:GenerateAppxPackageOnBuild=true
+          /p:GenerateAppxPackageOnBuild=true `
+          /restore
 
     - name: Build MSIX Package (Unsigned)
       if: github.event_name == 'pull_request' || env.HAS_CERTIFICATE != 'true'
@@ -107,7 +113,8 @@ jobs:
           /p:UapAppxPackageBuildMode=SideloadOnly `
           /p:AppxBundle=Never `
           /p:AppxPackageSigningEnabled=false `
-          /p:GenerateAppxPackageOnBuild=true
+          /p:GenerateAppxPackageOnBuild=true `
+          /restore
 
     # Clean up certificate (restore original if needed)
     - name: Remove signing certificate
