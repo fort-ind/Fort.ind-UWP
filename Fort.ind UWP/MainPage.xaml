@@ -5,7 +5,6 @@
     xmlns:local="using:Fort.ind_UWP"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
     mc:Ignorable="d"
     Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
 
@@ -17,48 +16,48 @@
                       FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
     </Page.Resources>
 
-    <muxc:NavigationView x:Name="NavView"
-                         PaneDisplayMode="LeftCompact"
-                         CompactModeThresholdWidth="0"
-                         ExpandedModeThresholdWidth="0"
-                         OpenPaneLength="256"
-                         IsBackButtonVisible="Collapsed"
-                         IsSettingsVisible="True"
-                         ItemInvoked="NavView_ItemInvoked"
-                         Loaded="NavView_Loaded">
+    <NavigationView x:Name="NavView"
+                    PaneDisplayMode="LeftCompact"
+                    CompactModeThresholdWidth="0"
+                    ExpandedModeThresholdWidth="0"
+                    OpenPaneLength="256"
+                    IsBackButtonVisible="Collapsed"
+                    IsSettingsVisible="True"
+                    ItemInvoked="NavView_ItemInvoked"
+                    Loaded="NavView_Loaded">
 
-        <muxc:NavigationView.MenuItems>
-            <muxc:NavigationViewItem Content="Home" Tag="LatestNews">
-                <muxc:NavigationViewItem.Icon>
+        <NavigationView.MenuItems>
+            <NavigationViewItem Content="Home" Tag="LatestNews">
+                <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Home"/>
-                </muxc:NavigationViewItem.Icon>
-            </muxc:NavigationViewItem>
-            <muxc:NavigationViewItem Content="Games" Tag="Games">
-                <muxc:NavigationViewItem.Icon>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Games" Tag="Games">
+                <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Play"/>
-                </muxc:NavigationViewItem.Icon>
-            </muxc:NavigationViewItem>
-            <muxc:NavigationViewItem Content="doo dads" Tag="Betas">
-                <muxc:NavigationViewItem.Icon>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="doo dads" Tag="Betas">
+                <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="PreviewLink"/>
-                </muxc:NavigationViewItem.Icon>
-            </muxc:NavigationViewItem>
-            <muxc:NavigationViewItem Content="Your Profile (wip)" Tag="Contacts">
-                <muxc:NavigationViewItem.Icon>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Your Profile (wip)" Tag="Contacts">
+                <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Contact"/>
-                </muxc:NavigationViewItem.Icon>
-            </muxc:NavigationViewItem>
-            <muxc:NavigationViewItem Content="Social" Tag="Social">
-                <muxc:NavigationViewItem.Icon>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="Social" Tag="Social">
+                <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="People"/>
-                </muxc:NavigationViewItem.Icon>
-            </muxc:NavigationViewItem>
-            <muxc:NavigationViewItem Content="About" Tag="About">
-                <muxc:NavigationViewItem.Icon>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem Content="About" Tag="About">
+                <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Help"/>
-                </muxc:NavigationViewItem.Icon>
-            </muxc:NavigationViewItem>
-        </muxc:NavigationView.MenuItems>
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+        </NavigationView.MenuItems>
 
         <!-- Content Area -->
         <ScrollViewer>
@@ -154,5 +153,5 @@
             </StackPanel>
         </ScrollViewer>
 
-    </muxc:NavigationView>
+    </NavigationView>
 </Page>

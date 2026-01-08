@@ -1,7 +1,5 @@
 ﻿' The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
-Imports muxc = Microsoft.UI.Xaml.Controls
-
 ''' <summary>
 ''' An empty page that can be used on its own or navigated to within a Frame.
 ''' </summary>
@@ -13,11 +11,11 @@ Public NotInheritable Class MainPage
         NavView.SelectedItem = NavView.MenuItems(0)
     End Sub
 
-    Private Sub NavView_ItemInvoked(sender As muxc.NavigationView, args As muxc.NavigationViewItemInvokedEventArgs)
+    Private Sub NavView_ItemInvoked(sender As NavigationView, args As NavigationViewItemInvokedEventArgs)
         If args.IsSettingsInvoked Then
             ShowPanel("Settings")
         Else
-            Dim invokedItem = TryCast(args.InvokedItemContainer, muxc.NavigationViewItem)
+            Dim invokedItem = TryCast(args.InvokedItemContainer, NavigationViewItem)
             If invokedItem IsNot Nothing Then
                 Dim tag = If(invokedItem.Tag?.ToString(), "LatestNews")
                 ShowPanel(tag)
