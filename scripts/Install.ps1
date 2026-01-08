@@ -195,11 +195,15 @@ if ($msixFile) {
         Write-Status "Fort.ind UWP installed successfully!" "Success"
         Write-Host ""
         Write-Host "========================================" -ForegroundColor Green
-        Write-Host "  Installation Complete!" -ForegroundColor Green
-        Write-Host "  Find Fort.ind UWP in your Start menu" -ForegroundColor Green
+        Write-Host "    Installation Complete! :p" -ForegroundColor Green
         Write-Host "========================================" -ForegroundColor Green
+        Write-Host ""
+        Write-Host "Find Fort.ind UWP in your Start menu." -ForegroundColor Green
+        Write-Host "If you run into any bugs, please open" -ForegroundColor Green
+        Write-Host "an issue on the GitHub repository." -ForegroundColor Green
+        Write-Host ""
     } catch {
-        Write-Status "Installation failed: $($_.Exception.Message)" "Error"
+        Write-Status " thats akward.. the install failed: $($_.Exception.Message)" "Error"
         Write-Host ""
         Write-Status "Troubleshooting tips:" "Warning"
         Write-Status "1. Make sure Developer Mode is enabled in Windows Settings" "Info"
