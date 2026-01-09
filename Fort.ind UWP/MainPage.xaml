@@ -37,12 +37,12 @@
                     <SymbolIcon Symbol="Play"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="doo dads" Tag="Betas">
+            <NavigationViewItem Content="Beta Programs" Tag="Betas">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="PreviewLink"/>
                 </NavigationViewItem.Icon>
             </NavigationViewItem>
-            <NavigationViewItem Content="Your Profile (wip)" Tag="Contacts">
+            <NavigationViewItem Content="Your Profile" Tag="Contacts">
                 <NavigationViewItem.Icon>
                     <SymbolIcon Symbol="Contact"/>
                 </NavigationViewItem.Icon>
@@ -64,16 +64,16 @@
             <StackPanel x:Name="ContentPanel" Padding="20">
                 <!-- Latest News Content (default view) -->
                 <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
-                    <TextBlock Text="uhhh brick :3"
+                    <TextBlock Text="Welcome to Fort.ind"
                                FontSize="32"
                                FontWeight="Bold"
-                               Margin="0,0,0,10" SelectionChanged="TextBlock_SelectionChanged"/>
+                               Margin="0,0,0,10"/>
 
-                    <TextBlock Text="yey 🎉"
+                    <TextBlock Text="Latest news and updates"
                                FontSize="18"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="I HATE UWP I HATE IT I HATE ITTTTTTTTT WHY IS ThIS SO HARD IM GONNA DIEEEE"
+                    <TextBlock Text="Check back here for the latest updates and announcements from Fort.ind."
                                TextWrapping="Wrap" 
                                FontSize="16"/>
                 </StackPanel>
@@ -85,31 +85,31 @@
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="nothing here.. go to https://www.fort1nd.com instead"
+                    <TextBlock Text="Visit https://www.fort1nd.com to explore our games"
                                FontSize="18"
                                TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <!-- Betas Content -->
                 <StackPanel x:Name="BetasPanel" Visibility="Collapsed">
-                    <TextBlock Text="Betas"
+                    <TextBlock Text="Beta Programs"
                                FontSize="32"
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Access beta versions for nothing (for now)"
+                    <TextBlock Text="Access beta versions and early features (coming soon)"
                                FontSize="18"
                                TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <!-- Contacts Content -->
                 <StackPanel x:Name="ContactsPanel" Visibility="Collapsed">
-                    <TextBlock Text="Contacts"
+                    <TextBlock Text="Your Profile"
                                FontSize="32"
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="wip"
+                    <TextBlock Text="Profile features coming soon"
                                FontSize="18"
                                TextWrapping="Wrap"/>
                 </StackPanel>
@@ -121,19 +121,19 @@
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="check back here soon :3"
+                    <TextBlock Text="Social features coming soon"
                                FontSize="18"
                                TextWrapping="Wrap"/>
                 </StackPanel>
 
                 <!-- About Content -->
                 <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
-                    <TextBlock Text="about fort.desktop (UWP)"
+                    <TextBlock Text="About Fort.ind Desktop"
                                FontSize="32"
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="0.1 beta :p"
+                    <TextBlock Text="Version 0.4 Beta"
                                FontSize="18"
                                TextWrapping="Wrap"/>
                 </StackPanel>
@@ -145,7 +145,7 @@
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Configure."
+                    <TextBlock Text="Configure your application preferences"
                                FontSize="18"
                                TextWrapping="Wrap"/>
                     <Button x:Name="AboutButton" Content="About this app" Click="AboutButton_Click" Margin="0,20,0,0"/>

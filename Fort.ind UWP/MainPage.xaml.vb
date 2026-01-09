@@ -54,10 +54,6 @@ Public NotInheritable Class MainPage
         End Select
     End Sub
 
-    Private Sub TextBlock_SelectionChanged(sender As Object, e As RoutedEventArgs)
-
-    End Sub
-
     Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
         Dim aboutDialog As New ContentDialog()
         aboutDialog.Title = "About"
