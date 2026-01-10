@@ -64,4 +64,8 @@ Public NotInheritable Class MainPage
 
         Await aboutDialog.ShowAsync()
     End Sub
+
+    Private Sub TextBlock_SelectionChanged(sender As Object, e As RoutedEventArgs)
+
+    End Sub
 End Class

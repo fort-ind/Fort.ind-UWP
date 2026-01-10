@@ -69,13 +69,13 @@
                                FontWeight="Bold"
                                Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Latest news and updates"
+                    <TextBlock Text="i got no idea what to put here yet..."
                                FontSize="18"
                                Margin="0,0,0,10"/>
 
                     <TextBlock Text="Check back here for the latest updates and announcements from Fort.ind."
                                TextWrapping="Wrap" 
-                               FontSize="16"/>
+                               FontSize="16" SelectionChanged="TextBlock_SelectionChanged"/>
                 </StackPanel>
 
                 <!-- Games Content -->
