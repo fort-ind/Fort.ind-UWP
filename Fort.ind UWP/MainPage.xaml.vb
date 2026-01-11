@@ -1,10 +1,43 @@
 ﻿' The Blank Page item template is documented at https://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 
+Imports Windows.UI
+Imports Windows.UI.ViewManagement
+Imports Windows.ApplicationModel.Core
+
 ''' <summary>
 ''' An empty page that can be used on its own or navigated to within a Frame.
 ''' </summary>
 Public NotInheritable Class MainPage
     Inherits Page
+
+    Public Sub New()
+        Me.InitializeComponent()
+        SetupTitleBar()
+    End Sub
+
+    Private Sub SetupTitleBar()
+        ' Extend view into title bar for seamless acrylic
+        Dim coreTitleBar = CoreApplication.GetCurrentView().TitleBar
+        coreTitleBar.ExtendViewIntoTitleBar = True
+
+        ' Set the draggable title bar region
+        Window.Current.SetTitleBar(AppTitleBar)
+
+        ' Make title bar buttons transparent to match acrylic
+        Dim titleBar = ApplicationView.GetForCurrentView().TitleBar
+
+        ' Button colors - transparent with subtle hover
+        titleBar.ButtonBackgroundColor = Colors.Transparent
+        titleBar.ButtonInactiveBackgroundColor = Colors.Transparent
+        titleBar.ButtonHoverBackgroundColor = Color.FromArgb(30, 255, 255, 255)
+        titleBar.ButtonPressedBackgroundColor = Color.FromArgb(50, 255, 255, 255)
+
+        ' Button foreground colors
+        titleBar.ButtonForegroundColor = Colors.White
+        titleBar.ButtonHoverForegroundColor = Colors.White
+        titleBar.ButtonPressedForegroundColor = Colors.White
+        titleBar.ButtonInactiveForegroundColor = Color.FromArgb(128, 255, 255, 255)
+    End Sub
 
     Private Sub NavView_Loaded(sender As Object, e As RoutedEventArgs)
         ' Select the first item (Latest News) by default

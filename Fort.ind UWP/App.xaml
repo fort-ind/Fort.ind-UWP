@@ -4,4 +4,29 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:Fort.ind_UWP">
 
+    <Application.Resources>
+        <ResourceDictionary>
+            <!-- Windows 10 Style Acrylic Background Brush -->
+            <AcrylicBrush x:Key="AppAcrylicBackgroundBrush"
+                          BackgroundSource="HostBackdrop"
+                          TintColor="{ThemeResource SystemChromeMediumLowColor}"
+                          TintOpacity="0.7"
+                          FallbackColor="{ThemeResource SystemChromeMediumLowColor}"/>
+
+            <!-- NavigationView Acrylic Pane Background -->
+            <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
+                          BackgroundSource="HostBackdrop"
+                          TintColor="{ThemeResource SystemChromeMediumColor}"
+                          TintOpacity="0.85"
+                          FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
+
+            <!-- Reveal Highlight NavigationViewItem Style Override -->
+            <SolidColorBrush x:Key="NavigationViewItemForeground" Color="{ThemeResource SystemBaseHighColor}"/>
+            <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="{ThemeResource SystemBaseHighColor}"/>
+            <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="{ThemeResource SystemAccentColor}"/>
+            <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="{ThemeResource SystemAccentColor}"/>
+
+        </ResourceDictionary>
+    </Application.Resources>
+
 </Application>

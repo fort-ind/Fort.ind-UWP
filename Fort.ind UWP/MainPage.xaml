@@ -6,152 +6,252 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="Transparent">
 
     <Page.Resources>
+        <!-- Consistent Acrylic Brush for the entire app -->
+        <AcrylicBrush x:Key="AppAcrylicBrush"
+                      BackgroundSource="HostBackdrop"
+                      TintColor="#1a1a2e"
+                      TintOpacity="0.85"
+                      FallbackColor="#1a1a2e"/>
+
+        <!-- NavigationView Pane Acrylic - matches the app background -->
         <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
                       BackgroundSource="HostBackdrop"
-                      TintColor="{ThemeResource SystemChromeMediumColor}"
+                      TintColor="#1a1a2e"
+                      TintOpacity="0.9"
+                      FallbackColor="#1a1a2e"/>
+
+        <!-- News Card Background -->
+        <AcrylicBrush x:Key="CardAcrylicBrush"
+                      BackgroundSource="Backdrop"
+                      TintColor="#2d2d44"
                       TintOpacity="0.8"
-                      FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
+                      FallbackColor="#2d2d44"/>
     </Page.Resources>
 
-    <NavigationView x:Name="NavView"
-                    PaneDisplayMode="LeftCompact"
-                    CompactModeThresholdWidth="0"
-                    ExpandedModeThresholdWidth="0"
-                    OpenPaneLength="256"
-                    IsBackButtonVisible="Collapsed"
-                    IsSettingsVisible="True"
-                    ItemInvoked="NavView_ItemInvoked"
-                    Loaded="NavView_Loaded">
+    <Grid Background="{StaticResource AppAcrylicBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <NavigationView.MenuItems>
-            <NavigationViewItem Content="Home" Tag="LatestNews">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Home"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Games" Tag="Games">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Play"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Beta Programs" Tag="Betas">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="PreviewLink"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Your Profile" Tag="Contacts">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Contact"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="Social" Tag="Social">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="People"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-            <NavigationViewItem Content="About" Tag="About">
-                <NavigationViewItem.Icon>
-                    <SymbolIcon Symbol="Help"/>
-                </NavigationViewItem.Icon>
-            </NavigationViewItem>
-        </NavigationView.MenuItems>
+        <!-- Custom Title Bar Area -->
+        <Grid x:Name="AppTitleBar" 
+              Grid.Row="0" 
+              Background="Transparent"
+              HorizontalAlignment="Stretch">
+            <TextBlock Text="Fort.ind"
+                       VerticalAlignment="Center"
+                       Margin="12,0,0,0"
+                       FontSize="12"
+                       Opacity="0.8"/>
+        </Grid>
 
-        <!-- Content Area -->
-        <ScrollViewer>
-            <StackPanel x:Name="ContentPanel" Padding="20">
-                <!-- Latest News Content (default view) -->
-                <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
-                    <TextBlock Text="Welcome to Fort.ind"
-                               FontSize="32"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+        <!-- Main Content -->
+        <NavigationView x:Name="NavView"
+                        Grid.Row="1"
+                        PaneDisplayMode="LeftCompact"
+                        CompactModeThresholdWidth="0"
+                        ExpandedModeThresholdWidth="0"
+                        OpenPaneLength="256"
+                        IsBackButtonVisible="Collapsed"
+                        IsSettingsVisible="True"
+                        ItemInvoked="NavView_ItemInvoked"
+                        Loaded="NavView_Loaded"
+                        Background="Transparent">
 
-                    <TextBlock Text="i got no idea what to put here yet..."
-                               FontSize="18"
-                               Margin="0,0,0,10"/>
+            <NavigationView.MenuItems>
+                <NavigationViewItem Content="Home" Tag="LatestNews">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Home"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Games" Tag="Games">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Play"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Beta Programs" Tag="Betas">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="PreviewLink"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Your Profile" Tag="Contacts">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Contact"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="Social" Tag="Social">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="People"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+                <NavigationViewItem Content="About" Tag="About">
+                    <NavigationViewItem.Icon>
+                        <SymbolIcon Symbol="Help"/>
+                    </NavigationViewItem.Icon>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
 
-                    <TextBlock Text="Check back here for the latest updates and announcements from Fort.ind."
-                               TextWrapping="Wrap" 
-                               FontSize="16" SelectionChanged="TextBlock_SelectionChanged"/>
-                </StackPanel>
+            <!-- Content Area -->
+            <Grid Background="Transparent">
+                <ScrollViewer>
+                    <StackPanel x:Name="ContentPanel" Padding="24">
+                        <!-- Latest News Content (default view) -->
+                        <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
+                            <TextBlock Text="Welcome to Fort.ind"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,10"/>
 
-                <!-- Games Content -->
-                <StackPanel x:Name="GamesPanel" Visibility="Collapsed">
-                    <TextBlock Text="Games"
-                               FontSize="32"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+                            <TextBlock Text="Check back here for the latest updates and announcements."
+                                       FontSize="16"
+                                       Opacity="0.7"
+                                       Margin="0,0,0,24"/>
 
-                    <TextBlock Text="Visit https://www.fort1nd.com to explore our games"
-                               FontSize="18"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
+                            <!-- News Cards Grid -->
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="16"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                <!-- Betas Content -->
-                <StackPanel x:Name="BetasPanel" Visibility="Collapsed">
-                    <TextBlock Text="Beta Programs"
-                               FontSize="32"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+                                <!-- News Card 1 -->
+                                <Grid Grid.Column="0" 
+                                      Background="{StaticResource CardAcrylicBrush}"
+                                      CornerRadius="8"
+                                      Padding="20"
+                                      MinHeight="180">
+                                    <StackPanel>
+                                        <TextBlock Text="📰 Welcome!"
+                                                   FontSize="14"
+                                                   Opacity="0.6"
+                                                   Margin="0,0,0,8"/>
+                                        <TextBlock Text="welcome to the FIRST actual public beta of this app!"
+                                                   FontSize="20"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,12"/>
+                                        <TextBlock Text="currently we have finished the base structure of the app :p more on the way"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="14"
+                                                   Opacity="0.8"
+                                                   Margin="0,0,0,12"/>
+                                        <TextBlock Text="Just now"
+                                                   FontSize="12"
+                                                   Opacity="0.5"/>
+                                    </StackPanel>
+                                </Grid>
 
-                    <TextBlock Text="Access beta versions and early features (coming soon)"
-                               FontSize="18"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
+                                <!-- News Card 2 -->
+                                <Grid Grid.Column="2" 
+                                      Background="{StaticResource CardAcrylicBrush}"
+                                      CornerRadius="8"
+                                      Padding="20"
+                                      MinHeight="180">
+                                    <StackPanel>
+                                        <TextBlock Text="🎮 soon! :3"
+                                                   FontSize="14"
+                                                   Opacity="0.6"
+                                                   Margin="0,0,0,8"/>
+                                        <TextBlock Text="New Features Ahead"
+                                                   FontSize="20"
+                                                   FontWeight="SemiBold"
+                                                   Margin="0,0,0,12"/>
+                                        <TextBlock Text="soon you will be able to manage your fort.ind account, view posts from social and play your games from fort1nd.com on windows! if you want to use the full experience for now go to fort1nd.com"
+                                                   TextWrapping="Wrap"
+                                                   FontSize="14"
+                                                   Opacity="0.8"
+                                                   Margin="0,0,0,12"/>
+                                        <TextBlock Text="in the future (maybe subject to change)"
+                                                   FontSize="12"
+                                                   Opacity="0.5"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Grid>
+                        </StackPanel>
 
-                <!-- Contacts Content -->
-                <StackPanel x:Name="ContactsPanel" Visibility="Collapsed">
-                    <TextBlock Text="Your Profile"
-                               FontSize="32"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+                        <!-- Games Content -->
+                        <StackPanel x:Name="GamesPanel" Visibility="Collapsed">
+                            <TextBlock Text="Games"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Profile features coming soon"
-                               FontSize="18"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
+                            <TextBlock Text="Visit https://www.fort1nd.com to explore our games"
+                                       FontSize="18"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
 
-                <!-- Social Content -->
-                <StackPanel x:Name="SocialPanel" Visibility="Collapsed">
-                    <TextBlock Text="Social"
-                               FontSize="32"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+                        <!-- Betas Content -->
+                        <StackPanel x:Name="BetasPanel" Visibility="Collapsed">
+                            <TextBlock Text="Beta Programs"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Social features coming soon"
-                               FontSize="18"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
+                            <TextBlock Text="Access beta versions and early features (coming soon)"
+                                       FontSize="18"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
 
-                <!-- About Content -->
-                <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
-                    <TextBlock Text="About Fort.ind Desktop"
-                               FontSize="32"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+                        <!-- Contacts Content -->
+                        <StackPanel x:Name="ContactsPanel" Visibility="Collapsed">
+                            <TextBlock Text="Your Profile"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Version 0.4 Beta"
-                               FontSize="18"
-                               TextWrapping="Wrap"/>
-                </StackPanel>
+                            <TextBlock Text="Profile features coming soon"
+                                       FontSize="18"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
 
-                <!-- Settings Content -->
-                <StackPanel x:Name="SettingsPanel" Visibility="Collapsed">
-                    <TextBlock Text="Settings"
-                               FontSize="32"
-                               FontWeight="Bold"
-                               Margin="0,0,0,10"/>
+                        <!-- Social Content -->
+                        <StackPanel x:Name="SocialPanel" Visibility="Collapsed">
+                            <TextBlock Text="Social"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,10"/>
 
-                    <TextBlock Text="Configure your application preferences"
-                               FontSize="18"
-                               TextWrapping="Wrap"/>
-                    <Button x:Name="AboutButton" Content="About this app" Click="AboutButton_Click" Margin="0,20,0,0"/>
-                </StackPanel>
-            </StackPanel>
-        </ScrollViewer>
+                            <TextBlock Text="Social features coming soon"
+                                       FontSize="18"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
 
-    </NavigationView>
+                        <!-- About Content -->
+                        <StackPanel x:Name="AboutPanel" Visibility="Collapsed">
+                            <TextBlock Text="About Fort.ind Desktop"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Version 0.4 Beta"
+                                       FontSize="18"
+                                       TextWrapping="Wrap"/>
+                        </StackPanel>
+
+                        <!-- Settings Content -->
+                        <StackPanel x:Name="SettingsPanel" Visibility="Collapsed">
+                            <TextBlock Text="Settings"
+                                       FontSize="32"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,10"/>
+
+                            <TextBlock Text="Configure your application preferences"
+                                       FontSize="18"
+                                       TextWrapping="Wrap"/>
+                            <Button x:Name="AboutButton" 
+                                    Content="About this app" 
+                                    Click="AboutButton_Click" 
+                                    Margin="0,20,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </Grid>
+
+        </NavigationView>
+    </Grid>
 </Page>
