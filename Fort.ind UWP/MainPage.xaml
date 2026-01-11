@@ -78,7 +78,7 @@
                         <SymbolIcon Symbol="PreviewLink"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Your Profile" Tag="Contacts">
+                <NavigationViewItem x:Name="ProfileNavItem" Content="Your Profile" Tag="Profile">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Contact"/>
                     </NavigationViewItem.Icon>
@@ -97,7 +97,10 @@
 
             <!-- Content Area -->
             <Grid Background="Transparent">
-                <ScrollViewer>
+                <!-- Frame for page navigation -->
+                <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
+                
+                <ScrollViewer x:Name="ContentScrollViewer">
                     <StackPanel x:Name="ContentPanel" Padding="24">
                         <!-- Latest News Content (default view) -->
                         <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
@@ -197,17 +200,7 @@
                                        TextWrapping="Wrap"/>
                         </StackPanel>
 
-                        <!-- Contacts Content -->
-                        <StackPanel x:Name="ContactsPanel" Visibility="Collapsed">
-                            <TextBlock Text="Your Profile"
-                                       FontSize="32"
-                                       FontWeight="Bold"
-                                       Margin="0,0,0,10"/>
-
-                            <TextBlock Text="Profile features coming soon"
-                                       FontSize="18"
-                                       TextWrapping="Wrap"/>
-                        </StackPanel>
+                        <!-- Profile Content is now handled by ProfilePage via Frame -->
 
                         <!-- Social Content -->
                         <StackPanel x:Name="SocialPanel" Visibility="Collapsed">
@@ -245,13 +238,50 @@
                                        TextWrapping="Wrap"
                                        Margin="0,0,0,24"/>
 
-                            <!-- Live Tile Section -->
-                            <TextBlock Text="Live Tile"
+                            <!-- Storage Section -->
+                            <TextBlock Text="💾 Data Storage"
                                        FontSize="20"
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,12"/>
 
-                            <StackPanel Orientation="Horizontal" Spacing="12">
+                            <Grid Background="{StaticResource CardAcrylicBrush}"
+                                  CornerRadius="8"
+                                  Padding="16"
+                                  Margin="0,0,0,16">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="📄 Local JSON Storage"
+                                               FontWeight="SemiBold"/>
+                                    <TextBlock Text="Your account data is stored locally on this device."
+                                               FontSize="12"
+                                               Opacity="0.7"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock x:Name="StoragePathText"
+                                               FontSize="11"
+                                               Opacity="0.5"
+                                               TextWrapping="Wrap"/>
+                                    <TextBlock x:Name="UserCountText"
+                                               FontSize="12"
+                                               Opacity="0.7"/>
+                                    
+                                    <StackPanel Orientation="Horizontal" 
+                                                Spacing="4" 
+                                                Margin="0,8,0,0"
+                                                Opacity="0.6">
+                                        <TextBlock Text="🔮" FontSize="12"/>
+                                        <TextBlock Text="SQLite database &amp; server sync coming soon!"
+                                                   FontSize="11"
+                                                   FontStyle="Italic"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Grid>
+
+                            <!-- Live Tile Section -->
+                            <TextBlock Text="📌 Live Tile"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,12"/>
+
+                            <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
                                 <Button x:Name="RefreshTileButton" 
                                         Content="🔄 Refresh Live Tile" 
                                         Click="RefreshTileButton_Click"/>
@@ -260,14 +290,11 @@
                                         Click="ClearTileButton_Click"/>
                             </StackPanel>
 
-                            <TextBlock Text="About"
+                            <TextBlock Text="ℹ️ About"
                                        FontSize="20"
                                        FontWeight="SemiBold"
-                                       Margin="0,24,0,12"/>
-
-                            <Button x:Name="AboutButton" 
-                                    Content="About this app" 
-                                    Click="AboutButton_Click"/>
+                                       Margin="0,0,0,12"/>
+                        
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

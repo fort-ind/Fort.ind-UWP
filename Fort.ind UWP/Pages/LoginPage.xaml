@@ -1,0 +1,175 @@
+<Page
+    x:Class="Fort.ind_UWP.LoginPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Fort.ind_UWP"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <Page.Resources>
+        <!-- Acrylic background -->
+        <AcrylicBrush x:Key="LoginAcrylicBrush"
+                      BackgroundSource="HostBackdrop"
+                      TintColor="#1a1a2e"
+                      TintOpacity="0.7"
+                      FallbackColor="#1a1a2e"/>
+
+        <!-- Card background -->
+        <AcrylicBrush x:Key="CardAcrylicBrush"
+                      BackgroundSource="Backdrop"
+                      TintColor="#2d2d44"
+                      TintOpacity="0.7"
+                      FallbackColor="#2d2d44"/>
+    </Page.Resources>
+
+    <Grid Background="{StaticResource LoginAcrylicBrush}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="32"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Title Bar -->
+        <Grid x:Name="AppTitleBar" 
+              Grid.Row="0" 
+              Background="Transparent"
+              HorizontalAlignment="Stretch">
+            <TextBlock Text="Fort.ind"
+                       VerticalAlignment="Center"
+                       Margin="12,0,0,0"
+                       FontSize="12"
+                       Opacity="0.8"/>
+        </Grid>
+
+        <!-- Main Content -->
+        <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid Background="{StaticResource CardAcrylicBrush}"
+                  CornerRadius="12"
+                  Padding="40"
+                  MinWidth="380"
+                  MaxWidth="420">
+                
+                <StackPanel Spacing="16">
+                    <!-- Logo/Title -->
+                    <StackPanel HorizontalAlignment="Center" Margin="0,0,0,16">
+                        <TextBlock Text="??" 
+                                   FontSize="48" 
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Fort.ind" 
+                                   FontSize="28" 
+                                   FontWeight="Bold"
+                                   HorizontalAlignment="Center"/>
+                        <TextBlock Text="Sign in to your account" 
+                                   FontSize="14"
+                                   Opacity="0.7"
+                                   HorizontalAlignment="Center"/>
+                    </StackPanel>
+
+                    <!-- Login Form -->
+                    <StackPanel x:Name="LoginForm" Spacing="12">
+                        <TextBox x:Name="UsernameBox"
+                                 PlaceholderText="Username"
+                                 FontSize="14"/>
+
+                        <PasswordBox x:Name="PasswordBox"
+                                     PlaceholderText="Password"
+                                     FontSize="14"
+                                     KeyDown="PasswordBox_KeyDown"/>
+
+                        <CheckBox x:Name="RememberMeCheck"
+                                  Content="Remember me"
+                                  IsChecked="True"/>
+
+                        <TextBlock x:Name="ErrorText"
+                                   Foreground="#FF6B6B"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Visibility="Collapsed"/>
+
+                        <Button x:Name="LoginButton"
+                                Content="Sign In"
+                                HorizontalAlignment="Stretch"
+                                Click="LoginButton_Click"
+                                Style="{StaticResource AccentButtonStyle}"/>
+
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Center"
+                                    Spacing="4">
+                            <TextBlock Text="Don't have an account?"
+                                       Opacity="0.7"
+                                       VerticalAlignment="Center"/>
+                            <HyperlinkButton x:Name="ShowRegisterLink"
+                                             Content="Create one"
+                                             Click="ShowRegisterLink_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Register Form (initially hidden) -->
+                    <StackPanel x:Name="RegisterForm" Spacing="12" Visibility="Collapsed">
+                        <TextBox x:Name="RegUsernameBox"
+                                 PlaceholderText="Username"
+                                 FontSize="14"/>
+
+                        <TextBox x:Name="RegDisplayNameBox"
+                                 PlaceholderText="Display Name (optional)"
+                                 FontSize="14"/>
+
+                        <TextBox x:Name="RegEmailBox"
+                                 PlaceholderText="Email (optional)"
+                                 FontSize="14"/>
+
+                        <PasswordBox x:Name="RegPasswordBox"
+                                     PlaceholderText="Password"
+                                     FontSize="14"/>
+
+                        <PasswordBox x:Name="RegConfirmPasswordBox"
+                                     PlaceholderText="Confirm Password"
+                                     FontSize="14"/>
+
+                        <TextBlock x:Name="RegErrorText"
+                                   Foreground="#FF6B6B"
+                                   FontSize="12"
+                                   TextWrapping="Wrap"
+                                   Visibility="Collapsed"/>
+
+                        <Button x:Name="RegisterButton"
+                                Content="Create Account"
+                                HorizontalAlignment="Stretch"
+                                Click="RegisterButton_Click"
+                                Style="{StaticResource AccentButtonStyle}"/>
+
+                        <StackPanel Orientation="Horizontal" 
+                                    HorizontalAlignment="Center"
+                                    Spacing="4">
+                            <TextBlock Text="Already have an account?"
+                                       Opacity="0.7"
+                                       VerticalAlignment="Center"/>
+                            <HyperlinkButton x:Name="ShowLoginLink"
+                                             Content="Sign in"
+                                             Click="ShowLoginLink_Click"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- Skip for now option -->
+                    <HyperlinkButton x:Name="SkipButton"
+                                     Content="Continue without account"
+                                     HorizontalAlignment="Center"
+                                     Opacity="0.6"
+                                     Click="SkipButton_Click"/>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <!-- Loading overlay -->
+        <Grid x:Name="LoadingOverlay" 
+              Grid.RowSpan="2" 
+              Background="#80000000" 
+              Visibility="Collapsed">
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressRing IsActive="True" Width="40" Height="40"/>
+                <TextBlock Text="Please wait..." Margin="0,12,0,0" Opacity="0.8"/>
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Page>

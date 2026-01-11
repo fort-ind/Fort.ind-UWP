@@ -14,6 +14,26 @@ Public NotInheritable Class MainPage
         Me.InitializeComponent()
         SetupTitleBar()
         UpdateLiveTile()
+        UpdateProfileNavItem()
+
+        ' Listen for auth state changes
+        AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
+    End Sub
+
+    Private Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
+        UpdateProfileNavItem()
+    End Sub
+
+    Private Sub UpdateProfileNavItem()
+        ' Update profile nav item based on login state
+        If ProfileService.CurrentUser IsNot Nothing Then
+            ProfileNavItem.Content = ProfileService.CurrentUser.DisplayName
+            If String.IsNullOrWhiteSpace(ProfileService.CurrentUser.DisplayName) Then
+                ProfileNavItem.Content = ProfileService.CurrentUser.Username
+            End If
+        Else
+            ProfileNavItem.Content = "Your Profile"
+        End If
     End Sub
 
     Private Sub SetupTitleBar()
@@ -72,14 +92,15 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Sub ShowPanel(panelName As String)
-        ' Hide all panels
+        ' Hide all panels and frame
         LatestNewsPanel.Visibility = Visibility.Collapsed
         GamesPanel.Visibility = Visibility.Collapsed
         BetasPanel.Visibility = Visibility.Collapsed
-        ContactsPanel.Visibility = Visibility.Collapsed
         SocialPanel.Visibility = Visibility.Collapsed
         AboutPanel.Visibility = Visibility.Collapsed
         SettingsPanel.Visibility = Visibility.Collapsed
+        ContentFrame.Visibility = Visibility.Collapsed
+        ContentScrollViewer.Visibility = Visibility.Visible
 
         ' Show the selected panel
         Select Case panelName
@@ -89,23 +110,38 @@ Public NotInheritable Class MainPage
                 GamesPanel.Visibility = Visibility.Visible
             Case "Betas"
                 BetasPanel.Visibility = Visibility.Visible
-            Case "Contacts"
-                ContactsPanel.Visibility = Visibility.Visible
+            Case "Profile"
+                ' Navigate to ProfilePage in the frame
+                ContentScrollViewer.Visibility = Visibility.Collapsed
+                ContentFrame.Visibility = Visibility.Visible
+                ContentFrame.Navigate(GetType(ProfilePage))
             Case "Social"
                 SocialPanel.Visibility = Visibility.Visible
             Case "About"
                 AboutPanel.Visibility = Visibility.Visible
             Case "Settings"
                 SettingsPanel.Visibility = Visibility.Visible
+                UpdateStorageInfo()
             Case Else
                 LatestNewsPanel.Visibility = Visibility.Visible
         End Select
     End Sub
 
+    Private Async Sub UpdateStorageInfo()
+    Try
+        StoragePathText.Text = $"Location: {LocalStorageService.DataPath}"
+        Dim userCount = Await LocalStorageService.GetUserCountAsync()
+        UserCountText.Text = $"Registered users: {userCount}"
+    Catch ex As Exception
+        StoragePathText.Text = ""
+        UserCountText.Text = ""
+    End Try
+    End Sub
+
     Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
         Dim aboutDialog As New ContentDialog()
         aboutDialog.Title = "About"
-        aboutDialog.Content = "Fort.ind desktop for UWP, version 0.5 beta"
+        aboutDialog.Content = $"Fort.ind desktop for UWP{vbCrLf}Version 0.5 beta{vbCrLf}{vbCrLf}Storage: Local JSON Files"
         aboutDialog.PrimaryButtonText = "OK"
         aboutDialog.DefaultButton = ContentDialogButton.Primary
         aboutDialog.XamlRoot = Me.XamlRoot

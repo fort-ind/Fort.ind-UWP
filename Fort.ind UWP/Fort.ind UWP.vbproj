@@ -141,8 +141,17 @@
     <Compile Include="MainPage.xaml.vb">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\UserProfile.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="Pages\LoginPage.xaml.vb">
+      <DependentUpon>LoginPage.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Pages\ProfilePage.xaml.vb">
+      <DependentUpon>ProfilePage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Services\LiveTileService.vb" />
+    <Compile Include="Services\LocalStorageService.vb" />
+    <Compile Include="Services\ProfileService.vb" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -214,6 +223,14 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Page Include="MainPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Pages\LoginPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Pages\ProfilePage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

@@ -10,7 +10,7 @@ NotInheritable Class App
     ''' search results, and so forth.
     ''' </summary>
     ''' <param name="e">Details about the launch request and process.</param>
-    Protected Overrides Sub OnLaunched(e As Windows.ApplicationModel.Activation.LaunchActivatedEventArgs)
+    Protected Overrides Async Sub OnLaunched(e As Windows.ApplicationModel.Activation.LaunchActivatedEventArgs)
         Dim rootFrame As Frame = TryCast(Window.Current.Content, Frame)
 
         ' Do not repeat app initialization when the Window already has content,
@@ -31,9 +31,13 @@ NotInheritable Class App
 
         If e.PrelaunchActivated = False Then
             If rootFrame.Content Is Nothing Then
-                ' When the navigation stack isn't restored navigate to the first page,
-                ' configuring the new page by passing required information as a navigation
-                ' parameter
+                ' Initialize storage service (loads settings and sets up database if needed)
+                Await LocalStorageService.InitializeAsync()
+
+                ' Try to restore user session
+                Dim hasSession = Await ProfileService.TryRestoreSessionAsync()
+
+                ' Navigate to MainPage (it will handle the profile state)
                 rootFrame.Navigate(GetType(MainPage), e.Arguments)
             End If
 

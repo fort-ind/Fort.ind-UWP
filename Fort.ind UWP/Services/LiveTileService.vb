@@ -54,7 +54,7 @@ Public Class LiveTileService
     ''' </summary>
     Private Shared Function CreateTileXml(title As String, message As String, branding As String, Optional tag As String = Nothing, Optional animation As TileAnimation = TileAnimation.FadeIn) As XmlDocument
         Dim animationAttr = GetAnimationAttribute(animation)
-        
+
         ' Adaptive tile template supporting all sizes with animations
         Dim tileXmlString = $"
 <tile>
@@ -69,7 +69,7 @@ Public Class LiveTileService
         <binding template=""TileMedium"">
             <group>
                 <subgroup>
-                    <text hint-style=""caption"" hint-wrap=""true"" {animationAttr}>{EscapeXml(title)}</text>
+                    <text {animationAttr} hint-wrap=""true"">{EscapeXml(title)}</text>
                     <text hint-style=""captionSubtle"" hint-wrap=""true"" hint-maxLines=""3"">{EscapeXml(message)}</text>
                 </subgroup>
             </group>
@@ -79,7 +79,7 @@ Public Class LiveTileService
         <binding template=""TileWide"">
             <group>
                 <subgroup>
-                    <text hint-style=""subtitle"" {animationAttr}>{EscapeXml(title)}</text>
+                    <text {animationAttr}>{EscapeXml(title)}</text>
                     <text hint-style=""body"" hint-wrap=""true"" hint-maxLines=""2"">{EscapeXml(message)}</text>
                 </subgroup>
             </group>
@@ -89,7 +89,7 @@ Public Class LiveTileService
         <binding template=""TileLarge"" hint-textStacking=""center"">
             <group>
                 <subgroup>
-                    <text hint-style=""title"" hint-align=""center"" {animationAttr}>{EscapeXml(title)}</text>
+                    <text {animationAttr} hint-align=""center"">{EscapeXml(title)}</text>
                 </subgroup>
             </group>
             <text hint-style=""body"" hint-wrap=""true"" hint-maxLines=""6"" hint-align=""center"">{EscapeXml(message)}</text>
