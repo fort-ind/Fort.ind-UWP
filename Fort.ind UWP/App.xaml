@@ -6,18 +6,18 @@
 
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Windows 10 Style Acrylic Background Brush -->
+            <!-- Windows 10 Style Acrylic Background Brush - reduced opacity for better transparency -->
             <AcrylicBrush x:Key="AppAcrylicBackgroundBrush"
                           BackgroundSource="HostBackdrop"
                           TintColor="{ThemeResource SystemChromeMediumLowColor}"
-                          TintOpacity="0.7"
+                          TintOpacity="0.5"
                           FallbackColor="{ThemeResource SystemChromeMediumLowColor}"/>
 
-            <!-- NavigationView Acrylic Pane Background -->
+            <!-- NavigationView Acrylic Pane Background - lighter for better see-through -->
             <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
                           BackgroundSource="HostBackdrop"
                           TintColor="{ThemeResource SystemChromeMediumColor}"
-                          TintOpacity="0.85"
+                          TintOpacity="0.65"
                           FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
 
             <!-- Reveal Highlight NavigationViewItem Style Override -->

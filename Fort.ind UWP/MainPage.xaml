@@ -9,25 +9,25 @@
     Background="Transparent">
 
     <Page.Resources>
-        <!-- Consistent Acrylic Brush for the entire app -->
+        <!-- Consistent Acrylic Brush for the entire app - adjusted for better transparency -->
         <AcrylicBrush x:Key="AppAcrylicBrush"
                       BackgroundSource="HostBackdrop"
                       TintColor="#1a1a2e"
-                      TintOpacity="0.85"
+                      TintOpacity="0.6"
                       FallbackColor="#1a1a2e"/>
 
-        <!-- NavigationView Pane Acrylic - matches the app background -->
+        <!-- NavigationView Pane Acrylic - lighter for better see-through effect -->
         <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
                       BackgroundSource="HostBackdrop"
                       TintColor="#1a1a2e"
-                      TintOpacity="0.9"
+                      TintOpacity="0.7"
                       FallbackColor="#1a1a2e"/>
 
-        <!-- News Card Background -->
+        <!-- News Card Background - more transparent backdrop -->
         <AcrylicBrush x:Key="CardAcrylicBrush"
                       BackgroundSource="Backdrop"
                       TintColor="#2d2d44"
-                      TintOpacity="0.8"
+                      TintOpacity="0.6"
                       FallbackColor="#2d2d44"/>
     </Page.Resources>
 
