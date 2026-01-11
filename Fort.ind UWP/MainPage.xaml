@@ -9,26 +9,29 @@
     Background="Transparent">
 
     <Page.Resources>
-        <!-- Consistent Acrylic Brush for the entire app - adjusted for better transparency -->
+        <!-- App Background - Windows 10 Settings style acrylic -->
         <AcrylicBrush x:Key="AppAcrylicBrush"
                       BackgroundSource="HostBackdrop"
-                      TintColor="#1a1a2e"
-                      TintOpacity="0.6"
-                      FallbackColor="#1a1a2e"/>
+                      TintColor="#2B2B40"
+                      TintOpacity="0.8"
+                      TintLuminosityOpacity="0.85"
+                      FallbackColor="#2B2B40"/>
 
-        <!-- NavigationView Pane Acrylic - lighter for better see-through effect -->
+        <!-- NavigationView Pane Acrylic - matches Windows 10 Settings sidebar -->
         <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
                       BackgroundSource="HostBackdrop"
-                      TintColor="#1a1a2e"
-                      TintOpacity="0.7"
-                      FallbackColor="#1a1a2e"/>
+                      TintColor="#1F1F2E"
+                      TintOpacity="0.9"
+                      TintLuminosityOpacity="0.8"
+                      FallbackColor="#1F1F2E"/>
 
-        <!-- News Card Background - more transparent backdrop -->
+        <!-- Card Background - more prominent acrylic effect -->
         <AcrylicBrush x:Key="CardAcrylicBrush"
-                      BackgroundSource="Backdrop"
-                      TintColor="#2d2d44"
-                      TintOpacity="0.6"
-                      FallbackColor="#2d2d44"/>
+                      BackgroundSource="HostBackdrop"
+                      TintColor="#33334D"
+                      TintOpacity="0.7"
+                      TintLuminosityOpacity="0.85"
+                      FallbackColor="#33334D"/>
     </Page.Resources>
 
     <Grid Background="{StaticResource AppAcrylicBrush}">

@@ -26,6 +26,18 @@
             <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="{ThemeResource SystemAccentColor}"/>
             <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="{ThemeResource SystemAccentColor}"/>
 
+            <!-- Enable Reveal Highlight on Buttons -->
+            <Style TargetType="Button">
+                <Setter Property="Background" Value="{ThemeResource ButtonRevealBackground}"/>
+                <Setter Property="BackgroundSizing" Value="InnerBorderEdge"/>
+                <Setter Property="BorderBrush" Value="{ThemeResource ButtonRevealBorderBrush}"/>
+            </Style>
+
+            <!-- Enable Reveal on AppBarButton -->
+            <Style TargetType="AppBarButton">
+                <Setter Property="Background" Value="{ThemeResource AppBarButtonRevealBackground}"/>
+            </Style>
+
         </ResourceDictionary>
     </Application.Resources>
 
