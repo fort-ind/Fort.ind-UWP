@@ -13,6 +13,7 @@ Public NotInheritable Class MainPage
     Public Sub New()
         Me.InitializeComponent()
         SetupTitleBar()
+        UpdateLiveTile()
     End Sub
 
     Private Sub SetupTitleBar()
@@ -37,6 +38,20 @@ Public NotInheritable Class MainPage
         titleBar.ButtonHoverForegroundColor = Colors.White
         titleBar.ButtonPressedForegroundColor = Colors.White
         titleBar.ButtonInactiveForegroundColor = Color.FromArgb(128, 255, 255, 255)
+    End Sub
+
+    Private Sub UpdateLiveTile()
+        ' Update Live Tile with latest news
+        Dim newsItems As New List(Of NewsItem) From {
+            New NewsItem("Whats new?", "2026.1 has been released for web go to fort1nd.com to see whats new", "welcome"),
+            New NewsItem("Get Started", "Hello! fort.uwp is now ready to use. :3", "features")
+        }
+
+        ' Update tile with cycling news
+        LiveTileService.UpdateTileWithMultipleNews(newsItems)
+
+        ' Show badge indicating new content
+        LiveTileService.UpdateBadgeGlyph("newMessage")
     End Sub
 
     Private Sub NavView_Loaded(sender As Object, e As RoutedEventArgs)
@@ -90,7 +105,7 @@ Public NotInheritable Class MainPage
     Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
         Dim aboutDialog As New ContentDialog()
         aboutDialog.Title = "About"
-        aboutDialog.Content = "Fort.ind desktop for UWP, version 0.4 beta"
+        aboutDialog.Content = "Fort.ind desktop for UWP, version 0.5 beta"
         aboutDialog.PrimaryButtonText = "OK"
         aboutDialog.DefaultButton = ContentDialogButton.Primary
         aboutDialog.XamlRoot = Me.XamlRoot
@@ -98,7 +113,13 @@ Public NotInheritable Class MainPage
         Await aboutDialog.ShowAsync()
     End Sub
 
-    Private Sub TextBlock_SelectionChanged(sender As Object, e As RoutedEventArgs)
-
+    Private Sub RefreshTileButton_Click(sender As Object, e As RoutedEventArgs)
+        UpdateLiveTile()
     End Sub
+
+    Private Sub ClearTileButton_Click(sender As Object, e As RoutedEventArgs)
+        LiveTileService.ClearTile()
+        LiveTileService.ClearBadge()
+    End Sub
+
 End Class
