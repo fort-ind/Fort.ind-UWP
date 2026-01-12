@@ -55,12 +55,15 @@
         <!-- Main Content -->
         <NavigationView x:Name="NavView"
                         Grid.Row="1"
-                        PaneDisplayMode="LeftCompact"
+                        PaneDisplayMode="Left"
                         CompactModeThresholdWidth="0"
-                        ExpandedModeThresholdWidth="0"
-                        OpenPaneLength="256"
+                        ExpandedModeThresholdWidth="9999"
+                        CompactPaneLength="48"
+                        OpenPaneLength="200"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="True"
+                        IsPaneToggleButtonVisible="True"
+                        IsPaneOpen="False"
                         ItemInvoked="NavView_ItemInvoked"
                         Loaded="NavView_Loaded"
                         Background="Transparent">

@@ -77,6 +77,8 @@ Public NotInheritable Class MainPage
     Private Sub NavView_Loaded(sender As Object, e As RoutedEventArgs)
         ' Select the first item (Latest News) by default
         NavView.SelectedItem = NavView.MenuItems(0)
+        ' Ensure pane starts closed
+        NavView.IsPaneOpen = False
     End Sub
 
     Private Sub NavView_ItemInvoked(sender As NavigationView, args As NavigationViewItemInvokedEventArgs)
@@ -89,6 +91,9 @@ Public NotInheritable Class MainPage
                 ShowPanel(tag)
             End If
         End If
+
+        ' Always close the pane after navigation
+        NavView.IsPaneOpen = False
     End Sub
 
     Private Sub ShowPanel(panelName As String)
