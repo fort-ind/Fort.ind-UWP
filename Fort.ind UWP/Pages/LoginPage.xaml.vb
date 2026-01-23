@@ -50,8 +50,12 @@ Public NotInheritable Class LoginPage
                     Await LocalStorageService.SaveProfileAsync(ProfileService.CurrentUser)
                 End If
 
-                ' Navigate to main page
-                Frame.Navigate(GetType(MainPage))
+                ' Navigate back instead of creating new MainPage instance
+                If Frame.CanGoBack Then
+                    Frame.GoBack()
+                Else
+                    Frame.Navigate(GetType(MainPage))
+                End If
             Else
                 ShowError(result.Message)
             End If
@@ -95,8 +99,12 @@ Public NotInheritable Class LoginPage
             Dim result = Await ProfileService.RegisterAsync(username, pwd, displayName, email)
 
             If result.Success Then
-                ' Navigate to main page
-                Frame.Navigate(GetType(MainPage))
+                ' Navigate back instead of creating new MainPage instance
+                If Frame.CanGoBack Then
+                    Frame.GoBack()
+                Else
+                    Frame.Navigate(GetType(MainPage))
+                End If
             Else
                 ShowRegError(result.Message)
             End If

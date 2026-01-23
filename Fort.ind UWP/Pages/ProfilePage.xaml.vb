@@ -7,6 +7,11 @@ Public NotInheritable Class ProfilePage
     Public Sub New()
         Me.InitializeComponent()
         AddHandler Loaded, AddressOf ProfilePage_Loaded
+        AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
+    End Sub
+
+    Private Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
+        RefreshUI()
     End Sub
 
     Private Sub ProfilePage_Loaded(sender As Object, e As RoutedEventArgs)
@@ -44,7 +49,7 @@ Public NotInheritable Class ProfilePage
         ' Update bio
         BioText.Text = If(String.IsNullOrWhiteSpace(user.Bio), "No bio yet. Click Edit Profile to add one!", user.Bio)
 
-        ' Update email
+        ' Update email (and pray it wont explode when you dont set one)
         EmailText.Text = If(String.IsNullOrWhiteSpace(user.Email), "No email set", user.Email)
 
         ' Show view mode by default
