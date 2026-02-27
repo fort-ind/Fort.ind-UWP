@@ -296,11 +296,32 @@
                                         Click="ClearTileButton_Click"/>
                             </StackPanel>
 
+                            <!-- Welcome Dialog Section -->
+                            <TextBlock Text="👋 Welcome Dialog"
+                                       FontSize="20"
+                                       FontWeight="SemiBold"
+                                       Margin="0,0,0,12"/>
+
+                            <Grid Background="{StaticResource CardAcrylicBrush}"
+                                  CornerRadius="8"
+                                  Padding="16"
+                                  Margin="0,0,0,16">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="The welcome dialog appears the first time you open the app."
+                                               FontSize="12"
+                                               Opacity="0.7"
+                                               TextWrapping="Wrap"/>
+                                    <Button x:Name="ResetWelcomeButton"
+                                            Content="🔄 Show Welcome Dialog Again"
+                                            Click="ResetWelcomeButton_Click"/>
+                                </StackPanel>
+                            </Grid>
+
                             <TextBlock Text="ℹ️ About"
                                        FontSize="20"
                                        FontWeight="SemiBold"
                                        Margin="0,0,0,12"/>
-                        
+
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

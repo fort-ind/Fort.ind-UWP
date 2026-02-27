@@ -3,6 +3,7 @@
 Imports Windows.UI
 Imports Windows.UI.ViewManagement
 Imports Windows.ApplicationModel.Core
+Imports Windows.Storage
 
 ''' <summary>
 ''' An empty page that can be used on its own or navigated to within a Frame.
@@ -80,11 +81,21 @@ Public NotInheritable Class MainPage
         LiveTileService.UpdateBadgeGlyph("newMessage")
     End Sub
 
-    Private Sub NavView_Loaded(sender As Object, e As RoutedEventArgs)
+    Private Async Sub NavView_Loaded(sender As Object, e As RoutedEventArgs)
         ' Select the first item (Latest News) by default
         NavView.SelectedItem = NavView.MenuItems(0)
         ' Ensure pane starts closed
         NavView.IsPaneOpen = False
+
+        ' Show welcome dialog on first launch
+        Dim localSettings = ApplicationData.Current.LocalSettings
+        Dim hideWelcome As Boolean = False
+        If localSettings.Values.ContainsKey("HideWelcomeDialog") Then
+            hideWelcome = CBool(localSettings.Values("HideWelcomeDialog"))
+        End If
+        If Not hideWelcome Then
+            Await ShowWelcomeDialogAsync()
+        End If
     End Sub
 
     Private Sub NavView_ItemInvoked(sender As NavigationView, args As NavigationViewItemInvokedEventArgs)
@@ -169,6 +180,69 @@ Public NotInheritable Class MainPage
     Private Sub ClearTileButton_Click(sender As Object, e As RoutedEventArgs)
         LiveTileService.ClearTile()
         LiveTileService.ClearBadge()
+    End Sub
+
+    Private Async Function ShowWelcomeDialogAsync() As Task
+        Dim dontShowCheckBox As New CheckBox()
+        dontShowCheckBox.Content = "Don't show this again"
+        dontShowCheckBox.Margin = New Thickness(0, 16, 0, 0)
+
+        Dim contentPanel As New StackPanel()
+        contentPanel.Spacing = 12
+
+        ' Icon row
+        Dim iconPanel As New StackPanel()
+        iconPanel.Orientation = Orientation.Horizontal
+        iconPanel.HorizontalAlignment = HorizontalAlignment.Center
+        iconPanel.Spacing = 24
+        iconPanel.Margin = New Thickness(0, 8, 0, 8)
+
+        Dim starIcon As New FontIcon()
+        starIcon.Glyph = ChrW(&HE734)
+        starIcon.FontSize = 32
+
+        Dim testTubeIcon As New FontIcon()
+        testTubeIcon.Glyph = ChrW(&HE9A1)
+        testTubeIcon.FontSize = 32
+
+        Dim webIcon As New FontIcon()
+        webIcon.Glyph = ChrW(&HE774)
+        webIcon.FontSize = 32
+
+        iconPanel.Children.Add(starIcon)
+        iconPanel.Children.Add(testTubeIcon)
+        iconPanel.Children.Add(webIcon)
+
+        contentPanel.Children.Add(iconPanel)
+
+        Dim descText As New TextBlock()
+        descText.Text = "Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do! "
+        descText.TextWrapping = TextWrapping.Wrap
+        descText.FontSize = 14
+        descText.Opacity = 0.9
+
+        contentPanel.Children.Add(descText)
+        contentPanel.Children.Add(dontShowCheckBox)
+
+        Dim welcomeDialog As New ContentDialog()
+        welcomeDialog.Title = "Hi :)"
+        welcomeDialog.Content = contentPanel
+        welcomeDialog.PrimaryButtonText = "got it"
+        welcomeDialog.DefaultButton = ContentDialogButton.Primary
+        welcomeDialog.XamlRoot = Me.XamlRoot
+
+        Await welcomeDialog.ShowAsync()
+
+        If dontShowCheckBox.IsChecked.GetValueOrDefault(False) Then
+            Dim localSettings = ApplicationData.Current.LocalSettings
+            localSettings.Values("HideWelcomeDialog") = True
+        End If
+    End Function
+
+    Private Async Sub ResetWelcomeButton_Click(sender As Object, e As RoutedEventArgs)
+        Dim localSettings = ApplicationData.Current.LocalSettings
+        localSettings.Values("HideWelcomeDialog") = False
+        Await ShowWelcomeDialogAsync()
     End Sub
 
 End Class
