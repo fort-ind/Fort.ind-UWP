@@ -124,7 +124,9 @@ Public Class ProfileService
             CurrentUser = profile
             RaiseEvent AuthStateChanged(Nothing, True)
             Return True
-        Catch
+        Catch ex As Exception
+            ' Log unexpected errors during session restore instead of silently swallowing them
+            System.Diagnostics.Debug.WriteLine($"TryRestoreSessionAsync failed: {ex}")
             Return False
         End Try
     End Function
