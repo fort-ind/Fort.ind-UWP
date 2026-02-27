@@ -7,11 +7,17 @@ Public NotInheritable Class ProfilePage
     Public Sub New()
         Me.InitializeComponent()
         AddHandler Loaded, AddressOf ProfilePage_Loaded
+        AddHandler Unloaded, AddressOf ProfilePage_Unloaded
         AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
     End Sub
 
-    Private Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
-        RefreshUI()
+    Private Sub ProfilePage_Unloaded(sender As Object, e As RoutedEventArgs)
+        RemoveHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
+    End Sub
+
+    Private Async Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
+        Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
+            Sub() RefreshUI())
     End Sub
 
     Private Sub ProfilePage_Loaded(sender As Object, e As RoutedEventArgs)

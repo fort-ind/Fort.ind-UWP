@@ -198,11 +198,12 @@ Public Class ProfileService
     ''' Note: For production, use a proper password hashing library
     ''' </summary>
     Private Shared Function HashPassword(password As String) As String
-        Dim sha256 As SHA256 = SHA256.Create()
-        ' Add a simple salt based on password length (basic security for local storage)
-        Dim saltedPassword = $"fort.ind_{password}_uwp"
-        Dim bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword))
-        Return Convert.ToBase64String(bytes)
+        Using sha256 As SHA256 = SHA256.Create()
+            ' Add a simple salt based on password length (basic security for local storage)
+            Dim saltedPassword = $"fort.ind_{password}_uwp"
+            Dim bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword))
+            Return Convert.ToBase64String(bytes)
+        End Using
     End Function
 
     ''' <summary>

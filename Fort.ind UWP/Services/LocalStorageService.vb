@@ -203,11 +203,17 @@ Public Class LocalStorageService
     End Property
 
     ''' <summary>
-    ''' Gets the number of registered users
+    ''' Gets the number of registered users (counts profile files without deserializing)
     ''' </summary>
     Public Shared Async Function GetUserCountAsync() As Task(Of Integer)
-        Dim profiles = Await GetAllProfilesAsync()
-        Return profiles.Count
+        Try
+            Dim profilesFolder = Await LocalFolder.CreateFolderAsync(PROFILES_FOLDER, CreationCollisionOption.OpenIfExists)
+            Dim files = Await profilesFolder.GetFilesAsync()
+            Return files.Where(Function(f) f.Name.EndsWith(".json") AndAlso f.Name <> CURRENT_USER_FILE).Count()
+        Catch ex As Exception
+            Debug.WriteLine($"Error getting user count: {ex.Message}")
+            Return 0
+        End Try
     End Function
 
 #End Region

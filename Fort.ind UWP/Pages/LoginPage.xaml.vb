@@ -1,5 +1,3 @@
-Imports Windows.UI.Core
-
 ''' <summary>
 ''' Login and registration page
 ''' </summary>

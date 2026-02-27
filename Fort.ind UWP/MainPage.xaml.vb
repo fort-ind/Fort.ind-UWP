@@ -18,10 +18,16 @@ Public NotInheritable Class MainPage
 
         ' Listen for auth state changes
         AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
+        AddHandler Unloaded, AddressOf MainPage_Unloaded
     End Sub
 
-    Private Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
-        UpdateProfileNavItem()
+    Private Sub MainPage_Unloaded(sender As Object, e As RoutedEventArgs)
+        RemoveHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
+    End Sub
+
+    Private Async Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
+        Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
+            Sub() UpdateProfileNavItem())
     End Sub
 
     Private Sub UpdateProfileNavItem()
@@ -116,10 +122,12 @@ Public NotInheritable Class MainPage
             Case "Betas"
                 BetasPanel.Visibility = Visibility.Visible
             Case "Profile"
-                ' Navigate to ProfilePage in the frame
+                ' Navigate to ProfilePage in the frame (skip if already there)
                 ContentScrollViewer.Visibility = Visibility.Collapsed
                 ContentFrame.Visibility = Visibility.Visible
-                ContentFrame.Navigate(GetType(ProfilePage))
+                If Not TypeOf ContentFrame.Content Is ProfilePage Then
+                    ContentFrame.Navigate(GetType(ProfilePage))
+                End If
             Case "Social"
                 SocialPanel.Visibility = Visibility.Visible
             Case "About"
@@ -133,14 +141,14 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Sub UpdateStorageInfo()
-    Try
-        StoragePathText.Text = $"Location: {LocalStorageService.DataPath}"
-        Dim userCount = Await LocalStorageService.GetUserCountAsync()
-        UserCountText.Text = $"Registered users: {userCount}"
-    Catch ex As Exception
-        StoragePathText.Text = ""
-        UserCountText.Text = ""
-    End Try
+        Try
+            StoragePathText.Text = $"Location: {LocalStorageService.DataPath}"
+            Dim userCount = Await LocalStorageService.GetUserCountAsync()
+            UserCountText.Text = $"Registered users: {userCount}"
+        Catch ex As Exception
+            StoragePathText.Text = ""
+            UserCountText.Text = ""
+        End Try
     End Sub
 
     Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
