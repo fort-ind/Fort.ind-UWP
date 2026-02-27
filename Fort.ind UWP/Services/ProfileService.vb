@@ -194,24 +194,81 @@ Public Class ProfileService
 #Region "Password Hashing"
 
     ''' <summary>
-    ''' Creates a simple hash of the password
-    ''' Note: For production, use a proper password hashing library
+    ''' Creates a secure hash of the password using PBKDF2 with a per-password random salt.
+    ''' The resulting string has the format: iterations:saltBase64:hashBase64
     ''' </summary>
     Private Shared Function HashPassword(password As String) As String
-        Using sha256 As SHA256 = SHA256.Create()
-            ' Add a simple salt based on password length (basic security for local storage)
-            Dim saltedPassword = $"fort.ind_{password}_uwp"
-            Dim bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(saltedPassword))
-            Return Convert.ToBase64String(bytes)
+        ' PBKDF2 configuration
+        Const iterations As Integer = 100000
+        Const saltSize As Integer = 16   ' 128-bit salt
+        Const keySize As Integer = 32    ' 256-bit derived key
+
+        Dim salt(saltSize - 1) As Byte
+        Using rng As RandomNumberGenerator = RandomNumberGenerator.Create()
+            rng.GetBytes(salt)
         End Using
+
+        Dim hashBytes As Byte()
+        Using pbkdf2 As New Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256)
+            hashBytes = pbkdf2.GetBytes(keySize)
+        End Using
+
+        Dim saltBase64 = Convert.ToBase64String(salt)
+        Dim hashBase64 = Convert.ToBase64String(hashBytes)
+
+        Return $"{iterations}:{saltBase64}:{hashBase64}"
     End Function
 
     ''' <summary>
-    ''' Verifies a password against a stored hash
+    ''' Verifies a password against a stored hash created by <see cref="HashPassword"/>.
     ''' </summary>
     Private Shared Function VerifyPassword(password As String, storedHash As String) As Boolean
-        Dim hash = HashPassword(password)
-        Return hash = storedHash
+        If String.IsNullOrWhiteSpace(storedHash) Then
+            Return False
+        End If
+
+        Dim parts = storedHash.Split(":"c)
+        If parts.Length <> 3 Then
+            ' Unknown or legacy format; cannot verify securely
+            Return False
+        End If
+
+        Dim iterations As Integer
+        If Not Integer.TryParse(parts(0), iterations) Then
+            Return False
+        End If
+
+        Dim salt As Byte()
+        Dim storedHashBytes As Byte()
+        Try
+            salt = Convert.FromBase64String(parts(1))
+            storedHashBytes = Convert.FromBase64String(parts(2))
+        Catch ex As FormatException
+            Return False
+        End Try
+
+        Dim computedHash As Byte()
+        Using pbkdf2 As New Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256)
+            computedHash = pbkdf2.GetBytes(storedHashBytes.Length)
+        End Using
+
+        Return FixedTimeEquals(storedHashBytes, computedHash)
+    End Function
+
+    ''' <summary>
+    ''' Compares two byte arrays in constant time to avoid timing attacks.
+    ''' </summary>
+    Private Shared Function FixedTimeEquals(a As Byte(), b As Byte()) As Boolean
+        If a Is Nothing OrElse b Is Nothing OrElse a.Length <> b.Length Then
+            Return False
+        End If
+
+        Dim diff As Integer = 0
+        For i As Integer = 0 To a.Length - 1
+            diff = diff Or (a(i) Xor b(i))
+        Next
+
+        Return diff = 0
     End Function
 
 #End Region
