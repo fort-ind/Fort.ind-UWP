@@ -112,6 +112,8 @@ Public Class ProfileService
 
             Dim profile = Await LocalStorageService.LoadProfileAsync(userId)
             If profile Is Nothing Then
+                ' Profile file is gone — clear the orphaned session
+                Await LocalStorageService.ClearCurrentUserAsync()
                 Return False
             End If
 

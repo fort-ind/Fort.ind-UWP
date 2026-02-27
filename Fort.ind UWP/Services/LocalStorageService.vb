@@ -31,21 +31,22 @@ Public Class LocalStorageService
     ''' <summary>
     ''' Initializes storage service
     ''' </summary>
-    Public Shared Async Function InitializeAsync() As Task
-        Try
-            ' Future: Load storage mode from settings
-            CurrentStorageMode = StorageMode.JsonFile
-        Catch ex As Exception
-            Debug.WriteLine($"Error initializing storage: {ex.Message}")
-        End Try
+    Public Shared Function InitializeAsync() As Task
+        ' Future: Load storage mode from settings
+        CurrentStorageMode = StorageMode.JsonFile
+        Return Task.CompletedTask
     End Function
 
 #Region "Profile Operations"
 
     ''' <summary>
-    ''' Saves a user profile to local storage
+    ''' Saves a user profile to local storage as a JSON file :p (temporarily) until we implement a more secure storage solution like SQLite or server-side storage with encryption.
     ''' </summary>
     Public Shared Async Function SaveProfileAsync(profile As UserProfile) As Task(Of Boolean)
+        If profile Is Nothing OrElse String.IsNullOrWhiteSpace(profile.UserId) Then
+            Return False
+        End If
+
         Try
             ' Ensure profiles folder exists
             Dim profilesFolder = Await LocalFolder.CreateFolderAsync(PROFILES_FOLDER, CreationCollisionOption.OpenIfExists)
@@ -69,6 +70,8 @@ Public Class LocalStorageService
     ''' Loads a user profile by user ID
     ''' </summary>
     Public Shared Async Function LoadProfileAsync(userId As String) As Task(Of UserProfile)
+        If String.IsNullOrWhiteSpace(userId) Then Return Nothing
+
         Try
             Dim profilesFolder = Await LocalFolder.GetFolderAsync(PROFILES_FOLDER)
             Dim fileName = $"{userId}.json"
@@ -106,15 +109,15 @@ Public Class LocalStorageService
             Dim files = Await profilesFolder.GetFilesAsync()
 
             For Each file In files
-                If file.Name.EndsWith(".json") AndAlso file.Name <> CURRENT_USER_FILE Then
+                If file.Name.EndsWith(".json") Then
                     Try
                         Dim json = Await FileIO.ReadTextAsync(file)
                         Dim profile = DeserializeFromJson(Of UserProfile)(json)
                         If profile IsNot Nothing Then
                             profiles.Add(profile)
                         End If
-                    Catch
-                        ' Skip invalid files
+                    Catch ex As Exception
+                        Debug.WriteLine($"Skipping corrupt profile '{file.Name}': {ex.Message}")
                     End Try
                 End If
             Next
@@ -129,11 +132,20 @@ Public Class LocalStorageService
     ''' Deletes a user profile
     ''' </summary>
     Public Shared Async Function DeleteProfileAsync(userId As String) As Task(Of Boolean)
+        If String.IsNullOrWhiteSpace(userId) Then Return False
+
         Try
             Dim profilesFolder = Await LocalFolder.GetFolderAsync(PROFILES_FOLDER)
             Dim fileName = $"{userId}.json"
             Dim file = Await profilesFolder.GetFileAsync(fileName)
             Await file.DeleteAsync()
+
+            ' Clear the session file if the deleted user was logged in
+            Dim currentId = Await GetCurrentUserIdAsync()
+            If currentId = userId Then
+                Await ClearCurrentUserAsync()
+            End If
+
             Return True
         Catch ex As Exception
             Debug.WriteLine($"Error deleting profile: {ex.Message}")
@@ -157,6 +169,8 @@ Public Class LocalStorageService
     ''' Saves the current logged-in user ID
     ''' </summary>
     Public Shared Async Function SaveCurrentUserIdAsync(userId As String) As Task
+        If String.IsNullOrWhiteSpace(userId) Then Return
+
         Try
             Dim file = Await LocalFolder.CreateFileAsync(CURRENT_USER_FILE, CreationCollisionOption.ReplaceExisting)
             Await FileIO.WriteTextAsync(file, userId)
@@ -171,7 +185,9 @@ Public Class LocalStorageService
     Public Shared Async Function GetCurrentUserIdAsync() As Task(Of String)
         Try
             Dim file = Await LocalFolder.GetFileAsync(CURRENT_USER_FILE)
-            Return Await FileIO.ReadTextAsync(file)
+            Dim id = (Await FileIO.ReadTextAsync(file))?.Trim()
+            If String.IsNullOrWhiteSpace(id) Then Return Nothing
+            Return id
         Catch
             Return Nothing
         End Try
@@ -203,13 +219,13 @@ Public Class LocalStorageService
     End Property
 
     ''' <summary>
-    ''' Gets the number of registered users (counts profile files without deserializing)
+    ''' Gets the number of registered users (counts profile files without deserializing) for security improvments 
     ''' </summary>
     Public Shared Async Function GetUserCountAsync() As Task(Of Integer)
         Try
             Dim profilesFolder = Await LocalFolder.CreateFolderAsync(PROFILES_FOLDER, CreationCollisionOption.OpenIfExists)
             Dim files = Await profilesFolder.GetFilesAsync()
-            Return files.Where(Function(f) f.Name.EndsWith(".json") AndAlso f.Name <> CURRENT_USER_FILE).Count()
+            Return files.Where(Function(f) f.Name.EndsWith(".json")).Count()
         Catch ex As Exception
             Debug.WriteLine($"Error getting user count: {ex.Message}")
             Return 0
