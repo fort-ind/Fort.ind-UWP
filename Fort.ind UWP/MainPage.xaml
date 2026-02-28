@@ -59,7 +59,7 @@
                         CompactModeThresholdWidth="640"
                         ExpandedModeThresholdWidth="1008"
                         CompactPaneLength="48"
-                        OpenPaneLength="200"
+                        OpenPaneLength="320"
                         IsBackButtonVisible="Collapsed"
                         IsSettingsVisible="True"
                         IsPaneToggleButtonVisible="True"
@@ -67,6 +67,16 @@
                         ItemInvoked="NavView_ItemInvoked"
                         Loaded="NavView_Loaded"
                         Background="Transparent">
+
+            <NavigationView.AutoSuggestBox>
+                <AutoSuggestBox x:Name="NavSearchBox"
+                                PlaceholderText="Search..."
+                                QueryIcon="Find"
+                                MaxSuggestionListHeight="400"
+                                TextChanged="NavSearchBox_TextChanged"
+                                QuerySubmitted="NavSearchBox_QuerySubmitted"
+                                SuggestionChosen="NavSearchBox_SuggestionChosen"/>
+            </NavigationView.AutoSuggestBox>
 
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Home" Tag="LatestNews">

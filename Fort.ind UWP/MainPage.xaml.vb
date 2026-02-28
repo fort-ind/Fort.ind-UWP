@@ -11,15 +11,43 @@ Imports Windows.Storage
 Public NotInheritable Class MainPage
     Inherits Page
 
+    ' All searchable items across menus, settings, profiles, and fort1nd.com
+    Private ReadOnly _searchItems As New List(Of SearchItem) From {
+        New SearchItem("Home", "Menu", "LatestNews"),
+        New SearchItem("Latest News", "Menu", "LatestNews"),
+        New SearchItem("Games", "Menu", "Games"),
+        New SearchItem("Beta Programs", "Menu", "Betas"),
+        New SearchItem("Your Profile", "Menu", "Profile"),
+        New SearchItem("Social", "Menu", "Social"),
+        New SearchItem("About", "Menu", "About"),
+        New SearchItem("Settings", "Menu", "Settings"),
+        New SearchItem("Data Storage", "Settings", "Settings"),
+        New SearchItem("Local JSON Storage", "Settings", "Settings"),
+        New SearchItem("Live Tile", "Settings", "Settings"),
+        New SearchItem("Refresh Live Tile", "Settings", "Settings"),
+        New SearchItem("Clear Live Tile", "Settings", "Settings"),
+        New SearchItem("Welcome Dialog", "Settings", "Settings"),
+        New SearchItem("Show Welcome Dialog Again", "Settings", "Settings"),
+        New SearchItem("Account", "Profile", "Profile"),
+        New SearchItem("Login", "Profile", "Profile"),
+        New SearchItem("Register", "Profile", "Profile")
+    }
+
     Public Sub New()
         Me.InitializeComponent()
         SetupTitleBar()
         UpdateLiveTile()
         UpdateProfileNavItem()
+        LoadSitemapItems()
 
         ' Listen for auth state changes
         AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
         AddHandler Unloaded, AddressOf MainPage_Unloaded
+    End Sub
+
+    Private Async Sub LoadSitemapItems()
+        Dim sitemapItems = Await SitemapService.LoadSearchItemsAsync()
+        _searchItems.AddRange(sitemapItems)
     End Sub
 
     Private Sub MainPage_Unloaded(sender As Object, e As RoutedEventArgs)
@@ -244,5 +272,69 @@ Public NotInheritable Class MainPage
         localSettings.Values("HideWelcomeDialog") = False
         Await ShowWelcomeDialogAsync()
     End Sub
+
+    ' ── Search bar handlers ──
+
+    Private Sub NavSearchBox_TextChanged(sender As AutoSuggestBox, args As AutoSuggestBoxTextChangedEventArgs)
+        If args.Reason = AutoSuggestionBoxTextChangeReason.UserInput Then
+            Dim query = sender.Text.Trim()
+            If String.IsNullOrEmpty(query) Then
+                sender.ItemsSource = Nothing
+                Return
+            End If
+
+            ' Add profile-specific item if logged in
+            Dim dynamicItems As New List(Of SearchItem)(_searchItems)
+            If ProfileService.CurrentUser IsNot Nothing Then
+                Dim name = If(String.IsNullOrWhiteSpace(ProfileService.CurrentUser.DisplayName),
+                              ProfileService.CurrentUser.Username,
+                              ProfileService.CurrentUser.DisplayName)
+                dynamicItems.Add(New SearchItem($"Profile: {name}", "Profile", "Profile"))
+            End If
+
+            Dim filtered = dynamicItems.Where(
+                Function(item) item.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                               item.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
+            ).ToList()
+
+            sender.ItemsSource = filtered
+        End If
+    End Sub
+
+    Private Async Sub NavSearchBox_QuerySubmitted(sender As AutoSuggestBox, args As AutoSuggestBoxQuerySubmittedEventArgs)
+        If args.ChosenSuggestion IsNot Nothing Then
+            Dim item = TryCast(args.ChosenSuggestion, SearchItem)
+            If item IsNot Nothing Then
+                Await NavigateToSearchItem(item)
+            End If
+        Else
+            ' User pressed Enter without picking a suggestion – navigate to first match
+            Dim query = args.QueryText.Trim()
+            If Not String.IsNullOrEmpty(query) Then
+                Dim match = _searchItems.FirstOrDefault(
+                    Function(i) i.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                                i.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                If match IsNot Nothing Then
+                    Await NavigateToSearchItem(match)
+                End If
+            End If
+        End If
+    End Sub
+
+    Private Async Sub NavSearchBox_SuggestionChosen(sender As AutoSuggestBox, args As AutoSuggestBoxSuggestionChosenEventArgs)
+        Dim item = TryCast(args.SelectedItem, SearchItem)
+        If item IsNot Nothing Then
+            sender.Text = item.Title
+        End If
+    End Sub
+
+    Private Async Function NavigateToSearchItem(item As SearchItem) As Task
+        If Not String.IsNullOrEmpty(item.Url) Then
+            ' External link – open in default browser
+            Await Windows.System.Launcher.LaunchUriAsync(New Uri(item.Url))
+        ElseIf Not String.IsNullOrEmpty(item.NavigationTag) Then
+            ShowPanel(item.NavigationTag)
+        End If
+    End Function
 
 End Class
