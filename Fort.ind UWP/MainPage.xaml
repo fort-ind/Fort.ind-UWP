@@ -54,19 +54,24 @@
 
         <!-- Main Content -->
         <NavigationView x:Name="NavView"
-                        Grid.Row="1"
-                        PaneDisplayMode="LeftCompact"
-                        CompactModeThresholdWidth="640"
-                        ExpandedModeThresholdWidth="1008"
-                        CompactPaneLength="48"
-                        OpenPaneLength="320"
-                        IsBackButtonVisible="Collapsed"
-                        IsSettingsVisible="True"
-                        IsPaneToggleButtonVisible="True"
-                        IsPaneOpen="False"
-                        ItemInvoked="NavView_ItemInvoked"
-                        Loaded="NavView_Loaded"
-                        Background="Transparent">
+                         Grid.Row="1"
+                         PaneDisplayMode="LeftCompact"
+                         CompactModeThresholdWidth="640"
+                         ExpandedModeThresholdWidth="1008"
+                         CompactPaneLength="48"
+                         OpenPaneLength="320"
+                         IsBackButtonVisible="Collapsed"
+                         IsSettingsVisible="True"
+                         IsPaneToggleButtonVisible="True"
+                         IsPaneOpen="False"
+                         ItemInvoked="NavView_ItemInvoked"
+                         Loaded="NavView_Loaded"
+                         Background="Transparent">
+
+            <NavigationView.Resources>
+                <x:Double x:Key="NavigationViewCompactPaneLength">48</x:Double>
+                <Thickness x:Key="NavigationViewItemIconBoxMargin">14,12,14,12</Thickness>
+            </NavigationView.Resources>
 
             <NavigationView.AutoSuggestBox>
                 <AutoSuggestBox x:Name="NavSearchBox"
@@ -75,7 +80,24 @@
                                 MaxSuggestionListHeight="400"
                                 TextChanged="NavSearchBox_TextChanged"
                                 QuerySubmitted="NavSearchBox_QuerySubmitted"
-                                SuggestionChosen="NavSearchBox_SuggestionChosen"/>
+                                SuggestionChosen="NavSearchBox_SuggestionChosen">
+                    <AutoSuggestBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" Spacing="10" Padding="0,4">
+                                <FontIcon Glyph="{Binding Icon}"
+                                          FontSize="16"
+                                          VerticalAlignment="Center"
+                                          Opacity="0.8"/>
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="{Binding Title}"/>
+                                    <TextBlock Text="{Binding Category}"
+                                               Style="{ThemeResource CaptionTextBlockStyle}"
+                                               Opacity="0.6"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </DataTemplate>
+                    </AutoSuggestBox.ItemTemplate>
+                </AutoSuggestBox>
             </NavigationView.AutoSuggestBox>
 
             <NavigationView.MenuItems>

@@ -63,7 +63,7 @@ Public Class SitemapService
     End Function
 
     Private Shared Function GetTitle(path As String) As String
-        ' Use the last segment of the path as the display name
+        ' Use the last segment of the path as the display name when showing results! example: "games/html/rynis-game" -> "rynis game"
         Dim segments = path.Split("/"c)
         Dim slug = segments.Last()
 
