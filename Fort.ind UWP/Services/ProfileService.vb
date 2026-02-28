@@ -27,8 +27,8 @@ Public Class ProfileService
             Return New RegistrationResult(False, "Username must be at least 3 characters")
         End If
 
-        If String.IsNullOrWhiteSpace(password) OrElse password.Length < 4 Then
-            Return New RegistrationResult(False, "Password must be at least 4 characters")
+        If String.IsNullOrWhiteSpace(password) OrElse password.Length < 8 Then
+            Return New RegistrationResult(False, "Password must be at least 8 characters")
         End If
 
         If String.IsNullOrWhiteSpace(displayName) Then
@@ -70,12 +70,12 @@ Public Class ProfileService
         ' Find user by username
         Dim profile = Await LocalStorageService.LoadProfileByUsernameAsync(username)
         If profile Is Nothing Then
-            Return New LoginResult(False, "Username not found")
+            Return New LoginResult(False, "Invalid username or password")
         End If
 
         ' Verify password
         If Not VerifyPassword(password, profile.PasswordHash) Then
-            Return New LoginResult(False, "Incorrect password")
+            Return New LoginResult(False, "Invalid username or password")
         End If
 
         ' Update last login
@@ -141,11 +141,21 @@ Public Class ProfileService
             Return False
         End If
 
+        Dim oldDisplayName = CurrentUser.DisplayName
+        Dim oldEmail = CurrentUser.Email
+        Dim oldBio = CurrentUser.Bio
+
         CurrentUser.DisplayName = displayName
         CurrentUser.Email = email
         CurrentUser.Bio = bio
 
-        Return Await LocalStorageService.SaveProfileAsync(CurrentUser)
+        Dim saved = Await LocalStorageService.SaveProfileAsync(CurrentUser)
+        If Not saved Then
+            CurrentUser.DisplayName = oldDisplayName
+            CurrentUser.Email = oldEmail
+            CurrentUser.Bio = oldBio
+        End If
+        Return saved
     End Function
 
     ''' <summary>
@@ -156,8 +166,13 @@ Public Class ProfileService
             Return False
         End If
 
+        Dim oldPreferences = CurrentUser.Preferences
         CurrentUser.Preferences = preferences
-        Return Await LocalStorageService.SaveProfileAsync(CurrentUser)
+        Dim saved = Await LocalStorageService.SaveProfileAsync(CurrentUser)
+        If Not saved Then
+            CurrentUser.Preferences = oldPreferences
+        End If
+        Return saved
     End Function
 
     ''' <summary>
@@ -174,12 +189,17 @@ Public Class ProfileService
         End If
 
         ' Validate new password
-        If String.IsNullOrWhiteSpace(newPassword) OrElse newPassword.Length < 4 Then
+        If String.IsNullOrWhiteSpace(newPassword) OrElse newPassword.Length < 8 Then
             Return False
         End If
 
+        Dim oldHash = CurrentUser.PasswordHash
         CurrentUser.PasswordHash = HashPassword(newPassword)
-        Return Await LocalStorageService.SaveProfileAsync(CurrentUser)
+        Dim saved = Await LocalStorageService.SaveProfileAsync(CurrentUser)
+        If Not saved Then
+            CurrentUser.PasswordHash = oldHash
+        End If
+        Return saved
     End Function
 
     ''' <summary>
@@ -227,7 +247,7 @@ Public Class ProfileService
     ''' Verifies a password against a stored hash created by <see cref="HashPassword"/>.
     ''' </summary>
     Private Shared Function VerifyPassword(password As String, storedHash As String) As Boolean
-        If String.IsNullOrWhiteSpace(storedHash) Then
+        If String.IsNullOrEmpty(password) OrElse String.IsNullOrWhiteSpace(storedHash) Then
             Return False
         End If
 

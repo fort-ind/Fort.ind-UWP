@@ -39,8 +39,8 @@ Public Class SitemapService
 
                 items.Add(New SearchItem(title, category, Nothing, loc))
             Next
-        Catch
-            ' If sitemap can't be loaded, return empty list gracefully
+        Catch ex As Exception
+            Debug.WriteLine($"SitemapService: failed to load sitemap – {ex.Message}")
         End Try
 
         Return items
@@ -52,7 +52,6 @@ Public Class SitemapService
         If path.StartsWith("games/codepen/") Then Return "Games — CodePen"
         If path.StartsWith("games/retroclassic-mostly-emulated/") Then Return "Games — Retro"
         If path.StartsWith("games/minecraft/") Then Return "Games — Minecraft"
-        If path.StartsWith("games/doodles") Then Return "Games"
         If path.StartsWith("games/") Then Return "Games"
         If path.StartsWith("social/") Then Return "Social"
         If path.StartsWith("emulators/") Then Return "Emulators"

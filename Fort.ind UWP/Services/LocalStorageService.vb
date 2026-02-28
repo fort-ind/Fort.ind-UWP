@@ -91,7 +91,7 @@ Public Class LocalStorageService
     Public Shared Async Function LoadProfileByUsernameAsync(username As String) As Task(Of UserProfile)
         Try
             Dim profiles = Await GetAllProfilesAsync()
-            Return profiles.FirstOrDefault(Function(p) p.Username.Equals(username, StringComparison.OrdinalIgnoreCase))
+            Return profiles.FirstOrDefault(Function(p) String.Equals(p.Username, username, StringComparison.OrdinalIgnoreCase))
         Catch ex As Exception
             Debug.WriteLine($"Error loading profile by username: {ex.Message}")
             Return Nothing
@@ -158,7 +158,7 @@ Public Class LocalStorageService
     ''' </summary>
     Public Shared Async Function IsUsernameTakenAsync(username As String) As Task(Of Boolean)
         Dim profiles = Await GetAllProfilesAsync()
-        Return profiles.Any(Function(p) p.Username.Equals(username, StringComparison.OrdinalIgnoreCase))
+        Return profiles.Any(Function(p) String.Equals(p.Username, username, StringComparison.OrdinalIgnoreCase))
     End Function
 
 #End Region
@@ -248,6 +248,7 @@ Public Class LocalStorageService
     End Function
 
     Private Shared Function DeserializeFromJson(Of T)(json As String) As T
+        If String.IsNullOrWhiteSpace(json) Then Return Nothing
         Using stream As New MemoryStream(System.Text.Encoding.UTF8.GetBytes(json))
             Dim serializer As New DataContractJsonSerializer(GetType(T))
             Return CType(serializer.ReadObject(stream), T)

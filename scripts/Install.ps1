@@ -203,7 +203,7 @@ if ($msixFile) {
         Write-Host "an issue on the GitHub repository." -ForegroundColor Green
         Write-Host ""
     } catch {
-        Write-Status " thats akward.. the install failed: $($_.Exception.Message)" "Error"
+        Write-Status "That's awkward... the install failed: $($_.Exception.Message)" "Error"
         Write-Host ""
         Write-Status "Troubleshooting tips:" "Warning"
         Write-Status "1. Make sure Developer Mode is enabled in Windows Settings" "Info"

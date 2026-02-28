@@ -58,6 +58,7 @@ Public NotInheritable Class LoginPage
                 ShowError(result.Message)
             End If
         Catch ex As Exception
+            Debug.WriteLine($"LoginButton_Click error: {ex}")
             ShowError("An error occurred. Please try again.")
         Finally
             ShowLoading(False)
@@ -107,6 +108,7 @@ Public NotInheritable Class LoginPage
                 ShowRegError(result.Message)
             End If
         Catch ex As Exception
+            Debug.WriteLine($"RegisterButton_Click error: {ex}")
             ShowRegError("An error occurred. Please try again.")
         Finally
             ShowLoading(False)
@@ -135,7 +137,11 @@ Public NotInheritable Class LoginPage
     ''' Skip login and continue without account
     ''' </summary>
     Private Sub SkipButton_Click(sender As Object, e As RoutedEventArgs)
-        Frame.Navigate(GetType(MainPage))
+        If Frame.CanGoBack Then
+            Frame.GoBack()
+        Else
+            Frame.Navigate(GetType(MainPage))
+        End If
     End Sub
 
     ''' <summary>
@@ -161,6 +167,7 @@ Public NotInheritable Class LoginPage
         LoadingOverlay.Visibility = If(show, Visibility.Visible, Visibility.Collapsed)
         LoginButton.IsEnabled = Not show
         RegisterButton.IsEnabled = Not show
+        SkipButton.IsEnabled = Not show
     End Sub
 
     ''' <summary>
