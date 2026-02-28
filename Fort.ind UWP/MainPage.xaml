@@ -290,9 +290,11 @@
                             <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
                                 <Button x:Name="RefreshTileButton" 
                                         Content="🔄 Refresh Live Tile" 
+                                        Style="{StaticResource ButtonRevealStyle}"
                                         Click="RefreshTileButton_Click"/>
                                 <Button x:Name="ClearTileButton" 
                                         Content="🗑️ Clear Live Tile" 
+                                        Style="{StaticResource ButtonRevealStyle}"
                                         Click="ClearTileButton_Click"/>
                             </StackPanel>
 
@@ -313,6 +315,7 @@
                                                TextWrapping="Wrap"/>
                                     <Button x:Name="ResetWelcomeButton"
                                             Content="🔄 Show Welcome Dialog Again"
+                                            Style="{StaticResource ButtonRevealStyle}"
                                             Click="ResetWelcomeButton_Click"/>
                                 </StackPanel>
                             </Grid>
