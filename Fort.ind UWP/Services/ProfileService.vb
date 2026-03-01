@@ -223,7 +223,7 @@ Public Class ProfileService
     ''' </summary>
     Private Shared Function HashPassword(password As String) As String
         ' PBKDF2 configuration
-        Const iterations As Integer = 100000
+        Const iterations As Integer = 600000
         Const saltSize As Integer = 16   ' 128-bit salt
         Const keySize As Integer = 32    ' 256-bit derived key
 
