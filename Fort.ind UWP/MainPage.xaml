@@ -12,26 +12,26 @@
         <!-- App Background - Windows 10 Settings style acrylic -->
         <AcrylicBrush x:Key="AppAcrylicBrush"
                       BackgroundSource="HostBackdrop"
-                      TintColor="#2B2B40"
+                      TintColor="{ThemeResource SystemChromeMediumLowColor}"
                       TintOpacity="0.8"
                       TintLuminosityOpacity="0.85"
-                      FallbackColor="#2B2B40"/>
+                      FallbackColor="{ThemeResource SystemChromeMediumLowColor}"/>
 
         <!-- NavigationView Pane Acrylic - matches Windows 10 Settings sidebar -->
         <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
                       BackgroundSource="HostBackdrop"
-                      TintColor="#1F1F2E"
+                      TintColor="{ThemeResource SystemChromeMediumColor}"
                       TintOpacity="0.9"
                       TintLuminosityOpacity="0.8"
-                      FallbackColor="#1F1F2E"/>
+                      FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
 
         <!-- Card Background - more prominent acrylic effect -->
         <AcrylicBrush x:Key="CardAcrylicBrush"
                       BackgroundSource="HostBackdrop"
-                      TintColor="#33334D"
+                      TintColor="{ThemeResource SystemChromeMediumHighColor}"
                       TintOpacity="0.7"
                       TintLuminosityOpacity="0.85"
-                      FallbackColor="#33334D"/>
+                      FallbackColor="{ThemeResource SystemChromeMediumHighColor}"/>
     </Page.Resources>
 
     <Grid Background="{StaticResource AppAcrylicBrush}">

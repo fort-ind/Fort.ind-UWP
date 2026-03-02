@@ -82,17 +82,24 @@ Public NotInheritable Class MainPage
         ' Make title bar buttons transparent to match acrylic
         Dim titleBar = ApplicationView.GetForCurrentView().TitleBar
 
+        ' Determine colors based on current theme
+        Dim isDark = Application.Current.RequestedTheme = ApplicationTheme.Dark
+        Dim fgColor = If(isDark, Colors.White, Colors.Black)
+        Dim inactiveFg = If(isDark, Color.FromArgb(128, 255, 255, 255), Color.FromArgb(128, 0, 0, 0))
+        Dim hoverBg = If(isDark, Color.FromArgb(30, 255, 255, 255), Color.FromArgb(30, 0, 0, 0))
+        Dim pressedBg = If(isDark, Color.FromArgb(50, 255, 255, 255), Color.FromArgb(50, 0, 0, 0))
+
         ' Button colors - transparent with subtle hover
         titleBar.ButtonBackgroundColor = Colors.Transparent
         titleBar.ButtonInactiveBackgroundColor = Colors.Transparent
-        titleBar.ButtonHoverBackgroundColor = Color.FromArgb(30, 255, 255, 255)
-        titleBar.ButtonPressedBackgroundColor = Color.FromArgb(50, 255, 255, 255)
+        titleBar.ButtonHoverBackgroundColor = hoverBg
+        titleBar.ButtonPressedBackgroundColor = pressedBg
 
         ' Button foreground colors
-        titleBar.ButtonForegroundColor = Colors.White
-        titleBar.ButtonHoverForegroundColor = Colors.White
-        titleBar.ButtonPressedForegroundColor = Colors.White
-        titleBar.ButtonInactiveForegroundColor = Color.FromArgb(128, 255, 255, 255)
+        titleBar.ButtonForegroundColor = fgColor
+        titleBar.ButtonHoverForegroundColor = fgColor
+        titleBar.ButtonPressedForegroundColor = fgColor
+        titleBar.ButtonInactiveForegroundColor = inactiveFg
     End Sub
 
     Private Sub UpdateLiveTile()
