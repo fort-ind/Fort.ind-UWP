@@ -82,7 +82,7 @@ Public Class SitemapService
                 sb.Append(Char.ToUpper(c))
                 capitalizeNext = False
             Else
-                sb.Append(c)
+                sb.Append(Char.ToLower(c))
             End If
         Next
         Return sb.ToString()
