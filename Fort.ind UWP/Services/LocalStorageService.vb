@@ -86,16 +86,33 @@ Public Class LocalStorageService
     End Function
 
     ''' <summary>
-    ''' Loads a user profile by username
+    ''' Loads a user profile by username (scans files with early exit to avoid loading all profiles)
     ''' </summary>
     Public Shared Async Function LoadProfileByUsernameAsync(username As String) As Task(Of UserProfile)
+        If String.IsNullOrWhiteSpace(username) Then Return Nothing
+
         Try
-            Dim profiles = Await GetAllProfilesAsync()
-            Return profiles.FirstOrDefault(Function(p) String.Equals(p.Username, username, StringComparison.OrdinalIgnoreCase))
+            Dim profilesFolder = Await LocalFolder.CreateFolderAsync(PROFILES_FOLDER, CreationCollisionOption.OpenIfExists)
+            Dim files = Await profilesFolder.GetFilesAsync()
+
+            For Each file In files
+                If file.Name.EndsWith(".json") Then
+                    Try
+                        Dim json = Await FileIO.ReadTextAsync(file)
+                        Dim profile = DeserializeFromJson(Of UserProfile)(json)
+                        If profile IsNot Nothing AndAlso String.Equals(profile.Username, username, StringComparison.OrdinalIgnoreCase) Then
+                            Return profile
+                        End If
+                    Catch
+                        ' Skip corrupt files
+                    End Try
+                End If
+            Next
         Catch ex As Exception
             Debug.WriteLine($"Error loading profile by username: {ex.Message}")
-            Return Nothing
         End Try
+
+        Return Nothing
     End Function
 
     ''' <summary>
@@ -154,11 +171,11 @@ Public Class LocalStorageService
     End Function
 
     ''' <summary>
-    ''' Checks if a username is already taken
+    ''' Checks if a username is already taken (reuses early-exit scan, avoids loading all profiles)
     ''' </summary>
     Public Shared Async Function IsUsernameTakenAsync(username As String) As Task(Of Boolean)
-        Dim profiles = Await GetAllProfilesAsync()
-        Return profiles.Any(Function(p) String.Equals(p.Username, username, StringComparison.OrdinalIgnoreCase))
+        Dim existing = Await LoadProfileByUsernameAsync(username)
+        Return existing IsNot Nothing
     End Function
 
 #End Region
@@ -219,13 +236,17 @@ Public Class LocalStorageService
     End Property
 
     ''' <summary>
-    ''' Gets the number of registered users (counts profile files without deserializing) for security improvments 
+    ''' Gets the number of registered users (counts profile files without deserializing)
     ''' </summary>
     Public Shared Async Function GetUserCountAsync() As Task(Of Integer)
         Try
             Dim profilesFolder = Await LocalFolder.CreateFolderAsync(PROFILES_FOLDER, CreationCollisionOption.OpenIfExists)
             Dim files = Await profilesFolder.GetFilesAsync()
-            Return files.Where(Function(f) f.Name.EndsWith(".json")).Count()
+            Dim count As Integer = 0
+            For Each f In files
+                If f.Name.EndsWith(".json") Then count += 1
+            Next
+            Return count
         Catch ex As Exception
             Debug.WriteLine($"Error getting user count: {ex.Message}")
             Return 0
@@ -236,9 +257,16 @@ Public Class LocalStorageService
 
 #Region "JSON Serialization"
 
+    ' Cache serializers to avoid repeated reflection on each call
+    Private Shared ReadOnly s_serializerCache As New Concurrent.ConcurrentDictionary(Of Type, DataContractJsonSerializer)
+
+    Private Shared Function GetSerializer(t As Type) As DataContractJsonSerializer
+        Return s_serializerCache.GetOrAdd(t, Function(key) New DataContractJsonSerializer(key))
+    End Function
+
     Private Shared Function SerializeToJson(Of T)(obj As T) As String
         Using stream As New MemoryStream()
-            Dim serializer As New DataContractJsonSerializer(GetType(T))
+            Dim serializer = GetSerializer(GetType(T))
             serializer.WriteObject(stream, obj)
             stream.Position = 0
             Using reader As New StreamReader(stream)
@@ -250,7 +278,7 @@ Public Class LocalStorageService
     Private Shared Function DeserializeFromJson(Of T)(json As String) As T
         If String.IsNullOrWhiteSpace(json) Then Return Nothing
         Using stream As New MemoryStream(System.Text.Encoding.UTF8.GetBytes(json))
-            Dim serializer As New DataContractJsonSerializer(GetType(T))
+            Dim serializer = GetSerializer(GetType(T))
             Return CType(serializer.ReadObject(stream), T)
         End Using
     End Function

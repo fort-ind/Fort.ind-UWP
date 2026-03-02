@@ -63,18 +63,26 @@ Public Class SitemapService
     End Function
 
     Private Shared Function GetTitle(path As String) As String
-        ' Use the last segment of the path as the display name when showing results! example: "games/html/rynis-game" -> "rynis game"
-        Dim segments = path.Split("/"c)
-        Dim slug = segments.Last()
+        ' Use the last segment of the path as the display name when showing results! example: "games/html/rynis-game" -> "Rynis Game"
+        Dim lastSlash = path.LastIndexOf("/"c)
+        Dim slug = If(lastSlash >= 0, path.Substring(lastSlash + 1), path)
 
-        ' Replace hyphens/underscores with spaces and title-case it
-        Dim words = slug.Replace("-", " ").Replace("_", " ").Split(" "c)
-        For i = 0 To words.Length - 1
-            If words(i).Length > 0 Then
-                words(i) = Char.ToUpper(words(i)(0)) & words(i).Substring(1)
+        ' Title-case in a single pass with one StringBuilder
+        Dim sb As New System.Text.StringBuilder(slug.Length)
+        Dim capitalizeNext As Boolean = True
+        For i = 0 To slug.Length - 1
+            Dim c = slug(i)
+            If c = "-"c OrElse c = "_"c Then
+                sb.Append(" "c)
+                capitalizeNext = True
+            ElseIf capitalizeNext Then
+                sb.Append(Char.ToUpper(c))
+                capitalizeNext = False
+            Else
+                sb.Append(c)
             End If
         Next
-        Return String.Join(" ", words)
+        Return sb.ToString()
     End Function
 
 End Class

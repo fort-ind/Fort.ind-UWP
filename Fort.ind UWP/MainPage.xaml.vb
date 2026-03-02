@@ -11,8 +11,8 @@ Imports Windows.Storage
 Public NotInheritable Class MainPage
     Inherits Page
 
-    ' All searchable items across menus, settings, profiles, and fort1nd.com
-    Private ReadOnly _searchItems As New List(Of SearchItem) From {
+    ' Static menu/settings items (never changes)
+    Private Shared ReadOnly s_staticSearchItems As SearchItem() = {
         New SearchItem("Home", "Menu", "LatestNews"),
         New SearchItem("Latest News", "Menu", "LatestNews"),
         New SearchItem("Games", "Menu", "Games"),
@@ -33,6 +33,12 @@ Public NotInheritable Class MainPage
         New SearchItem("Register", "Profile", "Profile")
     }
 
+    ' All searchable items – volatile reference swapped once when sitemap loads (no lock needed for reads)
+    Private _allSearchItems As IReadOnlyList(Of SearchItem) = s_staticSearchItems
+
+    ' Guard to prevent multiple ContentDialogs from opening simultaneously
+    Private _isDialogOpen As Boolean = False
+
     Public Sub New()
         Me.InitializeComponent()
         SetupTitleBar()
@@ -46,8 +52,16 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Sub LoadSitemapItems()
-        Dim sitemapItems = Await SitemapService.LoadSearchItemsAsync()
-        _searchItems.AddRange(sitemapItems)
+        Try
+            Dim sitemapItems = Await SitemapService.LoadSearchItemsAsync()
+            ' Build a new combined list and swap the reference (atomic, no lock needed)
+            Dim combined As New List(Of SearchItem)(s_staticSearchItems.Length + sitemapItems.Count)
+            combined.AddRange(s_staticSearchItems)
+            combined.AddRange(sitemapItems)
+            _allSearchItems = combined
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Failed to load sitemap items – {ex.Message}")
+        End Try
     End Sub
 
     Private Sub MainPage_Unloaded(sender As Object, e As RoutedEventArgs)
@@ -55,8 +69,12 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
-        Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
-            Sub() UpdateProfileNavItem())
+        Try
+            Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
+                Sub() UpdateProfileNavItem())
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Auth state change handler failed – {ex.Message}")
+        End Try
     End Sub
 
     Private Sub UpdateProfileNavItem()
@@ -117,20 +135,24 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Sub NavView_Loaded(sender As Object, e As RoutedEventArgs)
-        ' Select the first item (Latest News) by default
-        NavView.SelectedItem = NavView.MenuItems(0)
-        ' Ensure pane starts closed
-        NavView.IsPaneOpen = False
+        Try
+            ' Select the first item (Latest News) by default
+            NavView.SelectedItem = NavView.MenuItems(0)
+            ' Ensure pane starts closed
+            NavView.IsPaneOpen = False
 
-        ' Show welcome dialog on first launch
-        Dim localSettings = ApplicationData.Current.LocalSettings
-        Dim hideWelcome As Boolean = False
-        If localSettings.Values.ContainsKey("HideWelcomeDialog") Then
-            hideWelcome = CBool(localSettings.Values("HideWelcomeDialog"))
-        End If
-        If Not hideWelcome Then
-            Await ShowWelcomeDialogAsync()
-        End If
+            ' Show welcome dialog on first launch
+            Dim localSettings = ApplicationData.Current.LocalSettings
+            Dim hideWelcome As Boolean = False
+            If localSettings.Values.ContainsKey("HideWelcomeDialog") Then
+                hideWelcome = CBool(localSettings.Values("HideWelcomeDialog"))
+            End If
+            If Not hideWelcome Then
+                Await ShowWelcomeDialogAsync()
+            End If
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: NavView_Loaded failed – {ex.Message}")
+        End Try
     End Sub
 
     Private Sub NavView_ItemInvoked(sender As NavigationView, args As NavigationViewItemInvokedEventArgs)
@@ -171,9 +193,17 @@ Public NotInheritable Class MainPage
                 ' Navigate to ProfilePage in the frame (skip if already there)
                 ContentScrollViewer.Visibility = Visibility.Collapsed
                 ContentFrame.Visibility = Visibility.Visible
-                If Not TypeOf ContentFrame.Content Is ProfilePage Then
-                    ContentFrame.Navigate(GetType(ProfilePage))
-                End If
+                Try
+                    If Not TypeOf ContentFrame.Content Is ProfilePage Then
+                        ContentFrame.Navigate(GetType(ProfilePage))
+                    End If
+                Catch ex As Exception
+                    ' Navigation failed – fall back to home
+                    Debug.WriteLine($"MainPage: Profile navigation failed – {ex.Message}")
+                    ContentFrame.Visibility = Visibility.Collapsed
+                    ContentScrollViewer.Visibility = Visibility.Visible
+                    LatestNewsPanel.Visibility = Visibility.Visible
+                End Try
             Case "Social"
                 SocialPanel.Visibility = Visibility.Visible
             Case "About"
@@ -198,14 +228,23 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
-        Dim aboutDialog As New ContentDialog()
-        aboutDialog.Title = "About"
-        aboutDialog.Content = $"Fort.ind desktop for UWP{vbCrLf}Version 0.5 Beta{vbCrLf}{vbCrLf}Storage: Local JSON Files"
-        aboutDialog.PrimaryButtonText = "OK"
-        aboutDialog.DefaultButton = ContentDialogButton.Primary
-        aboutDialog.XamlRoot = Me.XamlRoot
+        Try
+            If _isDialogOpen Then Return
+            _isDialogOpen = True
 
-        Await aboutDialog.ShowAsync()
+            Dim aboutDialog As New ContentDialog()
+            aboutDialog.Title = "About"
+            aboutDialog.Content = $"Fort.ind desktop for UWP{vbCrLf}Version 0.5 Beta{vbCrLf}{vbCrLf}Storage: Local JSON Files"
+            aboutDialog.PrimaryButtonText = "OK"
+            aboutDialog.DefaultButton = ContentDialogButton.Primary
+            aboutDialog.XamlRoot = Me.XamlRoot
+
+            Await aboutDialog.ShowAsync()
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: About dialog failed – {ex.Message}")
+        Finally
+            _isDialogOpen = False
+        End Try
     End Sub
 
     Private Sub RefreshTileButton_Click(sender As Object, e As RoutedEventArgs)
@@ -260,66 +299,79 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Function ShowWelcomeDialogAsync() As Task
-        Dim dontShowCheckBox As New CheckBox()
-        dontShowCheckBox.Content = "Don't show this again"
-        dontShowCheckBox.Margin = New Thickness(0, 16, 0, 0)
+        If _isDialogOpen Then Return
+        _isDialogOpen = True
 
-        Dim contentPanel As New StackPanel()
-        contentPanel.Spacing = 12
+        Try
+            Dim dontShowCheckBox As New CheckBox()
+            dontShowCheckBox.Content = "Don't show this again"
+            dontShowCheckBox.Margin = New Thickness(0, 16, 0, 0)
 
-        ' Icon row
-        Dim iconPanel As New StackPanel()
-        iconPanel.Orientation = Orientation.Horizontal
-        iconPanel.HorizontalAlignment = HorizontalAlignment.Center
-        iconPanel.Spacing = 24
-        iconPanel.Margin = New Thickness(0, 8, 0, 8)
+            Dim contentPanel As New StackPanel()
+            contentPanel.Spacing = 12
 
-        Dim starIcon As New FontIcon()
-        starIcon.Glyph = ChrW(&HE734)
-        starIcon.FontSize = 32
+            ' Icon row
+            Dim iconPanel As New StackPanel()
+            iconPanel.Orientation = Orientation.Horizontal
+            iconPanel.HorizontalAlignment = HorizontalAlignment.Center
+            iconPanel.Spacing = 24
+            iconPanel.Margin = New Thickness(0, 8, 0, 8)
 
-        Dim testTubeIcon As New FontIcon()
-        testTubeIcon.Glyph = ChrW(&HE9A1)
-        testTubeIcon.FontSize = 32
+            Dim starIcon As New FontIcon()
+            starIcon.Glyph = ChrW(&HE734)
+            starIcon.FontSize = 32
 
-        Dim webIcon As New FontIcon()
-        webIcon.Glyph = ChrW(&HE774)
-        webIcon.FontSize = 32
+            Dim testTubeIcon As New FontIcon()
+            testTubeIcon.Glyph = ChrW(&HE9A1)
+            testTubeIcon.FontSize = 32
 
-        iconPanel.Children.Add(starIcon)
-        iconPanel.Children.Add(testTubeIcon)
-        iconPanel.Children.Add(webIcon)
+            Dim webIcon As New FontIcon()
+            webIcon.Glyph = ChrW(&HE774)
+            webIcon.FontSize = 32
 
-        contentPanel.Children.Add(iconPanel)
+            iconPanel.Children.Add(starIcon)
+            iconPanel.Children.Add(testTubeIcon)
+            iconPanel.Children.Add(webIcon)
 
-        Dim descText As New TextBlock()
-        descText.Text = "Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do! "
-        descText.TextWrapping = TextWrapping.Wrap
-        descText.FontSize = 14
-        descText.Opacity = 0.9
+            contentPanel.Children.Add(iconPanel)
 
-        contentPanel.Children.Add(descText)
-        contentPanel.Children.Add(dontShowCheckBox)
+            Dim descText As New TextBlock()
+            descText.Text = "Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do! "
+            descText.TextWrapping = TextWrapping.Wrap
+            descText.FontSize = 14
+            descText.Opacity = 0.9
 
-        Dim welcomeDialog As New ContentDialog()
-        welcomeDialog.Title = "Hi :)"
-        welcomeDialog.Content = contentPanel
-        welcomeDialog.PrimaryButtonText = "got it"
-        welcomeDialog.DefaultButton = ContentDialogButton.Primary
-        welcomeDialog.XamlRoot = Me.XamlRoot
+            contentPanel.Children.Add(descText)
+            contentPanel.Children.Add(dontShowCheckBox)
 
-        Await welcomeDialog.ShowAsync()
+            Dim welcomeDialog As New ContentDialog()
+            welcomeDialog.Title = "Hi :)"
+            welcomeDialog.Content = contentPanel
+            welcomeDialog.PrimaryButtonText = "got it"
+            welcomeDialog.DefaultButton = ContentDialogButton.Primary
+            welcomeDialog.XamlRoot = Me.XamlRoot
 
-        If dontShowCheckBox.IsChecked.GetValueOrDefault(False) Then
-            Dim localSettings = ApplicationData.Current.LocalSettings
-            localSettings.Values("HideWelcomeDialog") = True
-        End If
+            Await welcomeDialog.ShowAsync()
+
+            If dontShowCheckBox.IsChecked.GetValueOrDefault(False) Then
+                Dim localSettings = ApplicationData.Current.LocalSettings
+                localSettings.Values("HideWelcomeDialog") = True
+            End If
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Welcome dialog failed – {ex.Message}")
+        Finally
+            _isDialogOpen = False
+        End Try
     End Function
 
     Private Async Sub ResetWelcomeButton_Click(sender As Object, e As RoutedEventArgs)
-        Dim localSettings = ApplicationData.Current.LocalSettings
-        localSettings.Values("HideWelcomeDialog") = False
-        Await ShowWelcomeDialogAsync()
+        Try
+            Dim localSettings = ApplicationData.Current.LocalSettings
+            localSettings.Values("HideWelcomeDialog") = False
+            Await ShowWelcomeDialogAsync()
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Reset welcome failed – {ex.Message}")
+        End Try
     End Sub
 
     ' ── Search bar handlers ──
@@ -332,45 +384,66 @@ Public NotInheritable Class MainPage
                 Return
             End If
 
-            ' Add profile-specific item if logged in
-            Dim dynamicItems As New List(Of SearchItem)(_searchItems)
+            ' Read volatile reference – no lock or copy needed
+            Dim items = _allSearchItems
+
+            Dim filtered As New List(Of SearchItem)()
+            For Each item In items
+                If item.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                   item.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 Then
+                    filtered.Add(item)
+                End If
+            Next
+
+            ' Add profile-specific item if logged in and matches
             If ProfileService.CurrentUser IsNot Nothing Then
                 Dim name = If(String.IsNullOrWhiteSpace(ProfileService.CurrentUser.DisplayName),
                               ProfileService.CurrentUser.Username,
                               ProfileService.CurrentUser.DisplayName)
-                dynamicItems.Add(New SearchItem($"Profile: {name}", "Profile", "Profile"))
+                Dim profileTitle = $"Profile: {name}"
+                If profileTitle.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                   "Profile".IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 Then
+                    filtered.Add(New SearchItem(profileTitle, "Profile", "Profile"))
+                End If
             End If
-
-            Dim filtered = dynamicItems.Where(
-                Function(item) item.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
-                               item.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
-            ).ToList()
 
             sender.ItemsSource = filtered
         End If
     End Sub
 
     Private Async Sub NavSearchBox_QuerySubmitted(sender As AutoSuggestBox, args As AutoSuggestBoxQuerySubmittedEventArgs)
-        If args.ChosenSuggestion IsNot Nothing Then
-            Dim item = TryCast(args.ChosenSuggestion, SearchItem)
-            If item IsNot Nothing Then
-                Await NavigateToSearchItem(item)
-            End If
-        Else
-            ' User pressed Enter without picking a suggestion – navigate to first match
-            Dim query = args.QueryText.Trim()
-            If Not String.IsNullOrEmpty(query) Then
-                Dim match = _searchItems.FirstOrDefault(
-                    Function(i) i.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
-                                i.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
-                If match IsNot Nothing Then
-                    Await NavigateToSearchItem(match)
+        Try
+            If args.ChosenSuggestion IsNot Nothing Then
+                Dim item = TryCast(args.ChosenSuggestion, SearchItem)
+                If item IsNot Nothing Then
+                    Await NavigateToSearchItem(item)
+                End If
+            Else
+                ' User pressed Enter without picking a suggestion – navigate to first match
+                Dim query = args.QueryText.Trim()
+                If Not String.IsNullOrEmpty(query) Then
+                    Dim items = _allSearchItems
+
+                    Dim match As SearchItem = Nothing
+                    For Each i In items
+                        If i.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
+                           i.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 Then
+                            match = i
+                            Exit For
+                        End If
+                    Next
+                    If match IsNot Nothing Then
+                        Await NavigateToSearchItem(match)
+                    End If
                 End If
             End If
-        End If
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Search query failed – {ex.Message}")
+        End Try
     End Sub
 
-    Private Async Sub NavSearchBox_SuggestionChosen(sender As AutoSuggestBox, args As AutoSuggestBoxSuggestionChosenEventArgs)
+    ' Fixed: removed unnecessary Async keyword (no Await in this method)
+    Private Sub NavSearchBox_SuggestionChosen(sender As AutoSuggestBox, args As AutoSuggestBoxSuggestionChosenEventArgs)
         Dim item = TryCast(args.SelectedItem, SearchItem)
         If item IsNot Nothing Then
             sender.Text = item.Title
@@ -379,8 +452,13 @@ Public NotInheritable Class MainPage
 
     Private Async Function NavigateToSearchItem(item As SearchItem) As Task
         If Not String.IsNullOrEmpty(item.Url) Then
-            ' External link – open in default browser
-            Await Windows.System.Launcher.LaunchUriAsync(New Uri(item.Url))
+            ' Validate URL before launching to avoid UriFormatException
+            Dim uri As Uri = Nothing
+            If Uri.TryCreate(item.Url, UriKind.Absolute, uri) Then
+                Await Windows.System.Launcher.LaunchUriAsync(uri)
+            Else
+                Debug.WriteLine($"MainPage: Invalid URL in search item – {item.Url}")
+            End If
         ElseIf Not String.IsNullOrEmpty(item.NavigationTag) Then
             ShowPanel(item.NavigationTag)
         End If
