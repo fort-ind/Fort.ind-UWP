@@ -152,7 +152,8 @@
 
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Email" FontSize="12" Opacity="0.7"/>
-                                <TextBox x:Name="EditEmailBox"/>
+                                <TextBox x:Name="EditEmailBox"
+                                         InputScope="EmailSmtpAddress"/>
                             </StackPanel>
 
                             <StackPanel Spacing="4">

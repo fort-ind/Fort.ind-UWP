@@ -200,7 +200,7 @@ Public NotInheritable Class MainPage
     Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
         Dim aboutDialog As New ContentDialog()
         aboutDialog.Title = "About"
-        aboutDialog.Content = $"Fort.ind desktop for UWP{vbCrLf}Version 0.5 beta{vbCrLf}{vbCrLf}Storage: Local JSON Files"
+        aboutDialog.Content = $"Fort.ind desktop for UWP{vbCrLf}Version 0.5 Beta{vbCrLf}{vbCrLf}Storage: Local JSON Files"
         aboutDialog.PrimaryButtonText = "OK"
         aboutDialog.DefaultButton = ContentDialogButton.Primary
         aboutDialog.XamlRoot = Me.XamlRoot
@@ -215,6 +215,48 @@ Public NotInheritable Class MainPage
     Private Sub ClearTileButton_Click(sender As Object, e As RoutedEventArgs)
         LiveTileService.ClearTile()
         LiveTileService.ClearBadge()
+    End Sub
+
+    ' ── Settings row expand/collapse ──
+
+    Private Sub StorageHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
+        ToggleSettingsRow(StorageContent, StorageChevronRotation)
+    End Sub
+
+    Private Sub TileHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
+        ToggleSettingsRow(TileContent, TileChevronRotation)
+    End Sub
+
+    Private Sub WelcomeHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
+        ToggleSettingsRow(WelcomeContent, WelcomeChevronRotation)
+    End Sub
+
+    Private Sub AboutHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
+        ToggleSettingsRow(AboutContent, AboutChevronRotation)
+    End Sub
+
+    Private Sub ToggleSettingsRow(content As StackPanel, chevronTransform As RotateTransform)
+        If content.Visibility = Visibility.Collapsed Then
+            content.Visibility = Visibility.Visible
+            chevronTransform.Angle = 90
+        Else
+            content.Visibility = Visibility.Collapsed
+            chevronTransform.Angle = 0
+        End If
+    End Sub
+
+    Private Sub SettingsRow_PointerEntered(sender As Object, e As PointerRoutedEventArgs)
+        Dim grid = TryCast(sender, Grid)
+        If grid IsNot Nothing Then
+            grid.Opacity = 0.85
+        End If
+    End Sub
+
+    Private Sub SettingsRow_PointerExited(sender As Object, e As PointerRoutedEventArgs)
+        Dim grid = TryCast(sender, Grid)
+        If grid IsNot Nothing Then
+            grid.Opacity = 1.0
+        End If
     End Sub
 
     Private Async Function ShowWelcomeDialogAsync() As Task

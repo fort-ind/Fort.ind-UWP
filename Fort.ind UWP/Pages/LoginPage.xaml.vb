@@ -18,6 +18,15 @@ Public NotInheritable Class LoginPage
     End Sub
 
     ''' <summary>
+    ''' Handle Enter key in confirm password box
+    ''' </summary>
+    Private Sub RegConfirmPasswordBox_KeyDown(sender As Object, e As KeyRoutedEventArgs)
+        If e.Key = Windows.System.VirtualKey.Enter Then
+            RegisterButton_Click(sender, e)
+        End If
+    End Sub
+
+    ''' <summary>
     ''' Handle login button click
     ''' </summary>
     Private Async Sub LoginButton_Click(sender As Object, e As RoutedEventArgs)
@@ -87,8 +96,20 @@ Public NotInheritable Class LoginPage
             Return
         End If
 
+        If pwd.Length < 8 Then
+            ShowRegError("Password must be at least 8 characters")
+            Return
+        End If
+
         If pwd <> confirmPassword Then
             ShowRegError("Passwords do not match")
+            Return
+        End If
+
+        ' Basic email format validation (only if provided)
+        If Not String.IsNullOrWhiteSpace(email) AndAlso
+           (Not email.Contains("@") OrElse Not email.Contains(".")) Then
+            ShowRegError("Please enter a valid email address")
             Return
         End If
 
@@ -122,6 +143,7 @@ Public NotInheritable Class LoginPage
         LoginForm.Visibility = Visibility.Visible
         RegisterForm.Visibility = Visibility.Collapsed
         ClearForms()
+        UsernameBox.Focus(FocusState.Programmatic)
     End Sub
 
     ''' <summary>
@@ -131,6 +153,7 @@ Public NotInheritable Class LoginPage
         LoginForm.Visibility = Visibility.Collapsed
         RegisterForm.Visibility = Visibility.Visible
         ClearForms()
+        RegUsernameBox.Focus(FocusState.Programmatic)
     End Sub
 
     ''' <summary>

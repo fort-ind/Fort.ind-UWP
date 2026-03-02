@@ -259,7 +259,7 @@
                                        FontWeight="Bold"
                                        Margin="0,0,0,10"/>
 
-                            <TextBlock Text="Version 0.4 Beta"
+                            <TextBlock Text="Version 0.5 Beta"
                                        FontSize="18"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
@@ -269,94 +269,243 @@
                             <TextBlock Text="Settings"
                                        FontSize="32"
                                        FontWeight="Bold"
-                                       Margin="0,0,0,10"/>
+                                       Margin="0,0,0,4"/>
 
                             <TextBlock Text="Configure your application preferences"
-                                       FontSize="18"
-                                       TextWrapping="Wrap"
+                                       FontSize="14"
+                                       Opacity="0.6"
                                        Margin="0,0,0,24"/>
 
-                            <!-- Storage Section -->
-                            <TextBlock Text="💾 Data Storage"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,12"/>
+                            <StackPanel MaxWidth="700" HorizontalAlignment="Stretch" Spacing="4">
+                                <StackPanel.ChildrenTransitions>
+                                    <TransitionCollection>
+                                        <EntranceThemeTransition FromVerticalOffset="40"/>
+                                        <RepositionThemeTransition/>
+                                    </TransitionCollection>
+                                </StackPanel.ChildrenTransitions>
 
-                            <Grid Background="{StaticResource CardAcrylicBrush}"
-                                  CornerRadius="8"
-                                  Padding="16"
-                                  Margin="0,0,0,16">
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="📄 Local JSON Storage"
-                                               FontWeight="SemiBold"/>
-                                    <TextBlock Text="Your account data is stored locally on this device."
-                                               FontSize="12"
-                                               Opacity="0.7"
-                                               TextWrapping="Wrap"/>
-                                    <TextBlock x:Name="StoragePathText"
-                                               FontSize="11"
-                                               Opacity="0.5"
-                                               TextWrapping="Wrap"/>
-                                    <TextBlock x:Name="UserCountText"
-                                               FontSize="12"
-                                               Opacity="0.7"/>
-
-                                    <StackPanel Orientation="Horizontal" 
-                                                Spacing="4" 
-                                                Margin="0,8,0,0"
-                                                Opacity="0.6">
-                                        <TextBlock Text="🔮" FontSize="12"/>
-                                        <TextBlock Text="SQLite database &amp; server sync coming soon!"
-                                                   FontSize="11"
-                                                   FontStyle="Italic"/>
+                                <!-- ═══ Data Storage ═══ -->
+                                <Grid Background="{StaticResource CardAcrylicBrush}"
+                                      Padding="16,14"
+                                      PointerEntered="SettingsRow_PointerEntered"
+                                      PointerExited="SettingsRow_PointerExited"
+                                      Tapped="StorageHeader_Tapped">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="36" Height="36" CornerRadius="4"
+                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                        <FontIcon Glyph="&#xEDA2;" FontSize="16"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Data Storage" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Manage local storage and view account data"
+                                                   FontSize="12" Opacity="0.6"/>
+                                    </StackPanel>
+                                    <FontIcon x:Name="StorageChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                              RenderTransformOrigin="0.5,0.5">
+                                        <FontIcon.RenderTransform>
+                                            <RotateTransform x:Name="StorageChevronRotation" Angle="0"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                </Grid>
+                                <StackPanel x:Name="StorageContent" Visibility="Collapsed"
+                                            Background="{StaticResource CardAcrylicBrush}"
+                                            Padding="20,16" Margin="0,-2,0,0">
+                                    <StackPanel.ChildrenTransitions>
+                                        <TransitionCollection>
+                                            <EntranceThemeTransition FromVerticalOffset="20"/>
+                                        </TransitionCollection>
+                                    </StackPanel.ChildrenTransitions>
+                                    <StackPanel Spacing="8">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <FontIcon Glyph="&#xE8B7;" FontSize="14" Opacity="0.7"/>
+                                            <TextBlock Text="Local JSON Storage"
+                                                       FontSize="13" FontWeight="SemiBold"/>
+                                        </StackPanel>
+                                        <TextBlock Text="Your account data is stored locally on this device as JSON files."
+                                                   FontSize="12" Opacity="0.7" TextWrapping="Wrap"
+                                                   Margin="0,0,0,4"/>
+                                        <TextBlock x:Name="StoragePathText"
+                                                   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
+                                        <TextBlock x:Name="UserCountText"
+                                                   FontSize="12" Opacity="0.7"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="6"
+                                                    Margin="0,8,0,0" Opacity="0.5">
+                                            <FontIcon Glyph="&#xE946;" FontSize="11"/>
+                                            <TextBlock Text="SQLite database &amp; server sync coming soon!"
+                                                       FontSize="11" FontStyle="Italic"/>
+                                        </StackPanel>
                                     </StackPanel>
                                 </StackPanel>
-                            </Grid>
 
-                            <!-- Live Tile Section -->
-                            <TextBlock Text="📌 Live Tile"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,12"/>
-
-                            <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,0,0,16">
-                                <Button x:Name="RefreshTileButton" 
-                                        Content="🔄 Refresh Live Tile" 
-                                        Style="{StaticResource ButtonRevealStyle}"
-                                        Click="RefreshTileButton_Click"/>
-                                <Button x:Name="ClearTileButton" 
-                                        Content="🗑️ Clear Live Tile" 
-                                        Style="{StaticResource ButtonRevealStyle}"
-                                        Click="ClearTileButton_Click"/>
-                            </StackPanel>
-
-                            <!-- Welcome Dialog Section -->
-                            <TextBlock Text="👋 Welcome Dialog"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,12"/>
-
-                            <Grid Background="{StaticResource CardAcrylicBrush}"
-                                  CornerRadius="8"
-                                  Padding="16"
-                                  Margin="0,0,0,16">
-                                <StackPanel Spacing="8">
-                                    <TextBlock Text="The welcome dialog appears the first time you open the app."
-                                               FontSize="12"
-                                               Opacity="0.7"
-                                               TextWrapping="Wrap"/>
-                                    <Button x:Name="ResetWelcomeButton"
-                                            Content="🔄 Show Welcome Dialog Again"
-                                            Style="{StaticResource ButtonRevealStyle}"
-                                            Click="ResetWelcomeButton_Click"/>
+                                <!-- ═══ Live Tile ═══ -->
+                                <Grid Background="{StaticResource CardAcrylicBrush}"
+                                      Padding="16,14"
+                                      PointerEntered="SettingsRow_PointerEntered"
+                                      PointerExited="SettingsRow_PointerExited"
+                                      Tapped="TileHeader_Tapped">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="36" Height="36" CornerRadius="4"
+                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                        <FontIcon Glyph="&#xE77F;" FontSize="16"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Live Tile" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Refresh or clear your Start menu tile"
+                                                   FontSize="12" Opacity="0.6"/>
+                                    </StackPanel>
+                                    <FontIcon x:Name="TileChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                              RenderTransformOrigin="0.5,0.5">
+                                        <FontIcon.RenderTransform>
+                                            <RotateTransform x:Name="TileChevronRotation" Angle="0"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                </Grid>
+                                <StackPanel x:Name="TileContent" Visibility="Collapsed"
+                                            Background="{StaticResource CardAcrylicBrush}"
+                                            Padding="20,16" Margin="0,-2,0,0">
+                                    <StackPanel.ChildrenTransitions>
+                                        <TransitionCollection>
+                                            <EntranceThemeTransition FromVerticalOffset="20"/>
+                                        </TransitionCollection>
+                                    </StackPanel.ChildrenTransitions>
+                                    <StackPanel Orientation="Horizontal" Spacing="12">
+                                        <Button x:Name="RefreshTileButton"
+                                                Click="RefreshTileButton_Click"
+                                                Style="{StaticResource ButtonRevealStyle}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                                <TextBlock Text="Refresh Live Tile"/>
+                                            </StackPanel>
+                                        </Button>
+                                        <Button x:Name="ClearTileButton"
+                                                Click="ClearTileButton_Click"
+                                                Style="{StaticResource ButtonRevealStyle}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                                <TextBlock Text="Clear Live Tile"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
                                 </StackPanel>
-                            </Grid>
 
-                            <TextBlock Text="ℹ️ About"
-                                       FontSize="20"
-                                       FontWeight="SemiBold"
-                                       Margin="0,0,0,12"/>
+                                <!-- ═══ Welcome Dialog ═══ -->
+                                <Grid Background="{StaticResource CardAcrylicBrush}"
+                                      Padding="16,14"
+                                      PointerEntered="SettingsRow_PointerEntered"
+                                      PointerExited="SettingsRow_PointerExited"
+                                      Tapped="WelcomeHeader_Tapped">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="36" Height="36" CornerRadius="4"
+                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                        <FontIcon Glyph="&#xEB51;" FontSize="16"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Welcome Dialog" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Reset the first-run welcome experience"
+                                                   FontSize="12" Opacity="0.6"/>
+                                    </StackPanel>
+                                    <FontIcon x:Name="WelcomeChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                              RenderTransformOrigin="0.5,0.5">
+                                        <FontIcon.RenderTransform>
+                                            <RotateTransform x:Name="WelcomeChevronRotation" Angle="0"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                </Grid>
+                                <StackPanel x:Name="WelcomeContent" Visibility="Collapsed"
+                                            Background="{StaticResource CardAcrylicBrush}"
+                                            Padding="20,16" Margin="0,-2,0,0">
+                                    <StackPanel.ChildrenTransitions>
+                                        <TransitionCollection>
+                                            <EntranceThemeTransition FromVerticalOffset="20"/>
+                                        </TransitionCollection>
+                                    </StackPanel.ChildrenTransitions>
+                                    <StackPanel Spacing="10">
+                                        <TextBlock Text="The welcome dialog appears the first time you open the app."
+                                                   FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+                                        <Button x:Name="ResetWelcomeButton"
+                                                Click="ResetWelcomeButton_Click"
+                                                Style="{StaticResource ButtonRevealStyle}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                                <TextBlock Text="Show Welcome Dialog Again"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
 
+                                <!-- ═══ About ═══ -->
+                                <Grid Background="{StaticResource CardAcrylicBrush}"
+                                      Padding="16,14"
+                                      PointerEntered="SettingsRow_PointerEntered"
+                                      PointerExited="SettingsRow_PointerExited"
+                                      Tapped="AboutHeader_Tapped">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="36" Height="36" CornerRadius="4"
+                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                        <FontIcon Glyph="&#xE946;" FontSize="16"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="About" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Version info, credits, and more"
+                                                   FontSize="12" Opacity="0.6"/>
+                                    </StackPanel>
+                                    <FontIcon x:Name="AboutChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                              RenderTransformOrigin="0.5,0.5">
+                                        <FontIcon.RenderTransform>
+                                            <RotateTransform x:Name="AboutChevronRotation" Angle="0"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                </Grid>
+                                <StackPanel x:Name="AboutContent" Visibility="Collapsed"
+                                            Background="{StaticResource CardAcrylicBrush}"
+                                            Padding="20,16" Margin="0,-2,0,0">
+                                    <StackPanel.ChildrenTransitions>
+                                        <TransitionCollection>
+                                            <EntranceThemeTransition FromVerticalOffset="20"/>
+                                        </TransitionCollection>
+                                    </StackPanel.ChildrenTransitions>
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="Fort.ind Desktop for UWP"
+                                                   FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Version 0.5 Beta"
+                                                   FontSize="12" Opacity="0.6"/>
+                                        <Button x:Name="AboutButton"
+                                                Click="AboutButton_Click"
+                                                Margin="0,4,0,0"
+                                                Style="{StaticResource ButtonRevealStyle}">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE946;" FontSize="14"/>
+                                                <TextBlock Text="View Details"/>
+                                            </StackPanel>
+                                        </Button>
+                                    </StackPanel>
+                                </StackPanel>
+
+                            </StackPanel>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

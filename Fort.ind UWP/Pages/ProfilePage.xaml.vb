@@ -147,8 +147,8 @@ Public NotInheritable Class ProfilePage
             Return
         End If
 
-        If newPwd.Length < 4 Then
-            ShowPasswordError("New password must be at least 4 characters")
+        If newPwd.Length < 8 Then
+            ShowPasswordError("New password must be at least 8 characters")
             Return
         End If
 

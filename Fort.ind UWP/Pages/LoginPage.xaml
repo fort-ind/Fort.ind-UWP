@@ -117,7 +117,8 @@
 
                         <TextBox x:Name="RegEmailBox"
                                  PlaceholderText="Email (optional)"
-                                 FontSize="14"/>
+                                 FontSize="14"
+                                 InputScope="EmailSmtpAddress"/>
 
                         <PasswordBox x:Name="RegPasswordBox"
                                      PlaceholderText="Password"
@@ -125,7 +126,8 @@
 
                         <PasswordBox x:Name="RegConfirmPasswordBox"
                                      PlaceholderText="Confirm Password"
-                                     FontSize="14"/>
+                                     FontSize="14"
+                                     KeyDown="RegConfirmPasswordBox_KeyDown"/>
 
                         <TextBlock x:Name="RegErrorText"
                                    Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
