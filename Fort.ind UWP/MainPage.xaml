@@ -34,7 +34,7 @@
                       FallbackColor="{ThemeResource SystemChromeMediumHighColor}"/>
     </Page.Resources>
 
-    <Grid Background="{StaticResource AppAcrylicBrush}">
+    <Grid x:Name="RootGrid" Background="{StaticResource AppAcrylicBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="32"/>
             <RowDefinition Height="137*"/>
@@ -283,6 +283,111 @@
                                         <RepositionThemeTransition/>
                                     </TransitionCollection>
                                 </StackPanel.ChildrenTransitions>
+
+                                <!-- ═══ Appearance ═══ -->
+                                <Grid Background="{StaticResource CardAcrylicBrush}"
+                                      Padding="16,14"
+                                      PointerEntered="SettingsRow_PointerEntered"
+                                      PointerExited="SettingsRow_PointerExited"
+                                      Tapped="AppearanceHeader_Tapped">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto"/>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Grid Width="36" Height="36" CornerRadius="4"
+                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                        <FontIcon Glyph="&#xE771;" FontSize="16"
+                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                    </Grid>
+                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                        <TextBlock Text="Appearance" FontSize="14" FontWeight="SemiBold"/>
+                                        <TextBlock Text="Change app theme and background color"
+                                                   FontSize="12" Opacity="0.6"/>
+                                    </StackPanel>
+                                    <FontIcon x:Name="AppearanceChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                              RenderTransformOrigin="0.5,0.5">
+                                        <FontIcon.RenderTransform>
+                                            <RotateTransform x:Name="AppearanceChevronRotation" Angle="0"/>
+                                        </FontIcon.RenderTransform>
+                                    </FontIcon>
+                                </Grid>
+                                <StackPanel x:Name="AppearanceContent" Visibility="Collapsed"
+                                            Background="{StaticResource CardAcrylicBrush}"
+                                            Padding="20,16" Margin="0,-2,0,0">
+                                    <StackPanel.ChildrenTransitions>
+                                        <TransitionCollection>
+                                            <EntranceThemeTransition FromVerticalOffset="20"/>
+                                        </TransitionCollection>
+                                    </StackPanel.ChildrenTransitions>
+                                    <StackPanel Spacing="16">
+                                        <!-- Theme -->
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE793;" FontSize="14" Opacity="0.7"/>
+                                                <TextBlock Text="App Theme" FontSize="13" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="16">
+                                                <RadioButton x:Name="ThemeSystemRadio" Content="System Default"
+                                                             GroupName="AppTheme" Tag="Default"
+                                                             Checked="ThemeRadio_Checked"/>
+                                                <RadioButton x:Name="ThemeLightRadio" Content="Light"
+                                                             GroupName="AppTheme" Tag="Light"
+                                                             Checked="ThemeRadio_Checked"/>
+                                                <RadioButton x:Name="ThemeDarkRadio" Content="Dark"
+                                                             GroupName="AppTheme" Tag="Dark"
+                                                             Checked="ThemeRadio_Checked"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                        <!-- Background Tint -->
+                                        <StackPanel Spacing="8">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <FontIcon Glyph="&#xE771;" FontSize="14" Opacity="0.7"/>
+                                                <TextBlock Text="Background Tint" FontSize="13" FontWeight="SemiBold"/>
+                                            </StackPanel>
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Button x:Name="TintDefaultButton" Tag="Default"
+                                                        Click="TintColorButton_Click"
+                                                        Width="32" Height="32" Padding="0" MinWidth="32"
+                                                        BorderThickness="2" BorderBrush="White"
+                                                        ToolTipService.ToolTip="Default">
+                                                    <FontIcon Glyph="&#xE8D8;" FontSize="14"/>
+                                                </Button>
+                                                <Button x:Name="TintBlueButton" Tag="#1E3A5F"
+                                                        Click="TintColorButton_Click"
+                                                        Width="32" Height="32" Padding="0" MinWidth="32"
+                                                        Background="#1E3A5F" BorderThickness="2"
+                                                        BorderBrush="Transparent"
+                                                        ToolTipService.ToolTip="Navy Blue"/>
+                                                <Button x:Name="TintPurpleButton" Tag="#2D1B69"
+                                                        Click="TintColorButton_Click"
+                                                        Width="32" Height="32" Padding="0" MinWidth="32"
+                                                        Background="#2D1B69" BorderThickness="2"
+                                                        BorderBrush="Transparent"
+                                                        ToolTipService.ToolTip="Deep Purple"/>
+                                                <Button x:Name="TintGreenButton" Tag="#0F3D2E"
+                                                        Click="TintColorButton_Click"
+                                                        Width="32" Height="32" Padding="0" MinWidth="32"
+                                                        Background="#0F3D2E" BorderThickness="2"
+                                                        BorderBrush="Transparent"
+                                                        ToolTipService.ToolTip="Forest Green"/>
+                                                <Button x:Name="TintRedButton" Tag="#3D1515"
+                                                        Click="TintColorButton_Click"
+                                                        Width="32" Height="32" Padding="0" MinWidth="32"
+                                                        Background="#3D1515" BorderThickness="2"
+                                                        BorderBrush="Transparent"
+                                                        ToolTipService.ToolTip="Deep Red"/>
+                                                <Button x:Name="TintSlateButton" Tag="#1A1A2E"
+                                                        Click="TintColorButton_Click"
+                                                        Width="32" Height="32" Padding="0" MinWidth="32"
+                                                        Background="#1A1A2E" BorderThickness="2"
+                                                        BorderBrush="Transparent"
+                                                        ToolTipService.ToolTip="Dark Slate"/>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
 
                                 <!-- ═══ Data Storage ═══ -->
                                 <Grid Background="{StaticResource CardAcrylicBrush}"

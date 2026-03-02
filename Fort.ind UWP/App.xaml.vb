@@ -25,6 +25,15 @@ NotInheritable Class App
             If e.PreviousExecutionState = ApplicationExecutionState.Terminated Then
                 ' TODO: Load state from previously suspended application
             End If
+
+            ' Apply saved theme before rendering to prevent a flash of the default theme
+            Dim savedTheme = Windows.Storage.ApplicationData.Current.LocalSettings.Values("AppTheme")?.ToString()
+            Select Case savedTheme
+                Case "Light" : rootFrame.RequestedTheme = ElementTheme.Light
+                Case "Dark"  : rootFrame.RequestedTheme = ElementTheme.Dark
+                Case Else    : rootFrame.RequestedTheme = ElementTheme.Default
+            End Select
+
             ' Place the frame in the current Window
             Window.Current.Content = rootFrame
         End If

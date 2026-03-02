@@ -28,6 +28,12 @@ Public NotInheritable Class MainPage
         New SearchItem("Clear Live Tile", "Settings", "Settings"),
         New SearchItem("Welcome Dialog", "Settings", "Settings"),
         New SearchItem("Show Welcome Dialog Again", "Settings", "Settings"),
+        New SearchItem("Appearance", "Settings", "Settings"),
+        New SearchItem("Theme", "Settings", "Settings"),
+        New SearchItem("Dark Mode", "Settings", "Settings"),
+        New SearchItem("Light Mode", "Settings", "Settings"),
+        New SearchItem("Background Color", "Settings", "Settings"),
+        New SearchItem("Background Tint", "Settings", "Settings"),
         New SearchItem("Account", "Profile", "Profile"),
         New SearchItem("Login", "Profile", "Profile"),
         New SearchItem("Register", "Profile", "Profile")
@@ -39,12 +45,16 @@ Public NotInheritable Class MainPage
     ' Guard to prevent multiple ContentDialogs from opening simultaneously
     Private _isDialogOpen As Boolean = False
 
+    ' Guard to suppress appearance control event handlers during settings load
+    Private _loadingSettings As Boolean = False
+
     Public Sub New()
         Me.InitializeComponent()
         SetupTitleBar()
         UpdateLiveTile()
         UpdateProfileNavItem()
         LoadSitemapItems()
+        LoadAppearanceSettings()
 
         ' Listen for auth state changes
         AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
@@ -98,10 +108,19 @@ Public NotInheritable Class MainPage
         Window.Current.SetTitleBar(AppTitleBar)
 
         ' Make title bar buttons transparent to match acrylic
+        UpdateTitleBarColors()
+    End Sub
+
+    Private Sub UpdateTitleBarColors()
         Dim titleBar = ApplicationView.GetForCurrentView().TitleBar
 
-        ' Determine colors based on current theme
-        Dim isDark = Application.Current.RequestedTheme = ApplicationTheme.Dark
+        ' Determine effective theme
+        Dim rootFrame = TryCast(Window.Current.Content, Frame)
+        Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
+        Dim isDark = If(effTheme = ElementTheme.Default,
+                        Application.Current.RequestedTheme = ApplicationTheme.Dark,
+                        effTheme = ElementTheme.Dark)
+
         Dim fgColor = If(isDark, Colors.White, Colors.Black)
         Dim inactiveFg = If(isDark, Color.FromArgb(128, 255, 255, 255), Color.FromArgb(128, 0, 0, 0))
         Dim hoverBg = If(isDark, Color.FromArgb(30, 255, 255, 255), Color.FromArgb(30, 0, 0, 0))
@@ -260,6 +279,123 @@ Public NotInheritable Class MainPage
     Private Sub ClearTileButton_Click(sender As Object, e As RoutedEventArgs)
         LiveTileService.ClearTile()
         LiveTileService.ClearBadge()
+    End Sub
+
+    ' ── Appearance settings ──
+
+    Private Sub LoadAppearanceSettings()
+        _loadingSettings = True
+        Try
+            Dim localSettings = ApplicationData.Current.LocalSettings
+
+            ' Restore theme selection
+            Dim theme As String = "Default"
+            If localSettings.Values.ContainsKey("AppTheme") Then
+                theme = localSettings.Values("AppTheme").ToString()
+            End If
+            Select Case theme
+                Case "Light" : ThemeLightRadio.IsChecked = True
+                Case "Dark"  : ThemeDarkRadio.IsChecked = True
+                Case Else    : ThemeSystemRadio.IsChecked = True
+            End Select
+            ApplyTheme(theme)
+
+            ' Restore tint color selection
+            Dim tintTag As String = "Default"
+            If localSettings.Values.ContainsKey("AppTintColor") Then
+                tintTag = localSettings.Values("AppTintColor").ToString()
+            End If
+            ApplyTintColor(tintTag)
+            UpdateTintSelection(tintTag)
+        Finally
+            _loadingSettings = False
+        End Try
+    End Sub
+
+    Private Sub ApplyTheme(theme As String)
+        Dim rootFrame = TryCast(Window.Current.Content, Frame)
+        If rootFrame Is Nothing Then Return
+        Select Case theme
+            Case "Light" : rootFrame.RequestedTheme = ElementTheme.Light
+            Case "Dark"  : rootFrame.RequestedTheme = ElementTheme.Dark
+            Case Else    : rootFrame.RequestedTheme = ElementTheme.Default
+        End Select
+        If Not _loadingSettings Then
+            ApplicationData.Current.LocalSettings.Values("AppTheme") = theme
+        End If
+        UpdateTitleBarColors()
+    End Sub
+
+    Private Sub ApplyTintColor(colorTag As String)
+        If String.IsNullOrEmpty(colorTag) OrElse colorTag = "Default" Then
+            Dim original = TryCast(Me.Resources("AppAcrylicBrush"), Brush)
+            If original IsNot Nothing Then RootGrid.Background = original
+        Else
+            Try
+                Dim c = HexToColor(colorTag)
+                RootGrid.Background = New AcrylicBrush() With {
+                    .BackgroundSource = AcrylicBackgroundSource.HostBackdrop,
+                    .TintColor = c,
+                    .TintOpacity = 0.8,
+                    .TintLuminosityOpacity = 0.85,
+                    .FallbackColor = c
+                }
+            Catch ex As Exception
+                Debug.WriteLine($"MainPage: ApplyTintColor failed – {ex.Message}")
+            End Try
+        End If
+        If Not _loadingSettings Then
+            ApplicationData.Current.LocalSettings.Values("AppTintColor") = colorTag
+        End If
+    End Sub
+
+    Private Sub UpdateTintSelection(selectedTag As String)
+        Dim swatches As Button() = {TintDefaultButton, TintBlueButton, TintPurpleButton,
+                                    TintGreenButton, TintRedButton, TintSlateButton}
+        For Each btn In swatches
+            btn.BorderBrush = New SolidColorBrush(Colors.Transparent)
+        Next
+        Dim sel As Button = Nothing
+        Select Case If(selectedTag, "Default")
+            Case "Default" : sel = TintDefaultButton
+            Case "#1E3A5F" : sel = TintBlueButton
+            Case "#2D1B69" : sel = TintPurpleButton
+            Case "#0F3D2E" : sel = TintGreenButton
+            Case "#3D1515" : sel = TintRedButton
+            Case "#1A1A2E" : sel = TintSlateButton
+        End Select
+        If sel IsNot Nothing Then
+            sel.BorderBrush = New SolidColorBrush(Colors.White)
+        End If
+    End Sub
+
+    Private Shared Function HexToColor(hex As String) As Color
+        hex = hex.TrimStart("#"c)
+        Return Color.FromArgb(255,
+                              Convert.ToByte(hex.Substring(0, 2), 16),
+                              Convert.ToByte(hex.Substring(2, 2), 16),
+                              Convert.ToByte(hex.Substring(4, 2), 16))
+    End Function
+
+    Private Sub AppearanceHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
+        ToggleSettingsRow(AppearanceContent, AppearanceChevronRotation)
+    End Sub
+
+    Private Sub ThemeRadio_Checked(sender As Object, e As RoutedEventArgs)
+        If _loadingSettings Then Return
+        Dim radio = TryCast(sender, RadioButton)
+        If radio IsNot Nothing Then
+            ApplyTheme(radio.Tag.ToString())
+        End If
+    End Sub
+
+    Private Sub TintColorButton_Click(sender As Object, e As RoutedEventArgs)
+        Dim btn = TryCast(sender, Button)
+        If btn IsNot Nothing Then
+            Dim tag = If(btn.Tag?.ToString(), "Default")
+            ApplyTintColor(tag)
+            UpdateTintSelection(tag)
+        End If
     End Sub
 
     ' ── Settings row expand/collapse ──
