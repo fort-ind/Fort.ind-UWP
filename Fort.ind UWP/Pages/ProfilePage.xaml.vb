@@ -4,6 +4,9 @@
 Public NotInheritable Class ProfilePage
     Inherits Page
 
+    ' Guard to prevent multiple ContentDialogs from opening simultaneously
+    Private _isDialogOpen As Boolean = False
+
     Public Sub New()
         Me.InitializeComponent()
         AddHandler Loaded, AddressOf ProfilePage_Loaded
@@ -176,53 +179,71 @@ Public NotInheritable Class ProfilePage
     End Sub
 
     Private Async Sub LogoutButton_Click(sender As Object, e As RoutedEventArgs)
-        Dim dialog As New ContentDialog()
-        dialog.Title = "Sign Out"
-        dialog.Content = "Are you sure you want to sign out?"
-        dialog.PrimaryButtonText = "Sign Out"
-        dialog.CloseButtonText = "Cancel"
-        dialog.DefaultButton = ContentDialogButton.Close
-        dialog.XamlRoot = Me.XamlRoot
+        If _isDialogOpen Then Return
+        _isDialogOpen = True
 
-        Dim result = Await dialog.ShowAsync()
+        Try
+            Dim dialog As New ContentDialog()
+            dialog.Title = "Sign Out"
+            dialog.Content = "Are you sure you want to sign out?"
+            dialog.PrimaryButtonText = "Sign Out"
+            dialog.CloseButtonText = "Cancel"
+            dialog.DefaultButton = ContentDialogButton.Close
+            dialog.XamlRoot = Me.XamlRoot
 
-        If result = ContentDialogResult.Primary Then
-            Await ProfileService.LogoutAsync()
-            RefreshUI()
-        End If
+            Dim result = Await dialog.ShowAsync()
+
+            If result = ContentDialogResult.Primary Then
+                Await ProfileService.LogoutAsync()
+                RefreshUI()
+            End If
+        Catch ex As Exception
+            Debug.WriteLine($"ProfilePage: Logout dialog failed – {ex.Message}")
+        Finally
+            _isDialogOpen = False
+        End Try
     End Sub
 
     Private Async Sub DeleteAccountButton_Click(sender As Object, e As RoutedEventArgs)
-        Dim dialog As New ContentDialog()
-        dialog.Title = "Delete Account"
-        dialog.Content = "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost."
-        dialog.PrimaryButtonText = "Delete Forever"
-        dialog.CloseButtonText = "Cancel"
-        dialog.DefaultButton = ContentDialogButton.Close
-        dialog.XamlRoot = Me.XamlRoot
+        If _isDialogOpen Then Return
+        _isDialogOpen = True
 
-        Dim result = Await dialog.ShowAsync()
+        Try
+            Dim dialog As New ContentDialog()
+            dialog.Title = "Delete Account"
+            dialog.Content = "Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently lost."
+            dialog.PrimaryButtonText = "Delete Forever"
+            dialog.CloseButtonText = "Cancel"
+            dialog.DefaultButton = ContentDialogButton.Close
+            dialog.XamlRoot = Me.XamlRoot
 
-        If result = ContentDialogResult.Primary Then
-            ' Ask for confirmation again
-            Dim confirmDialog As New ContentDialog()
-            confirmDialog.Title = "Final Confirmation"
+            Dim result = Await dialog.ShowAsync()
 
-            Dim confirmBox As New TextBox()
-            confirmBox.PlaceholderText = "Type DELETE"
-            confirmDialog.Content = confirmBox
+            If result = ContentDialogResult.Primary Then
+                ' Ask for confirmation again
+                Dim confirmDialog As New ContentDialog()
+                confirmDialog.Title = "Final Confirmation"
 
-            confirmDialog.PrimaryButtonText = "Delete"
-            confirmDialog.CloseButtonText = "Cancel"
-            confirmDialog.XamlRoot = Me.XamlRoot
+                Dim confirmBox As New TextBox()
+                confirmBox.PlaceholderText = "Type DELETE"
+                confirmDialog.Content = confirmBox
 
-            Dim confirmResult = Await confirmDialog.ShowAsync()
+                confirmDialog.PrimaryButtonText = "Delete"
+                confirmDialog.CloseButtonText = "Cancel"
+                confirmDialog.XamlRoot = Me.XamlRoot
 
-            If confirmResult = ContentDialogResult.Primary AndAlso confirmBox.Text.Trim().ToUpper() = "DELETE" Then
-                Await ProfileService.DeleteAccountAsync()
-                RefreshUI()
+                Dim confirmResult = Await confirmDialog.ShowAsync()
+
+                If confirmResult = ContentDialogResult.Primary AndAlso confirmBox.Text.Trim().ToUpper() = "DELETE" Then
+                    Await ProfileService.DeleteAccountAsync()
+                    RefreshUI()
+                End If
             End If
-        End If
+        Catch ex As Exception
+            Debug.WriteLine($"ProfilePage: Delete account dialog failed – {ex.Message}")
+        Finally
+            _isDialogOpen = False
+        End Try
     End Sub
 
     Private Sub ShowPasswordError(message As String)
@@ -231,12 +252,21 @@ Public NotInheritable Class ProfilePage
     End Sub
 
     Private Async Function ShowMessageAsync(title As String, message As String) As Task
-        Dim dialog As New ContentDialog()
-        dialog.Title = title
-        dialog.Content = message
-        dialog.CloseButtonText = "OK"
-        dialog.XamlRoot = Me.XamlRoot
-        Await dialog.ShowAsync()
+        If _isDialogOpen Then Return
+        _isDialogOpen = True
+
+        Try
+            Dim dialog As New ContentDialog()
+            dialog.Title = title
+            dialog.Content = message
+            dialog.CloseButtonText = "OK"
+            dialog.XamlRoot = Me.XamlRoot
+            Await dialog.ShowAsync()
+        Catch ex As Exception
+            Debug.WriteLine($"ProfilePage: ShowMessage dialog failed – {ex.Message}")
+        Finally
+            _isDialogOpen = False
+        End Try
     End Function
 
 End Class

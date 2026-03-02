@@ -64,8 +64,11 @@ Public Class SitemapService
 
     Private Shared Function GetTitle(path As String) As String
         ' Use the last segment of the path as the display name when showing results! example: "games/html/rynis-game" -> "Rynis Game"
-        Dim lastSlash = path.LastIndexOf("/"c)
-        Dim slug = If(lastSlash >= 0, path.Substring(lastSlash + 1), path)
+        Dim trimmed = path.TrimEnd("/"c)
+        Dim lastSlash = trimmed.LastIndexOf("/"c)
+        Dim slug = If(lastSlash >= 0, trimmed.Substring(lastSlash + 1), trimmed)
+
+        If String.IsNullOrEmpty(slug) Then Return path
 
         ' Title-case in a single pass with one StringBuilder
         Dim sb As New System.Text.StringBuilder(slug.Length)

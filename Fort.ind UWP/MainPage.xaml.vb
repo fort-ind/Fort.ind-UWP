@@ -121,23 +121,29 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Sub UpdateLiveTile()
-        ' Update Live Tile with latest news
-        Dim newsItems As New List(Of NewsItem) From {
-            New NewsItem("Whats new?", "2026.1 has been released for web go to fort1nd.com to see whats new", "welcome"),
-            New NewsItem("Get Started", "Hello! fort.uwp is now ready to use. :3", "features")
-        }
+        Try
+            ' Update Live Tile with latest news
+            Dim newsItems As New List(Of NewsItem) From {
+                New NewsItem("Whats new?", "2026.1 has been released for web go to fort1nd.com to see whats new", "welcome"),
+                New NewsItem("Get Started", "Hello! fort.uwp is now ready to use. :3", "features")
+            }
 
-        ' Update tile with cycling news
-        LiveTileService.UpdateTileWithMultipleNews(newsItems)
+            ' Update tile with cycling news
+            LiveTileService.UpdateTileWithMultipleNews(newsItems)
 
-        ' Show badge indicating new content
-        LiveTileService.UpdateBadgeGlyph("newMessage")
+            ' Show badge indicating new content
+            LiveTileService.UpdateBadgeGlyph("newMessage")
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: UpdateLiveTile failed – {ex.Message}")
+        End Try
     End Sub
 
     Private Async Sub NavView_Loaded(sender As Object, e As RoutedEventArgs)
         Try
             ' Select the first item (Latest News) by default
-            NavView.SelectedItem = NavView.MenuItems(0)
+            If NavView.MenuItems.Count > 0 Then
+                NavView.SelectedItem = NavView.MenuItems(0)
+            End If
             ' Ensure pane starts closed
             NavView.IsPaneOpen = False
 

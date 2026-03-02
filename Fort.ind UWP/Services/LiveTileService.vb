@@ -22,6 +22,8 @@ Public Class LiveTileService
     ''' Updates the Live Tile with multiple news items that cycle
     ''' </summary>
     Public Shared Sub UpdateTileWithMultipleNews(newsItems As List(Of NewsItem))
+        If newsItems Is Nothing OrElse newsItems.Count = 0 Then Return
+
         ' Enable notification queue to show multiple tiles
         Dim tileUpdater = TileUpdateManager.CreateTileUpdaterForApplication()
         tileUpdater.EnableNotificationQueue(True)
@@ -148,6 +150,8 @@ Public Class LiveTileService
     ''' Updates the badge with a glyph (icon)
     ''' </summary>
     Public Shared Sub UpdateBadgeGlyph(glyph As String)
+        If String.IsNullOrEmpty(glyph) Then Return
+
         ' Available glyphs: none, activity, alarm, alert, attention, available, away, busy, 
         ' error, newMessage, paused, playing, unavailable
         Dim badgeXml = $"<badge value=""{glyph}""/>"

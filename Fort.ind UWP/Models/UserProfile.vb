@@ -62,10 +62,21 @@ Public Class UserProfile
     Public Property LastLoginDate As DateTime
 
     ''' <summary>
-    ''' User preferences and settings
+    ''' User preferences and settings.
+    ''' Getter ensures this is never Nothing even after deserialization
+    ''' (DataContractJsonSerializer bypasses the constructor).
     ''' </summary>
     <DataMember>
     Public Property Preferences As UserPreferences
+        Get
+            If _preferences Is Nothing Then _preferences = New UserPreferences()
+            Return _preferences
+        End Get
+        Set(value As UserPreferences)
+            _preferences = value
+        End Set
+    End Property
+    Private _preferences As UserPreferences
 
     ''' <summary>
     ''' Creates a new empty profile
