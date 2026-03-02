@@ -11,9 +11,9 @@
     <Page.Resources>
         <AcrylicBrush x:Key="CardAcrylicBrush"
                       BackgroundSource="Backdrop"
-                      TintColor="#2d2d44"
+                      TintColor="{ThemeResource SystemChromeMediumHighColor}"
                       TintOpacity="0.6"
-                      FallbackColor="#2d2d44"/>
+                      FallbackColor="{ThemeResource SystemChromeMediumHighColor}"/>
     </Page.Resources>
 
     <ScrollViewer>
@@ -60,7 +60,7 @@
                     <!-- Profile Picture -->
                     <Grid Width="80" Height="80" 
                           CornerRadius="40"
-                          Background="#3d3d5c">
+                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                         <TextBlock x:Name="ProfileInitials"
                                    Text="?"
                                    FontSize="32"
@@ -164,7 +164,7 @@
                             </StackPanel>
 
                             <TextBlock x:Name="EditErrorText"
-                                       Foreground="#FF6B6B"
+                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                        FontSize="12"
                                        Visibility="Collapsed"/>
 
@@ -205,7 +205,7 @@
                             </StackPanel>
 
                             <TextBlock x:Name="PasswordErrorText"
-                                       Foreground="#FF6B6B"
+                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                        FontSize="12"
                                        Visibility="Collapsed"/>
 
@@ -216,20 +216,22 @@
                     </Grid>
 
                     <!-- Danger Zone -->
-                    <Grid Background="#402d2d"
-                          CornerRadius="8"
+                    <Grid Background="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                          Opacity="0.15"
+                          CornerRadius="8"/>
+                    <Grid CornerRadius="8"
                           Padding="20">
                         <StackPanel Spacing="12">
                             <TextBlock Text="?? Danger Zone"
                                        FontSize="16"
                                        FontWeight="SemiBold"
-                                       Foreground="#FF6B6B"/>
+                                       Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"/>
                             <TextBlock Text="Deleting your account is permanent and cannot be undone."
                                        TextWrapping="Wrap"
                                        Opacity="0.7"/>
                             <Button x:Name="DeleteAccountButton"
                                     Content="Delete Account"
-                                    Background="#803030"
+                                    Background="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                     Click="DeleteAccountButton_Click"/>
                         </StackPanel>
                     </Grid>

@@ -12,16 +12,16 @@
         <!-- Acrylic background -->
         <AcrylicBrush x:Key="LoginAcrylicBrush"
                       BackgroundSource="HostBackdrop"
-                      TintColor="#1a1a2e"
+                      TintColor="{ThemeResource SystemChromeMediumLowColor}"
                       TintOpacity="0.7"
-                      FallbackColor="#1a1a2e"/>
+                      FallbackColor="{ThemeResource SystemChromeMediumLowColor}"/>
 
         <!-- Card background -->
         <AcrylicBrush x:Key="CardAcrylicBrush"
                       BackgroundSource="Backdrop"
-                      TintColor="#2d2d44"
+                      TintColor="{ThemeResource SystemChromeMediumHighColor}"
                       TintOpacity="0.7"
-                      FallbackColor="#2d2d44"/>
+                      FallbackColor="{ThemeResource SystemChromeMediumHighColor}"/>
     </Page.Resources>
 
     <Grid Background="{StaticResource LoginAcrylicBrush}">
@@ -82,7 +82,7 @@
                                   IsChecked="True"/>
 
                         <TextBlock x:Name="ErrorText"
-                                   Foreground="#FF6B6B"
+                                   Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap"
                                    Visibility="Collapsed"/>
@@ -128,7 +128,7 @@
                                      FontSize="14"/>
 
                         <TextBlock x:Name="RegErrorText"
-                                   Foreground="#FF6B6B"
+                                   Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap"
                                    Visibility="Collapsed"/>
@@ -164,7 +164,7 @@
         <!-- Loading overlay -->
         <Grid x:Name="LoadingOverlay" 
               Grid.RowSpan="2" 
-              Background="#80000000" 
+              Background="{ThemeResource SystemControlPageBackgroundMediumAltMediumBrush}" 
               Visibility="Collapsed">
             <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
                 <ProgressRing IsActive="True" Width="40" Height="40"/>
