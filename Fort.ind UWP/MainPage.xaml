@@ -357,31 +357,31 @@
                                                 <Button x:Name="TintBlueButton" Tag="#1E3A5F"
                                                         Click="TintColorButton_Click"
                                                         Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#1E3A5F" BorderThickness="2"
+                                                        Background="#1D6FA5" BorderThickness="2"
                                                         BorderBrush="Transparent"
                                                         ToolTipService.ToolTip="Navy Blue"/>
                                                 <Button x:Name="TintPurpleButton" Tag="#2D1B69"
                                                         Click="TintColorButton_Click"
                                                         Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#2D1B69" BorderThickness="2"
+                                                        Background="#6041B0" BorderThickness="2"
                                                         BorderBrush="Transparent"
                                                         ToolTipService.ToolTip="Deep Purple"/>
                                                 <Button x:Name="TintGreenButton" Tag="#0F3D2E"
                                                         Click="TintColorButton_Click"
                                                         Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#0F3D2E" BorderThickness="2"
+                                                        Background="#1B7A4E" BorderThickness="2"
                                                         BorderBrush="Transparent"
                                                         ToolTipService.ToolTip="Forest Green"/>
                                                 <Button x:Name="TintRedButton" Tag="#3D1515"
                                                         Click="TintColorButton_Click"
                                                         Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#3D1515" BorderThickness="2"
+                                                        Background="#B03232" BorderThickness="2"
                                                         BorderBrush="Transparent"
                                                         ToolTipService.ToolTip="Deep Red"/>
                                                 <Button x:Name="TintSlateButton" Tag="#1A1A2E"
                                                         Click="TintColorButton_Click"
                                                         Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#1A1A2E" BorderThickness="2"
+                                                        Background="#404080" BorderThickness="2"
                                                         BorderBrush="Transparent"
                                                         ToolTipService.ToolTip="Dark Slate"/>
                                             </StackPanel>

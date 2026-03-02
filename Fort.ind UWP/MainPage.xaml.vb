@@ -48,6 +48,15 @@ Public NotInheritable Class MainPage
     ' Guard to suppress appearance control event handlers during settings load
     Private _loadingSettings As Boolean = False
 
+    ' Light-mode equivalents for each dark tint color
+    Private Shared ReadOnly s_lightTintMap As New Dictionary(Of String, String) From {
+        {"#1E3A5F", "#C8E0F5"},
+        {"#2D1B69", "#DDD0F5"},
+        {"#0F3D2E", "#C5E8D5"},
+        {"#3D1515", "#F5CECE"},
+        {"#1A1A2E", "#D0D0EA"}
+    }
+
     Public Sub New()
         Me.InitializeComponent()
         SetupTitleBar()
@@ -324,6 +333,13 @@ Public NotInheritable Class MainPage
             ApplicationData.Current.LocalSettings.Values("AppTheme") = theme
         End If
         UpdateTitleBarColors()
+        ' Re-apply tint so the correct light/dark shade is used for the new theme
+        If Not _loadingSettings Then
+            Dim savedTint = ApplicationData.Current.LocalSettings.Values("AppTintColor")?.ToString()
+            If Not String.IsNullOrEmpty(savedTint) AndAlso savedTint <> "Default" Then
+                ApplyTintColor(savedTint)
+            End If
+        End If
     End Sub
 
     Private Sub ApplyTintColor(colorTag As String)
@@ -332,11 +348,28 @@ Public NotInheritable Class MainPage
             If original IsNot Nothing Then RootGrid.Background = original
         Else
             Try
-                Dim c = HexToColor(colorTag)
+                ' Determine effective theme to choose the right tint shade
+                Dim rootFrame = TryCast(Window.Current.Content, Frame)
+                Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
+                Dim isDark = If(effTheme = ElementTheme.Default,
+                                Application.Current.RequestedTheme = ApplicationTheme.Dark,
+                                effTheme = ElementTheme.Dark)
+
+                Dim hexToApply As String = colorTag
+                Dim tintOpacity As Double = 0.8
+                If Not isDark Then
+                    Dim lightHex As String = Nothing
+                    If s_lightTintMap.TryGetValue(colorTag, lightHex) Then
+                        hexToApply = lightHex
+                    End If
+                    tintOpacity = 0.6
+                End If
+
+                Dim c = HexToColor(hexToApply)
                 RootGrid.Background = New AcrylicBrush() With {
                     .BackgroundSource = AcrylicBackgroundSource.HostBackdrop,
                     .TintColor = c,
-                    .TintOpacity = 0.8,
+                    .TintOpacity = tintOpacity,
                     .TintLuminosityOpacity = 0.85,
                     .FallbackColor = c
                 }
@@ -365,7 +398,12 @@ Public NotInheritable Class MainPage
             Case "#1A1A2E" : sel = TintSlateButton
         End Select
         If sel IsNot Nothing Then
-            sel.BorderBrush = New SolidColorBrush(Colors.White)
+            Dim rootFrame = TryCast(Window.Current.Content, Frame)
+            Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
+            Dim isDark = If(effTheme = ElementTheme.Default,
+                            Application.Current.RequestedTheme = ApplicationTheme.Dark,
+                            effTheme = ElementTheme.Dark)
+            sel.BorderBrush = New SolidColorBrush(If(isDark, Colors.White, Colors.Black))
         End If
     End Sub
 
