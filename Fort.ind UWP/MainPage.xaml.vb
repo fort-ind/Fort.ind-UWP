@@ -465,17 +465,13 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Sub SettingsRow_PointerEntered(sender As Object, e As PointerRoutedEventArgs)
-        Dim grid = TryCast(sender, Grid)
-        If grid IsNot Nothing Then
-            grid.Opacity = 0.85
-        End If
+        Dim element = TryCast(sender, FrameworkElement)
+        If element IsNot Nothing Then element.Opacity = 0.85
     End Sub
 
     Private Sub SettingsRow_PointerExited(sender As Object, e As PointerRoutedEventArgs)
-        Dim grid = TryCast(sender, Grid)
-        If grid IsNot Nothing Then
-            grid.Opacity = 1.0
-        End If
+        Dim element = TryCast(sender, FrameworkElement)
+        If element IsNot Nothing Then element.Opacity = 1.0
     End Sub
 
     Private Async Function ShowWelcomeDialogAsync() As Task

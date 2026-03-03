@@ -276,7 +276,7 @@
                                        Opacity="0.6"
                                        Margin="0,0,0,24"/>
 
-                            <StackPanel MaxWidth="700" HorizontalAlignment="Stretch" Spacing="4">
+                            <StackPanel MaxWidth="700" HorizontalAlignment="Stretch" Spacing="8">
                                 <StackPanel.ChildrenTransitions>
                                     <TransitionCollection>
                                         <EntranceThemeTransition FromVerticalOffset="40"/>
@@ -285,330 +285,353 @@
                                 </StackPanel.ChildrenTransitions>
 
                                 <!-- ═══ Appearance ═══ -->
-                                <Grid Background="{StaticResource CardAcrylicBrush}"
-                                      Padding="16,14"
-                                      PointerEntered="SettingsRow_PointerEntered"
-                                      PointerExited="SettingsRow_PointerExited"
-                                      Tapped="AppearanceHeader_Tapped">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Width="36" Height="36" CornerRadius="4"
-                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
-                                        <FontIcon Glyph="&#xE771;" FontSize="16"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Appearance" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Change app theme and background color"
-                                                   FontSize="12" Opacity="0.6"/>
-                                    </StackPanel>
-                                    <FontIcon x:Name="AppearanceChevron" Grid.Column="2" Glyph="&#xE76C;"
-                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
-                                              RenderTransformOrigin="0.5,0.5">
-                                        <FontIcon.RenderTransform>
-                                            <RotateTransform x:Name="AppearanceChevronRotation" Angle="0"/>
-                                        </FontIcon.RenderTransform>
-                                    </FontIcon>
-                                </Grid>
-                                <StackPanel x:Name="AppearanceContent" Visibility="Collapsed"
-                                            Background="{StaticResource CardAcrylicBrush}"
-                                            Padding="20,16" Margin="0,-2,0,0">
-                                    <StackPanel.ChildrenTransitions>
-                                        <TransitionCollection>
-                                            <EntranceThemeTransition FromVerticalOffset="20"/>
-                                        </TransitionCollection>
-                                    </StackPanel.ChildrenTransitions>
-                                    <StackPanel Spacing="16">
-                                        <!-- Theme -->
-                                        <StackPanel Spacing="8">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE793;" FontSize="14" Opacity="0.7"/>
-                                                <TextBlock Text="App Theme" FontSize="13" FontWeight="SemiBold"/>
+                                <Border Background="{StaticResource CardAcrylicBrush}"
+                                        CornerRadius="8"
+                                        PointerEntered="SettingsRow_PointerEntered"
+                                        PointerExited="SettingsRow_PointerExited">
+                                    <StackPanel>
+                                        <Grid Padding="16,14" Tapped="AppearanceHeader_Tapped">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Width="36" Height="36" CornerRadius="4"
+                                                  Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                                <FontIcon Glyph="&#xE771;" FontSize="16"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="Appearance" FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="Change app theme and background color"
+                                                           FontSize="12" Opacity="0.6"/>
                                             </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Spacing="16">
-                                                <RadioButton x:Name="ThemeSystemRadio" Content="System Default"
-                                                             GroupName="AppTheme" Tag="Default"
-                                                             Checked="ThemeRadio_Checked"/>
-                                                <RadioButton x:Name="ThemeLightRadio" Content="Light"
-                                                             GroupName="AppTheme" Tag="Light"
-                                                             Checked="ThemeRadio_Checked"/>
-                                                <RadioButton x:Name="ThemeDarkRadio" Content="Dark"
-                                                             GroupName="AppTheme" Tag="Dark"
-                                                             Checked="ThemeRadio_Checked"/>
+                                            <FontIcon x:Name="AppearanceChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                                      FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                <FontIcon.RenderTransform>
+                                                    <RotateTransform x:Name="AppearanceChevronRotation" Angle="0"/>
+                                                </FontIcon.RenderTransform>
+                                            </FontIcon>
+                                        </Grid>
+                                        <StackPanel x:Name="AppearanceContent" Visibility="Collapsed"
+                                                    Padding="20,0,20,16">
+                                            <StackPanel.ChildrenTransitions>
+                                                <TransitionCollection>
+                                                    <EntranceThemeTransition FromVerticalOffset="20"/>
+                                                </TransitionCollection>
+                                            </StackPanel.ChildrenTransitions>
+                                            <Rectangle Height="1" Margin="0,0,0,14"
+                                                       Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                                       Opacity="0.08"/>
+                                            <StackPanel Spacing="16">
+                                                <StackPanel Spacing="8">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <FontIcon Glyph="&#xE793;" FontSize="14" Opacity="0.7"/>
+                                                        <TextBlock Text="App Theme" FontSize="13" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="16">
+                                                        <RadioButton x:Name="ThemeSystemRadio" Content="System Default"
+                                                                     GroupName="AppTheme" Tag="Default"
+                                                                     Checked="ThemeRadio_Checked"/>
+                                                        <RadioButton x:Name="ThemeLightRadio" Content="Light"
+                                                                     GroupName="AppTheme" Tag="Light"
+                                                                     Checked="ThemeRadio_Checked"/>
+                                                        <RadioButton x:Name="ThemeDarkRadio" Content="Dark"
+                                                                     GroupName="AppTheme" Tag="Dark"
+                                                                     Checked="ThemeRadio_Checked"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <StackPanel Spacing="8">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <FontIcon Glyph="&#xE771;" FontSize="14" Opacity="0.7"/>
+                                                        <TextBlock Text="Background Tint" FontSize="13" FontWeight="SemiBold"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <Button x:Name="TintDefaultButton" Tag="Default"
+                                                                Click="TintColorButton_Click"
+                                                                Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                BorderThickness="2" BorderBrush="White"
+                                                                ToolTipService.ToolTip="Default">
+                                                            <FontIcon Glyph="&#xE8D8;" FontSize="14"/>
+                                                        </Button>
+                                                        <Button x:Name="TintBlueButton" Tag="#1E3A5F"
+                                                                Click="TintColorButton_Click"
+                                                                Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                Background="#1D6FA5" BorderThickness="2"
+                                                                BorderBrush="Transparent"
+                                                                ToolTipService.ToolTip="Navy Blue"/>
+                                                        <Button x:Name="TintPurpleButton" Tag="#2D1B69"
+                                                                Click="TintColorButton_Click"
+                                                                Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                Background="#6041B0" BorderThickness="2"
+                                                                BorderBrush="Transparent"
+                                                                ToolTipService.ToolTip="Deep Purple"/>
+                                                        <Button x:Name="TintGreenButton" Tag="#0F3D2E"
+                                                                Click="TintColorButton_Click"
+                                                                Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                Background="#1B7A4E" BorderThickness="2"
+                                                                BorderBrush="Transparent"
+                                                                ToolTipService.ToolTip="Forest Green"/>
+                                                        <Button x:Name="TintRedButton" Tag="#3D1515"
+                                                                Click="TintColorButton_Click"
+                                                                Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                Background="#B03232" BorderThickness="2"
+                                                                BorderBrush="Transparent"
+                                                                ToolTipService.ToolTip="Deep Red"/>
+                                                        <Button x:Name="TintSlateButton" Tag="#1A1A2E"
+                                                                Click="TintColorButton_Click"
+                                                                Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                Background="#404080" BorderThickness="2"
+                                                                BorderBrush="Transparent"
+                                                                ToolTipService.ToolTip="Dark Slate"/>
+                                                    </StackPanel>
+                                                </StackPanel>
                                             </StackPanel>
                                         </StackPanel>
-                                        <!-- Background Tint -->
-                                        <StackPanel Spacing="8">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE771;" FontSize="14" Opacity="0.7"/>
-                                                <TextBlock Text="Background Tint" FontSize="13" FontWeight="SemiBold"/>
-                                            </StackPanel>
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <Button x:Name="TintDefaultButton" Tag="Default"
-                                                        Click="TintColorButton_Click"
-                                                        Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        BorderThickness="2" BorderBrush="White"
-                                                        ToolTipService.ToolTip="Default">
-                                                    <FontIcon Glyph="&#xE8D8;" FontSize="14"/>
-                                                </Button>
-                                                <Button x:Name="TintBlueButton" Tag="#1E3A5F"
-                                                        Click="TintColorButton_Click"
-                                                        Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#1D6FA5" BorderThickness="2"
-                                                        BorderBrush="Transparent"
-                                                        ToolTipService.ToolTip="Navy Blue"/>
-                                                <Button x:Name="TintPurpleButton" Tag="#2D1B69"
-                                                        Click="TintColorButton_Click"
-                                                        Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#6041B0" BorderThickness="2"
-                                                        BorderBrush="Transparent"
-                                                        ToolTipService.ToolTip="Deep Purple"/>
-                                                <Button x:Name="TintGreenButton" Tag="#0F3D2E"
-                                                        Click="TintColorButton_Click"
-                                                        Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#1B7A4E" BorderThickness="2"
-                                                        BorderBrush="Transparent"
-                                                        ToolTipService.ToolTip="Forest Green"/>
-                                                <Button x:Name="TintRedButton" Tag="#3D1515"
-                                                        Click="TintColorButton_Click"
-                                                        Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#B03232" BorderThickness="2"
-                                                        BorderBrush="Transparent"
-                                                        ToolTipService.ToolTip="Deep Red"/>
-                                                <Button x:Name="TintSlateButton" Tag="#1A1A2E"
-                                                        Click="TintColorButton_Click"
-                                                        Width="32" Height="32" Padding="0" MinWidth="32"
-                                                        Background="#404080" BorderThickness="2"
-                                                        BorderBrush="Transparent"
-                                                        ToolTipService.ToolTip="Dark Slate"/>
-                                            </StackPanel>
-                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
+                                </Border>
 
                                 <!-- ═══ Data Storage ═══ -->
-                                <Grid Background="{StaticResource CardAcrylicBrush}"
-                                      Padding="16,14"
-                                      PointerEntered="SettingsRow_PointerEntered"
-                                      PointerExited="SettingsRow_PointerExited"
-                                      Tapped="StorageHeader_Tapped">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Width="36" Height="36" CornerRadius="4"
-                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
-                                        <FontIcon Glyph="&#xEDA2;" FontSize="16"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Data Storage" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Manage local storage and view account data"
-                                                   FontSize="12" Opacity="0.6"/>
-                                    </StackPanel>
-                                    <FontIcon x:Name="StorageChevron" Grid.Column="2" Glyph="&#xE76C;"
-                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
-                                              RenderTransformOrigin="0.5,0.5">
-                                        <FontIcon.RenderTransform>
-                                            <RotateTransform x:Name="StorageChevronRotation" Angle="0"/>
-                                        </FontIcon.RenderTransform>
-                                    </FontIcon>
-                                </Grid>
-                                <StackPanel x:Name="StorageContent" Visibility="Collapsed"
-                                            Background="{StaticResource CardAcrylicBrush}"
-                                            Padding="20,16" Margin="0,-2,0,0">
-                                    <StackPanel.ChildrenTransitions>
-                                        <TransitionCollection>
-                                            <EntranceThemeTransition FromVerticalOffset="20"/>
-                                        </TransitionCollection>
-                                    </StackPanel.ChildrenTransitions>
-                                    <StackPanel Spacing="8">
-                                        <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <FontIcon Glyph="&#xE8B7;" FontSize="14" Opacity="0.7"/>
-                                            <TextBlock Text="Local JSON Storage"
-                                                       FontSize="13" FontWeight="SemiBold"/>
+                                <Border Background="{StaticResource CardAcrylicBrush}"
+                                        CornerRadius="8"
+                                        PointerEntered="SettingsRow_PointerEntered"
+                                        PointerExited="SettingsRow_PointerExited">
+                                    <StackPanel>
+                                        <Grid Padding="16,14" Tapped="StorageHeader_Tapped">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Width="36" Height="36" CornerRadius="4"
+                                                  Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                                <FontIcon Glyph="&#xEDA2;" FontSize="16"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="Data Storage" FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="Manage local storage and view account data"
+                                                           FontSize="12" Opacity="0.6"/>
+                                            </StackPanel>
+                                            <FontIcon x:Name="StorageChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                                      FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                <FontIcon.RenderTransform>
+                                                    <RotateTransform x:Name="StorageChevronRotation" Angle="0"/>
+                                                </FontIcon.RenderTransform>
+                                            </FontIcon>
+                                        </Grid>
+                                        <StackPanel x:Name="StorageContent" Visibility="Collapsed"
+                                                    Padding="20,0,20,16">
+                                            <StackPanel.ChildrenTransitions>
+                                                <TransitionCollection>
+                                                    <EntranceThemeTransition FromVerticalOffset="20"/>
+                                                </TransitionCollection>
+                                            </StackPanel.ChildrenTransitions>
+                                            <Rectangle Height="1" Margin="0,0,0,14"
+                                                       Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                                       Opacity="0.08"/>
+                                            <StackPanel Spacing="8">
+                                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                                    <FontIcon Glyph="&#xE8B7;" FontSize="14" Opacity="0.7"/>
+                                                    <TextBlock Text="Local JSON Storage"
+                                                               FontSize="13" FontWeight="SemiBold"/>
+                                                </StackPanel>
+                                                <TextBlock Text="Your account data is stored locally on this device as JSON files."
+                                                           FontSize="12" Opacity="0.7" TextWrapping="Wrap"
+                                                           Margin="0,0,0,4"/>
+                                                <TextBlock x:Name="StoragePathText"
+                                                           FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
+                                                <TextBlock x:Name="UserCountText"
+                                                           FontSize="12" Opacity="0.7"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="6"
+                                                            Margin="0,8,0,0" Opacity="0.5">
+                                                    <FontIcon Glyph="&#xE946;" FontSize="11"/>
+                                                    <TextBlock Text="SQLite database &amp; server sync coming soon!"
+                                                               FontSize="11" FontStyle="Italic"/>
+                                                </StackPanel>
+                                            </StackPanel>
                                         </StackPanel>
-                                        <TextBlock Text="Your account data is stored locally on this device as JSON files."
-                                                   FontSize="12" Opacity="0.7" TextWrapping="Wrap"
-                                                   Margin="0,0,0,4"/>
-                                        <TextBlock x:Name="StoragePathText"
-                                                   FontSize="11" Opacity="0.5" TextWrapping="Wrap"/>
-                                        <TextBlock x:Name="UserCountText"
-                                                   FontSize="12" Opacity="0.7"/>
-                                        <StackPanel Orientation="Horizontal" Spacing="6"
-                                                    Margin="0,8,0,0" Opacity="0.5">
-                                            <FontIcon Glyph="&#xE946;" FontSize="11"/>
-                                            <TextBlock Text="SQLite database &amp; server sync coming soon!"
-                                                       FontSize="11" FontStyle="Italic"/>
-                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
+                                </Border>
 
                                 <!-- ═══ Live Tile ═══ -->
-                                <Grid Background="{StaticResource CardAcrylicBrush}"
-                                      Padding="16,14"
-                                      PointerEntered="SettingsRow_PointerEntered"
-                                      PointerExited="SettingsRow_PointerExited"
-                                      Tapped="TileHeader_Tapped">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Width="36" Height="36" CornerRadius="4"
-                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
-                                        <FontIcon Glyph="&#xE77F;" FontSize="16"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Live Tile" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Refresh or clear your Start menu tile"
-                                                   FontSize="12" Opacity="0.6"/>
-                                    </StackPanel>
-                                    <FontIcon x:Name="TileChevron" Grid.Column="2" Glyph="&#xE76C;"
-                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
-                                              RenderTransformOrigin="0.5,0.5">
-                                        <FontIcon.RenderTransform>
-                                            <RotateTransform x:Name="TileChevronRotation" Angle="0"/>
-                                        </FontIcon.RenderTransform>
-                                    </FontIcon>
-                                </Grid>
-                                <StackPanel x:Name="TileContent" Visibility="Collapsed"
-                                            Background="{StaticResource CardAcrylicBrush}"
-                                            Padding="20,16" Margin="0,-2,0,0">
-                                    <StackPanel.ChildrenTransitions>
-                                        <TransitionCollection>
-                                            <EntranceThemeTransition FromVerticalOffset="20"/>
-                                        </TransitionCollection>
-                                    </StackPanel.ChildrenTransitions>
-                                    <StackPanel Orientation="Horizontal" Spacing="12">
-                                        <Button x:Name="RefreshTileButton"
-                                                Click="RefreshTileButton_Click"
-                                                Style="{StaticResource ButtonRevealStyle}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE72C;" FontSize="14"/>
-                                                <TextBlock Text="Refresh Live Tile"/>
+                                <Border Background="{StaticResource CardAcrylicBrush}"
+                                        CornerRadius="8"
+                                        PointerEntered="SettingsRow_PointerEntered"
+                                        PointerExited="SettingsRow_PointerExited">
+                                    <StackPanel>
+                                        <Grid Padding="16,14" Tapped="TileHeader_Tapped">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Width="36" Height="36" CornerRadius="4"
+                                                  Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                                <FontIcon Glyph="&#xE77F;" FontSize="16"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="Live Tile" FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="Refresh or clear your Start menu tile"
+                                                           FontSize="12" Opacity="0.6"/>
                                             </StackPanel>
-                                        </Button>
-                                        <Button x:Name="ClearTileButton"
-                                                Click="ClearTileButton_Click"
-                                                Style="{StaticResource ButtonRevealStyle}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE74D;" FontSize="14"/>
-                                                <TextBlock Text="Clear Live Tile"/>
+                                            <FontIcon x:Name="TileChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                                      FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                <FontIcon.RenderTransform>
+                                                    <RotateTransform x:Name="TileChevronRotation" Angle="0"/>
+                                                </FontIcon.RenderTransform>
+                                            </FontIcon>
+                                        </Grid>
+                                        <StackPanel x:Name="TileContent" Visibility="Collapsed"
+                                                    Padding="20,0,20,16">
+                                            <StackPanel.ChildrenTransitions>
+                                                <TransitionCollection>
+                                                    <EntranceThemeTransition FromVerticalOffset="20"/>
+                                                </TransitionCollection>
+                                            </StackPanel.ChildrenTransitions>
+                                            <Rectangle Height="1" Margin="0,0,0,14"
+                                                       Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                                       Opacity="0.08"/>
+                                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                                <Button x:Name="RefreshTileButton"
+                                                        Click="RefreshTileButton_Click"
+                                                        Style="{StaticResource ButtonRevealStyle}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                                        <TextBlock Text="Refresh Live Tile"/>
+                                                    </StackPanel>
+                                                </Button>
+                                                <Button x:Name="ClearTileButton"
+                                                        Click="ClearTileButton_Click"
+                                                        Style="{StaticResource ButtonRevealStyle}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                                        <TextBlock Text="Clear Live Tile"/>
+                                                    </StackPanel>
+                                                </Button>
                                             </StackPanel>
-                                        </Button>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
+                                </Border>
 
                                 <!-- ═══ Welcome Dialog ═══ -->
-                                <Grid Background="{StaticResource CardAcrylicBrush}"
-                                      Padding="16,14"
-                                      PointerEntered="SettingsRow_PointerEntered"
-                                      PointerExited="SettingsRow_PointerExited"
-                                      Tapped="WelcomeHeader_Tapped">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Width="36" Height="36" CornerRadius="4"
-                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
-                                        <FontIcon Glyph="&#xEB51;" FontSize="16"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="Welcome Dialog" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Reset the first-run welcome experience"
-                                                   FontSize="12" Opacity="0.6"/>
-                                    </StackPanel>
-                                    <FontIcon x:Name="WelcomeChevron" Grid.Column="2" Glyph="&#xE76C;"
-                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
-                                              RenderTransformOrigin="0.5,0.5">
-                                        <FontIcon.RenderTransform>
-                                            <RotateTransform x:Name="WelcomeChevronRotation" Angle="0"/>
-                                        </FontIcon.RenderTransform>
-                                    </FontIcon>
-                                </Grid>
-                                <StackPanel x:Name="WelcomeContent" Visibility="Collapsed"
-                                            Background="{StaticResource CardAcrylicBrush}"
-                                            Padding="20,16" Margin="0,-2,0,0">
-                                    <StackPanel.ChildrenTransitions>
-                                        <TransitionCollection>
-                                            <EntranceThemeTransition FromVerticalOffset="20"/>
-                                        </TransitionCollection>
-                                    </StackPanel.ChildrenTransitions>
-                                    <StackPanel Spacing="10">
-                                        <TextBlock Text="The welcome dialog appears the first time you open the app."
-                                                   FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
-                                        <Button x:Name="ResetWelcomeButton"
-                                                Click="ResetWelcomeButton_Click"
-                                                Style="{StaticResource ButtonRevealStyle}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE72C;" FontSize="14"/>
-                                                <TextBlock Text="Show Welcome Dialog Again"/>
+                                <Border Background="{StaticResource CardAcrylicBrush}"
+                                        CornerRadius="8"
+                                        PointerEntered="SettingsRow_PointerEntered"
+                                        PointerExited="SettingsRow_PointerExited">
+                                    <StackPanel>
+                                        <Grid Padding="16,14" Tapped="WelcomeHeader_Tapped">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Width="36" Height="36" CornerRadius="4"
+                                                  Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                                <FontIcon Glyph="&#xEB51;" FontSize="16"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="Welcome Dialog" FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="Reset the first-run welcome experience"
+                                                           FontSize="12" Opacity="0.6"/>
                                             </StackPanel>
-                                        </Button>
+                                            <FontIcon x:Name="WelcomeChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                                      FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                <FontIcon.RenderTransform>
+                                                    <RotateTransform x:Name="WelcomeChevronRotation" Angle="0"/>
+                                                </FontIcon.RenderTransform>
+                                            </FontIcon>
+                                        </Grid>
+                                        <StackPanel x:Name="WelcomeContent" Visibility="Collapsed"
+                                                    Padding="20,0,20,16">
+                                            <StackPanel.ChildrenTransitions>
+                                                <TransitionCollection>
+                                                    <EntranceThemeTransition FromVerticalOffset="20"/>
+                                                </TransitionCollection>
+                                            </StackPanel.ChildrenTransitions>
+                                            <Rectangle Height="1" Margin="0,0,0,12"
+                                                       Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                                       Opacity="0.08"/>
+                                            <StackPanel Spacing="10">
+                                                <TextBlock Text="The welcome dialog appears the first time you open the app."
+                                                           FontSize="12" Opacity="0.7" TextWrapping="Wrap"/>
+                                                <Button x:Name="ResetWelcomeButton"
+                                                        Click="ResetWelcomeButton_Click"
+                                                        Style="{StaticResource ButtonRevealStyle}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                                        <TextBlock Text="Show Welcome Dialog Again"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
+                                </Border>
 
                                 <!-- ═══ About ═══ -->
-                                <Grid Background="{StaticResource CardAcrylicBrush}"
-                                      Padding="16,14"
-                                      PointerEntered="SettingsRow_PointerEntered"
-                                      PointerExited="SettingsRow_PointerExited"
-                                      Tapped="AboutHeader_Tapped">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto"/>
-                                        <ColumnDefinition Width="*"/>
-                                        <ColumnDefinition Width="Auto"/>
-                                    </Grid.ColumnDefinitions>
-                                    <Grid Width="36" Height="36" CornerRadius="4"
-                                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
-                                        <FontIcon Glyph="&#xE946;" FontSize="16"
-                                                  HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                    </Grid>
-                                    <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                        <TextBlock Text="About" FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Version info, credits, and more"
-                                                   FontSize="12" Opacity="0.6"/>
-                                    </StackPanel>
-                                    <FontIcon x:Name="AboutChevron" Grid.Column="2" Glyph="&#xE76C;"
-                                              FontSize="12" Opacity="0.4" VerticalAlignment="Center"
-                                              RenderTransformOrigin="0.5,0.5">
-                                        <FontIcon.RenderTransform>
-                                            <RotateTransform x:Name="AboutChevronRotation" Angle="0"/>
-                                        </FontIcon.RenderTransform>
-                                    </FontIcon>
-                                </Grid>
-                                <StackPanel x:Name="AboutContent" Visibility="Collapsed"
-                                            Background="{StaticResource CardAcrylicBrush}"
-                                            Padding="20,16" Margin="0,-2,0,0">
-                                    <StackPanel.ChildrenTransitions>
-                                        <TransitionCollection>
-                                            <EntranceThemeTransition FromVerticalOffset="20"/>
-                                        </TransitionCollection>
-                                    </StackPanel.ChildrenTransitions>
-                                    <StackPanel Spacing="8">
-                                        <TextBlock Text="Fort.ind Desktop for UWP"
-                                                   FontSize="14" FontWeight="SemiBold"/>
-                                        <TextBlock Text="Version 0.5 Beta"
-                                                   FontSize="12" Opacity="0.6"/>
-                                        <Button x:Name="AboutButton"
-                                                Click="AboutButton_Click"
-                                                Margin="0,4,0,0"
-                                                Style="{StaticResource ButtonRevealStyle}">
-                                            <StackPanel Orientation="Horizontal" Spacing="8">
-                                                <FontIcon Glyph="&#xE946;" FontSize="14"/>
-                                                <TextBlock Text="View Details"/>
+                                <Border Background="{StaticResource CardAcrylicBrush}"
+                                        CornerRadius="8"
+                                        PointerEntered="SettingsRow_PointerEntered"
+                                        PointerExited="SettingsRow_PointerExited">
+                                    <StackPanel>
+                                        <Grid Padding="16,14" Tapped="AboutHeader_Tapped">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Grid Width="36" Height="36" CornerRadius="4"
+                                                  Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                                                <FontIcon Glyph="&#xE946;" FontSize="16"
+                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                            </Grid>
+                                            <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
+                                                <TextBlock Text="About" FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="Version info, credits, and more"
+                                                           FontSize="12" Opacity="0.6"/>
                                             </StackPanel>
-                                        </Button>
+                                            <FontIcon x:Name="AboutChevron" Grid.Column="2" Glyph="&#xE76C;"
+                                                      FontSize="12" Opacity="0.4" VerticalAlignment="Center"
+                                                      RenderTransformOrigin="0.5,0.5">
+                                                <FontIcon.RenderTransform>
+                                                    <RotateTransform x:Name="AboutChevronRotation" Angle="0"/>
+                                                </FontIcon.RenderTransform>
+                                            </FontIcon>
+                                        </Grid>
+                                        <StackPanel x:Name="AboutContent" Visibility="Collapsed"
+                                                    Padding="20,0,20,16">
+                                            <StackPanel.ChildrenTransitions>
+                                                <TransitionCollection>
+                                                    <EntranceThemeTransition FromVerticalOffset="20"/>
+                                                </TransitionCollection>
+                                            </StackPanel.ChildrenTransitions>
+                                            <Rectangle Height="1" Margin="0,0,0,12"
+                                                       Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
+                                                       Opacity="0.08"/>
+                                            <StackPanel Spacing="8">
+                                                <TextBlock Text="Fort.ind Desktop for UWP"
+                                                           FontSize="14" FontWeight="SemiBold"/>
+                                                <TextBlock Text="Version 0.5 Beta"
+                                                           FontSize="12" Opacity="0.6"/>
+                                                <Button x:Name="AboutButton"
+                                                        Click="AboutButton_Click"
+                                                        Margin="0,4,0,0"
+                                                        Style="{StaticResource ButtonRevealStyle}">
+                                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                                        <FontIcon Glyph="&#xE946;" FontSize="14"/>
+                                                        <TextBlock Text="View Details"/>
+                                                    </StackPanel>
+                                                </Button>
+                                            </StackPanel>
+                                        </StackPanel>
                                     </StackPanel>
-                                </StackPanel>
+                                </Border>
 
                             </StackPanel>
                         </StackPanel>
