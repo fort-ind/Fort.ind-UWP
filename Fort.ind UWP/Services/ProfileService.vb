@@ -255,7 +255,7 @@ Public Class ProfileService
     ''' Verifies a password against a stored hash created by <see cref="HashPassword"/>.
     ''' </summary>
     Private Shared Function VerifyPassword(password As String, storedHash As String) As Boolean
-        If String.IsNullOrEmpty(password) OrElse String.IsNullOrWhiteSpace(storedHash) Then
+        If String.IsNullOrWhiteSpace(password) OrElse String.IsNullOrWhiteSpace(storedHash) Then
             Return False
         End If
 
