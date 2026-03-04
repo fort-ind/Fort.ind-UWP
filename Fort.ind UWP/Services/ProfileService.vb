@@ -188,21 +188,38 @@ Public Class ProfileService
     End Function
 
     ''' <summary>
+    ''' Result of a password change operation
+    ''' </summary>
+    Public Class PasswordChangeResult
+        Public Property Success As Boolean
+        Public Property Message As String
+    End Class
+
+    ''' <summary>
     ''' Changes the user's password
     ''' </summary>
-    Public Shared Async Function ChangePasswordAsync(currentPassword As String, newPassword As String) As Task(Of Boolean)
+    Public Shared Async Function ChangePasswordAsync(currentPassword As String, newPassword As String) As Task(Of PasswordChangeResult)
         If CurrentUser Is Nothing Then
-            Return False
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "No user is currently logged in."
+            }
         End If
 
         ' Verify current password
         If Not VerifyPassword(currentPassword, CurrentUser.PasswordHash) Then
-            Return False
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "Current password is incorrect."
+            }
         End If
 
         ' Validate new password
         If String.IsNullOrWhiteSpace(newPassword) OrElse newPassword.Length < 8 Then
-            Return False
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "New password must be at least 8 characters long."
+            }
         End If
 
         Dim oldHash = CurrentUser.PasswordHash
@@ -210,8 +227,16 @@ Public Class ProfileService
         Dim saved = Await LocalStorageService.SaveProfileAsync(CurrentUser)
         If Not saved Then
             CurrentUser.PasswordHash = oldHash
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "Failed to save password change. Please try again."
+            }
         End If
-        Return saved
+
+        Return New PasswordChangeResult With {
+            .Success = True,
+            .Message = "Password changed successfully."
+        }
     End Function
 
     ''' <summary>
