@@ -174,6 +174,10 @@ Public Class ProfileService
             Return False
         End If
 
+        If preferences Is Nothing Then
+            Return False
+        End If
+
         Dim oldPreferences = CurrentUser.Preferences
         CurrentUser.Preferences = preferences
         Dim saved = Await LocalStorageService.SaveProfileAsync(CurrentUser)
