@@ -9,6 +9,14 @@ Imports System.Text
 Public Class ProfileService
 
     ''' <summary>
+    ''' Represents the result of a profile update operation.
+    ''' </summary>
+    Public Class ProfileUpdateResult
+        Public Property Success As Boolean
+        Public Property Message As String
+    End Class
+
+    ''' <summary>
     ''' The currently logged-in user profile
     ''' </summary>
     Public Shared Property CurrentUser As UserProfile
@@ -144,9 +152,12 @@ Public Class ProfileService
     ''' <summary>
     ''' Updates the current user's profile
     ''' </summary>
-    Public Shared Async Function UpdateProfileAsync(displayName As String, email As String, bio As String) As Task(Of Boolean)
+    Public Shared Async Function UpdateProfileAsync(displayName As String, email As String, bio As String) As Task(Of ProfileUpdateResult)
         If CurrentUser Is Nothing Then
-            Return False
+            Return New ProfileUpdateResult With {
+                .Success = False,
+                .Message = "No user is currently logged in."
+            }
         End If
 
         Dim oldDisplayName = CurrentUser.DisplayName
@@ -162,8 +173,16 @@ Public Class ProfileService
             CurrentUser.DisplayName = oldDisplayName
             CurrentUser.Email = oldEmail
             CurrentUser.Bio = oldBio
+            Return New ProfileUpdateResult With {
+                .Success = False,
+                .Message = "Failed to save profile changes."
+            }
         End If
-        Return saved
+
+        Return New ProfileUpdateResult With {
+            .Success = True,
+            .Message = "Profile updated successfully."
+        }
     End Function
 
     ''' <summary>
@@ -188,21 +207,38 @@ Public Class ProfileService
     End Function
 
     ''' <summary>
+    ''' Result of a password change operation
+    ''' </summary>
+    Public Class PasswordChangeResult
+        Public Property Success As Boolean
+        Public Property Message As String
+    End Class
+
+    ''' <summary>
     ''' Changes the user's password
     ''' </summary>
-    Public Shared Async Function ChangePasswordAsync(currentPassword As String, newPassword As String) As Task(Of Boolean)
+    Public Shared Async Function ChangePasswordAsync(currentPassword As String, newPassword As String) As Task(Of PasswordChangeResult)
         If CurrentUser Is Nothing Then
-            Return False
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "No user is currently logged in."
+            }
         End If
 
         ' Verify current password
         If Not VerifyPassword(currentPassword, CurrentUser.PasswordHash) Then
-            Return False
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "Current password is incorrect."
+            }
         End If
 
         ' Validate new password
         If String.IsNullOrWhiteSpace(newPassword) OrElse newPassword.Length < 8 Then
-            Return False
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "New password must be at least 8 characters long."
+            }
         End If
 
         Dim oldHash = CurrentUser.PasswordHash
@@ -210,8 +246,16 @@ Public Class ProfileService
         Dim saved = Await LocalStorageService.SaveProfileAsync(CurrentUser)
         If Not saved Then
             CurrentUser.PasswordHash = oldHash
+            Return New PasswordChangeResult With {
+                .Success = False,
+                .Message = "Failed to save password change. Please try again."
+            }
         End If
-        Return saved
+
+        Return New PasswordChangeResult With {
+            .Success = True,
+            .Message = "Password changed successfully."
+        }
     End Function
 
     ''' <summary>
@@ -235,7 +279,7 @@ Public Class ProfileService
     ''' </summary>
     Private Shared Function HashPassword(password As String) As String
         ' PBKDF2 configuration
-        Const iterations As Integer = 600000
+        Const iterations As Integer = 1000000
         Const saltSize As Integer = 16   ' 128-bit salt
         Const keySize As Integer = 32    ' 256-bit derived key
 
