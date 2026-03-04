@@ -163,18 +163,31 @@ Public Class LiveTileService
     End Sub
 
     ''' <summary>
-    ''' Shows a Windows toast notification with a title and message
+    ''' Shows a Windows toast notification with a title and message.
+    ''' Returns False (and writes to Debug output) if notifications are blocked or an error occurs.
     ''' </summary>
-    Public Shared Sub SendToast(title As String, message As String)
+    Public Shared Function SendToast(title As String, message As String) As Boolean
         Try
+            Dim notifier = ToastNotificationManager.CreateToastNotifier()
+            If notifier.Setting <> NotificationSetting.Enabled Then
+                Debug.WriteLine($"LiveTileService: Toast suppressed – NotificationSetting is {notifier.Setting}. " &
+                                "Enable notifications for this app in Windows Settings > System > Notifications.")
+                Return False
+            End If
             Dim toastXml As New XmlDocument()
-            toastXml.LoadXml($"<toast><visual><binding template=""ToastGeneric""><text>{EscapeXml(title)}</text><text>{EscapeXml(message)}</text></binding></visual></toast>")
+            toastXml.LoadXml(
+                $"<toast><visual><binding template=""ToastGeneric"">" &
+                $"<text>{EscapeXml(title)}</text>" &
+                $"<text>{EscapeXml(message)}</text>" &
+                "</binding></visual></toast>")
             Dim toast As New ToastNotification(toastXml)
-            ToastNotificationManager.CreateToastNotifier().Show(toast)
+            notifier.Show(toast)
+            Return True
         Catch ex As Exception
-            Debug.WriteLine($"LiveTileService: SendToast failed – {ex.Message}")
+            Debug.WriteLine($"LiveTileService: SendToast failed – {ex.GetType().Name}: {ex.Message}")
+            Return False
         End Try
-    End Sub
+    End Function
 
     ''' <summary>
     ''' Clears the Live Tile back to default

@@ -90,7 +90,8 @@ Public Class ProfileService
         CurrentUser = profile
         Await LocalStorageService.SaveCurrentUserIdAsync(profile.UserId)
         RaiseEvent AuthStateChanged(Nothing, True)
-        LiveTileService.SendToast("Welcome back!", $"Signed in as {profile.DisplayName}")
+        Dim displayName = If(String.IsNullOrWhiteSpace(profile.DisplayName), profile.Username, profile.DisplayName)
+        LiveTileService.SendToast("Welcome back!", $"Signed in as {displayName}")
 
         Return New LoginResult(True, "Login successful!", profile)
     End Function
