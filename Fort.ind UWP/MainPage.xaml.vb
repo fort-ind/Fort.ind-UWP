@@ -68,6 +68,7 @@ Public NotInheritable Class MainPage
         ' Listen for auth state changes
         AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
         AddHandler Unloaded, AddressOf MainPage_Unloaded
+        AddHandler Window.Current.CoreWindow.KeyDown, AddressOf OnCoreKeyDown
     End Sub
 
     Private Async Sub LoadSitemapItems()
@@ -85,6 +86,7 @@ Public NotInheritable Class MainPage
 
     Private Sub MainPage_Unloaded(sender As Object, e As RoutedEventArgs)
         RemoveHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
+        RemoveHandler Window.Current.CoreWindow.KeyDown, AddressOf OnCoreKeyDown
     End Sub
 
     Private Async Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
@@ -174,6 +176,9 @@ Public NotInheritable Class MainPage
             End If
             ' Ensure pane starts closed
             NavView.IsPaneOpen = False
+
+            ' Clear the badge now that the user has opened the app
+            LiveTileService.ClearBadge()
 
             ' Show welcome dialog on first launch
             Dim localSettings = ApplicationData.Current.LocalSettings
@@ -551,6 +556,23 @@ Public NotInheritable Class MainPage
     End Sub
 
     ' ── Search bar handlers ──
+
+    Private Sub OnCoreKeyDown(sender As Windows.UI.Core.CoreWindow, args As Windows.UI.Core.KeyEventArgs)
+        ' Ctrl+F focuses the search box
+        Dim ctrl = (Windows.UI.Core.CoreWindow.GetForCurrentThread().GetKeyState(Windows.System.VirtualKey.Control) And
+                    Windows.UI.Core.CoreVirtualKeyStates.Down) = Windows.UI.Core.CoreVirtualKeyStates.Down
+        If ctrl AndAlso args.VirtualKey = Windows.System.VirtualKey.F Then
+            NavSearchBox.Focus(FocusState.Keyboard)
+            args.Handled = True
+            Return
+        End If
+        ' Escape clears the search box when it has text
+        If args.VirtualKey = Windows.System.VirtualKey.Escape AndAlso Not String.IsNullOrEmpty(NavSearchBox.Text) Then
+            NavSearchBox.Text = ""
+            NavSearchBox.ItemsSource = Nothing
+            args.Handled = True
+        End If
+    End Sub
 
     Private Sub NavSearchBox_TextChanged(sender As AutoSuggestBox, args As AutoSuggestBoxTextChangedEventArgs)
         If args.Reason = AutoSuggestionBoxTextChangeReason.UserInput Then

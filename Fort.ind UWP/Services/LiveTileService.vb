@@ -163,6 +163,20 @@ Public Class LiveTileService
     End Sub
 
     ''' <summary>
+    ''' Shows a Windows toast notification with a title and message
+    ''' </summary>
+    Public Shared Sub SendToast(title As String, message As String)
+        Try
+            Dim toastXml As New XmlDocument()
+            toastXml.LoadXml($"<toast><visual><binding template=""ToastGeneric""><text>{EscapeXml(title)}</text><text>{EscapeXml(message)}</text></binding></visual></toast>")
+            Dim toast As New ToastNotification(toastXml)
+            ToastNotificationManager.CreateToastNotifier().Show(toast)
+        Catch ex As Exception
+            Debug.WriteLine($"LiveTileService: SendToast failed – {ex.Message}")
+        End Try
+    End Sub
+
+    ''' <summary>
     ''' Clears the Live Tile back to default
     ''' </summary>
     Public Shared Sub ClearTile()

@@ -91,6 +91,11 @@ Public NotInheritable Class LoginPage
             Return
         End If
 
+        If Not IsValidUsername(username) Then
+            ShowRegError("Username may only contain letters, numbers, hyphens and underscores")
+            Return
+        End If
+
         If String.IsNullOrWhiteSpace(pwd) Then
             ShowRegError("Please enter a password")
             Return
@@ -206,6 +211,55 @@ Public NotInheritable Class LoginPage
         RegEmailBox.Text = ""
         RegPasswordBox.Password = ""
         RegConfirmPasswordBox.Password = ""
+    End Sub
+
+    ''' <summary>
+    ''' Returns True if username contains only letters, digits, hyphens, and underscores
+    ''' </summary>
+    Private Shared Function IsValidUsername(username As String) As Boolean
+        For Each c In username
+            If Not (Char.IsLetterOrDigit(c) OrElse c = "-"c OrElse c = "_"c) Then Return False
+        Next
+        Return True
+    End Function
+
+    ''' <summary>
+    ''' Updates the password strength label while the user types
+    ''' </summary>
+    Private Sub RegPasswordBox_PasswordChanged(sender As Object, e As RoutedEventArgs)
+        UpdateStrengthLabel(RegPasswordBox.Password, RegPasswordStrengthText)
+    End Sub
+
+    ''' <summary>
+    ''' Returns a (label, hex-color) tuple for the given password
+    ''' </summary>
+    Friend Shared Function GetPasswordStrength(pwd As String) As (Label As String, Color As String)
+        If String.IsNullOrEmpty(pwd) Then Return ("", "")
+        Dim hasUpper = pwd.Any(Function(c) Char.IsUpper(c))
+        Dim hasDigit = pwd.Any(Function(c) Char.IsDigit(c))
+        Dim hasSpecial = pwd.Any(Function(c) Not Char.IsLetterOrDigit(c))
+        If pwd.Length >= 12 AndAlso hasUpper AndAlso hasDigit AndAlso hasSpecial Then
+            Return ("Strong", "#2E7D32")
+        ElseIf pwd.Length >= 8 AndAlso (hasDigit OrElse hasSpecial) Then
+            Return ("Medium", "#E65100")
+        Else
+            Return ("Weak", "#C62828")
+        End If
+    End Function
+
+    Friend Shared Sub UpdateStrengthLabel(pwd As String, label As TextBlock)
+        If String.IsNullOrEmpty(pwd) Then
+            label.Visibility = Visibility.Collapsed
+            Return
+        End If
+        Dim result = GetPasswordStrength(pwd)
+        label.Text = $"Strength: {result.Label}"
+        label.Foreground = New SolidColorBrush(Windows.UI.ColorHelper.FromArgb(
+            255,
+            Convert.ToByte(result.Color.Substring(1, 2), 16),
+            Convert.ToByte(result.Color.Substring(3, 2), 16),
+            Convert.ToByte(result.Color.Substring(5, 2), 16)))
+        label.Visibility = Visibility.Visible
     End Sub
 
 End Class

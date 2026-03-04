@@ -27,6 +27,10 @@ Public Class ProfileService
             Return New RegistrationResult(False, "Username must be at least 3 characters")
         End If
 
+        If Not username.All(Function(c) Char.IsLetterOrDigit(c) OrElse c = "-"c OrElse c = "_"c) Then
+            Return New RegistrationResult(False, "Username may only contain letters, numbers, hyphens and underscores")
+        End If
+
         If String.IsNullOrWhiteSpace(password) OrElse password.Length < 8 Then
             Return New RegistrationResult(False, "Password must be at least 8 characters")
         End If
@@ -86,6 +90,7 @@ Public Class ProfileService
         CurrentUser = profile
         Await LocalStorageService.SaveCurrentUserIdAsync(profile.UserId)
         RaiseEvent AuthStateChanged(Nothing, True)
+        LiveTileService.SendToast("Welcome back!", $"Signed in as {profile.DisplayName}")
 
         Return New LoginResult(True, "Login successful!", profile)
     End Function
@@ -94,9 +99,11 @@ Public Class ProfileService
     ''' Logs out the current user
     ''' </summary>
     Public Shared Async Function LogoutAsync() As Task
+        Dim name = If(CurrentUser IsNot Nothing, If(String.IsNullOrWhiteSpace(CurrentUser.DisplayName), CurrentUser.Username, CurrentUser.DisplayName), "")
         CurrentUser = Nothing
         Await LocalStorageService.ClearCurrentUserAsync()
         RaiseEvent AuthStateChanged(Nothing, False)
+        If Not String.IsNullOrEmpty(name) Then LiveTileService.SendToast("Signed out", $"Goodbye, {name}!")
     End Function
 
     ''' <summary>

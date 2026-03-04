@@ -94,6 +94,12 @@
                                    FontSize="12"
                                    Opacity="0.5"
                                    Margin="0,4,0,0"/>
+                        <TextBlock x:Name="LastLoginText"
+                                   Text=""
+                                   FontSize="12"
+                                   Opacity="0.5"
+                                   Margin="0,2,0,0"
+                                   Visibility="Collapsed"/>
                     </StackPanel>
                 </Grid>
 
@@ -207,7 +213,12 @@
 
                             <StackPanel Spacing="4">
                                 <TextBlock Text="New Password" FontSize="12" Opacity="0.7"/>
-                                <PasswordBox x:Name="NewPasswordBox"/>
+                                <PasswordBox x:Name="NewPasswordBox"
+                                             PasswordChanged="NewPasswordBox_PasswordChanged"/>
+                                <TextBlock x:Name="NewPasswordStrengthText"
+                                           FontSize="11"
+                                           Margin="0,-2,0,0"
+                                           Visibility="Collapsed"/>
                             </StackPanel>
 
                             <StackPanel Spacing="4">

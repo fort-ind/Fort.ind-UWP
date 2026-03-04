@@ -51,6 +51,13 @@ Public NotInheritable Class ProfilePage
         UsernameText.Text = $"@{user.Username}"
         MemberSinceText.Text = $"Member since {user.CreatedDate:MMMM yyyy}"
 
+        If user.LastLoginDate > DateTime.MinValue Then
+            LastLoginText.Text = $"Last login: {user.LastLoginDate:MMM d, yyyy h:mm tt}"
+            LastLoginText.Visibility = Visibility.Visible
+        Else
+            LastLoginText.Visibility = Visibility.Collapsed
+        End If
+
         ' Set initials (up to two letters: first letter of each word)
         Dim name = If(String.IsNullOrWhiteSpace(user.DisplayName), user.Username, user.DisplayName)
         If name.Length > 0 Then
@@ -260,6 +267,10 @@ Public NotInheritable Class ProfilePage
     Private Sub ShowPasswordError(message As String)
         PasswordErrorText.Text = message
         PasswordErrorText.Visibility = Visibility.Visible
+    End Sub
+
+    Private Sub NewPasswordBox_PasswordChanged(sender As Object, e As RoutedEventArgs)
+        LoginPage.UpdateStrengthLabel(NewPasswordBox.Password, NewPasswordStrengthText)
     End Sub
 
     Private Async Function ShowMessageAsync(title As String, message As String) As Task

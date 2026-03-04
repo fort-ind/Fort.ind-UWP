@@ -122,7 +122,12 @@
 
                         <PasswordBox x:Name="RegPasswordBox"
                                      PlaceholderText="Password"
-                                     FontSize="14"/>
+                                     FontSize="14"
+                                     PasswordChanged="RegPasswordBox_PasswordChanged"/>
+                        <TextBlock x:Name="RegPasswordStrengthText"
+                                   FontSize="11"
+                                   Margin="0,-4,0,0"
+                                   Visibility="Collapsed"/>
 
                         <PasswordBox x:Name="RegConfirmPasswordBox"
                                      PlaceholderText="Confirm Password"
