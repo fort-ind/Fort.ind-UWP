@@ -101,32 +101,38 @@
             </NavigationView.AutoSuggestBox>
 
             <NavigationView.MenuItems>
-                <NavigationViewItem Content="Home" Tag="LatestNews">
+                <NavigationViewItem Content="Home" Tag="LatestNews"
+                                     ToolTipService.ToolTip="Home">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Home"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Games" Tag="Games">
+                <NavigationViewItem Content="Games" Tag="Games"
+                                     ToolTipService.ToolTip="Games">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Play"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Beta Programs" Tag="Betas">
+                <NavigationViewItem Content="Beta Programs" Tag="Betas"
+                                     ToolTipService.ToolTip="Beta Programs">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="PreviewLink"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="ProfileNavItem" Content="Your Profile" Tag="Profile">
+                <NavigationViewItem x:Name="ProfileNavItem" Content="Your Profile" Tag="Profile"
+                                     ToolTipService.ToolTip="Your Profile">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Contact"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Social" Tag="Social">
+                <NavigationViewItem Content="Social" Tag="Social"
+                                     ToolTipService.ToolTip="Social">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="People"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="About" Tag="About">
+                <NavigationViewItem Content="About" Tag="About"
+                                     ToolTipService.ToolTip="About">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Help"/>
                     </NavigationViewItem.Icon>

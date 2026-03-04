@@ -1,3 +1,5 @@
+Imports Windows.UI.Xaml.Media.Animation
+
 ''' <summary>
 ''' Profile viewing and editing page
 ''' </summary>
@@ -49,10 +51,15 @@ Public NotInheritable Class ProfilePage
         UsernameText.Text = $"@{user.Username}"
         MemberSinceText.Text = $"Member since {user.CreatedDate:MMMM yyyy}"
 
-        ' Set initials
+        ' Set initials (up to two letters: first letter of each word)
         Dim name = If(String.IsNullOrWhiteSpace(user.DisplayName), user.Username, user.DisplayName)
         If name.Length > 0 Then
-            ProfileInitials.Text = name.Substring(0, 1).ToUpper()
+            Dim parts = name.Trim().Split(" "c)
+            If parts.Length >= 2 AndAlso parts(1).Length > 0 Then
+                ProfileInitials.Text = (parts(0).Substring(0, 1) & parts(1).Substring(0, 1)).ToUpper()
+            Else
+                ProfileInitials.Text = parts(0).Substring(0, 1).ToUpper()
+            End If
         End If
 
         ' Update bio
@@ -63,6 +70,10 @@ Public NotInheritable Class ProfilePage
 
         ' Show view mode by default
         ShowViewMode()
+
+        ' Fade in the avatar
+        Dim sb = TryCast(Me.Resources("AvatarFadeIn"), Storyboard)
+        sb?.Begin()
     End Sub
 
     Private Sub ShowNotLoggedInState()

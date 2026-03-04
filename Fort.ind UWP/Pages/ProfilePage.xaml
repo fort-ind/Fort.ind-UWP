@@ -9,6 +9,14 @@
     Background="Transparent">
 
     <Page.Resources>
+        <Storyboard x:Key="AvatarFadeIn">
+            <DoubleAnimation Storyboard.TargetName="AvatarGrid"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             Duration="0:0:0.4"
+                             EasingFunction="{StaticResource FadeEase}"/>
+        </Storyboard>
+        <CubicEase x:Key="FadeEase" EasingMode="EaseOut"/>
         <AcrylicBrush x:Key="CardAcrylicBrush"
                       BackgroundSource="Backdrop"
                       TintColor="{ThemeResource SystemChromeMediumHighColor}"
@@ -58,9 +66,11 @@
                     </Grid.ColumnDefinitions>
 
                     <!-- Profile Picture -->
-                    <Grid Width="80" Height="80" 
+                    <Grid x:Name="AvatarGrid"
+                          Width="80" Height="80" 
                           CornerRadius="40"
-                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
+                          Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
+                          Opacity="0">
                         <TextBlock x:Name="ProfileInitials"
                                    Text="?"
                                    FontSize="32"
