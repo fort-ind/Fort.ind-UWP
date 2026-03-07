@@ -11,6 +11,7 @@ NotInheritable Class App
     ''' </summary>
     ''' <param name="e">Details about the launch request and process.</param>
     Protected Overrides Async Sub OnLaunched(e As Windows.ApplicationModel.Activation.LaunchActivatedEventArgs)
+        Dim showStartupErrorDialog As Boolean = False
         Try
             Dim rootFrame As Frame = TryCast(Window.Current.Content, Frame)
 
@@ -57,20 +58,21 @@ NotInheritable Class App
         Catch ex As Exception
             ' Log critical startup error
             Debug.WriteLine($"Critical: OnLaunched failed - {ex.Message}")
-            ' Try to show error to user if possible
+            showStartupErrorDialog = True
+        End Try
+
+        If showStartupErrorDialog AndAlso Window.Current.Content IsNot Nothing Then
             Try
                 Dim errorDialog As New ContentDialog()
                 errorDialog.Title = "Startup Error"
                 errorDialog.Content = "The application failed to start properly. Please try restarting."
                 errorDialog.PrimaryButtonText = "OK"
-                If Window.Current.Content IsNot Nothing Then
-                    errorDialog.XamlRoot = Window.Current.Content.XamlRoot
-                    Await errorDialog.ShowAsync()
-                End If
+                errorDialog.XamlRoot = Window.Current.Content.XamlRoot
+                Await errorDialog.ShowAsync()
             Catch
                 ' Nothing more we can do
             End Try
-        End Try
+        End If
     End Sub
 
     ''' <summary>

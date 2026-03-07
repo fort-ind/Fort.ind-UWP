@@ -77,6 +77,7 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Sub LoadSitemapItems()
+        Dim shouldHideLoadingIndicator As Boolean = False
         Try
             ' Show loading indicator
             Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
@@ -96,7 +97,11 @@ Public NotInheritable Class MainPage
         Catch ex As Exception
             Debug.WriteLine($"MainPage: Failed to load sitemap items – {ex.Message}")
         Finally
-            ' Hide loading indicator
+            shouldHideLoadingIndicator = True
+        End Try
+
+        If shouldHideLoadingIndicator Then
+            ' VB does not allow Await in Finally blocks.
             Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
                 Sub()
                     If LoadingIndicator IsNot Nothing Then
@@ -104,7 +109,7 @@ Public NotInheritable Class MainPage
                         LoadingIndicator.Visibility = Visibility.Collapsed
                     End If
                 End Sub)
-        End Try
+        End If
     End Sub
 
     Private Sub MainPage_Unloaded(sender As Object, e As RoutedEventArgs)
