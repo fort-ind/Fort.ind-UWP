@@ -15,7 +15,16 @@ Public Class SitemapService
         Try
             Dim file = Await StorageFile.GetFileFromApplicationUriAsync(New Uri("ms-appx:///sitemap.xml"))
             Dim text = Await FileIO.ReadTextAsync(file)
-            Dim doc = XDocument.Parse(text)
+            
+            ' Protect against malformed XML
+            Dim doc As XDocument = Nothing
+            Try
+                doc = XDocument.Parse(text)
+            Catch xmlEx As Exception
+                Debug.WriteLine($"SitemapService: XML parsing failed – {xmlEx.Message}")
+                Return items ' Return empty list if XML is malformed
+            End Try
+            
             Dim ns As XNamespace = "http://www.sitemaps.org/schemas/sitemap/0.9"
 
             For Each urlElement In doc.Descendants(ns + "url")

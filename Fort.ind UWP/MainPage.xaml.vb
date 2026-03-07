@@ -43,7 +43,7 @@ Public NotInheritable Class MainPage
     Private _allSearchItems As IReadOnlyList(Of SearchItem) = s_staticSearchItems
 
     ' Guard to prevent multiple ContentDialogs from opening simultaneously
-    Private _isDialogOpen As Boolean = False
+    Private _dialogSemaphore As New Threading.SemaphoreSlim(1, 1)
 
     ' Guard to suppress appearance control event handlers during settings load
     Private _loadingSettings As Boolean = False
@@ -68,11 +68,25 @@ Public NotInheritable Class MainPage
         ' Listen for auth state changes
         AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
         AddHandler Unloaded, AddressOf MainPage_Unloaded
+        AddHandler Loaded, AddressOf MainPage_Loaded
+    End Sub
+
+    Private Sub MainPage_Loaded(sender As Object, e As RoutedEventArgs)
+        ' Attach keyboard handler only when loaded to prevent memory leaks
         AddHandler Window.Current.CoreWindow.KeyDown, AddressOf OnCoreKeyDown
     End Sub
 
     Private Async Sub LoadSitemapItems()
         Try
+            ' Show loading indicator
+            Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
+                Sub()
+                    If LoadingIndicator IsNot Nothing Then
+                        LoadingIndicator.IsActive = True
+                        LoadingIndicator.Visibility = Visibility.Visible
+                    End If
+                End Sub)
+            
             Dim sitemapItems = Await SitemapService.LoadSearchItemsAsync()
             ' Build a new combined list and swap the reference (atomic, no lock needed)
             Dim combined As New List(Of SearchItem)(s_staticSearchItems.Length + sitemapItems.Count)
@@ -81,19 +95,40 @@ Public NotInheritable Class MainPage
             _allSearchItems = combined
         Catch ex As Exception
             Debug.WriteLine($"MainPage: Failed to load sitemap items – {ex.Message}")
+        Finally
+            ' Hide loading indicator
+            Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
+                Sub()
+                    If LoadingIndicator IsNot Nothing Then
+                        LoadingIndicator.IsActive = False
+                        LoadingIndicator.Visibility = Visibility.Collapsed
+                    End If
+                End Sub)
         End Try
     End Sub
 
     Private Sub MainPage_Unloaded(sender As Object, e As RoutedEventArgs)
         RemoveHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
-        RemoveHandler Window.Current.CoreWindow.KeyDown, AddressOf OnCoreKeyDown
+        ' Remove keyboard handler to prevent memory leaks
+        Try
+            RemoveHandler Window.Current.CoreWindow.KeyDown, AddressOf OnCoreKeyDown
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Failed to remove KeyDown handler - {ex.Message}")
+        End Try
     End Sub
 
     Private Async Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
         Try
             Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
-                Sub() UpdateProfileNavItem())
+                Sub() 
+                    Try
+                        UpdateProfileNavItem()
+                    Catch ex As Exception
+                        Debug.WriteLine($"MainPage: UpdateProfileNavItem failed - {ex.Message}")
+                    End Try
+                End Sub)
         Catch ex As Exception
+            ' Critical: Catch exceptions in async void to prevent app crash
             Debug.WriteLine($"MainPage: Auth state change handler failed – {ex.Message}")
         End Try
     End Sub
@@ -233,13 +268,16 @@ Public NotInheritable Class MainPage
                 ContentScrollViewer.Visibility = Visibility.Collapsed
                 ContentFrame.Visibility = Visibility.Visible
                 Try
-                    If Not TypeOf ContentFrame.Content Is ProfilePage Then
+                    ' Null check for ContentFrame
+                    If ContentFrame IsNot Nothing AndAlso Not TypeOf ContentFrame.Content Is ProfilePage Then
                         ContentFrame.Navigate(GetType(ProfilePage))
                     End If
                 Catch ex As Exception
                     ' Navigation failed – fall back to home
                     Debug.WriteLine($"MainPage: Profile navigation failed – {ex.Message}")
-                    ContentFrame.Visibility = Visibility.Collapsed
+                    If ContentFrame IsNot Nothing Then
+                        ContentFrame.Visibility = Visibility.Collapsed
+                    End If
                     ContentScrollViewer.Visibility = Visibility.Visible
                     LatestNewsPanel.Visibility = Visibility.Visible
                 End Try
@@ -267,10 +305,12 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Sub AboutButton_Click(sender As Object, e As RoutedEventArgs)
+        ' Use semaphore to prevent concurrent dialog opening
+        If Not Await _dialogSemaphore.WaitAsync(0) Then
+            Return ' Another dialog is already open
+        End If
+        
         Try
-            If _isDialogOpen Then Return
-            _isDialogOpen = True
-
             Dim aboutDialog As New ContentDialog()
             aboutDialog.Title = "About"
             aboutDialog.Content = $"Fort.ind desktop for UWP{vbCrLf}Version 0.5 Beta{vbCrLf}{vbCrLf}Storage: Local JSON Files"
@@ -282,7 +322,7 @@ Public NotInheritable Class MainPage
         Catch ex As Exception
             Debug.WriteLine($"MainPage: About dialog failed – {ex.Message}")
         Finally
-            _isDialogOpen = False
+            _dialogSemaphore.Release()
         End Try
     End Sub
 
@@ -321,6 +361,9 @@ Public NotInheritable Class MainPage
             End If
             ApplyTintColor(tintTag)
             UpdateTintSelection(tintTag)
+            
+            ' Restore settings panel states
+            RestoreSettingsPanelStates()
         Finally
             _loadingSettings = False
         End Try
@@ -421,7 +464,7 @@ Public NotInheritable Class MainPage
     End Function
 
     Private Sub AppearanceHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
-        ToggleSettingsRow(AppearanceContent, AppearanceChevronRotation)
+        ToggleSettingsRow(AppearanceContent, AppearanceChevronRotation, "SettingsAppearanceExpanded")
     End Sub
 
     Private Sub ThemeRadio_Checked(sender As Object, e As RoutedEventArgs)
@@ -444,29 +487,82 @@ Public NotInheritable Class MainPage
     ' ── Settings row expand/collapse ──
 
     Private Sub StorageHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
-        ToggleSettingsRow(StorageContent, StorageChevronRotation)
+        ToggleSettingsRow(StorageContent, StorageChevronRotation, "SettingsStorageExpanded")
     End Sub
 
     Private Sub TileHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
-        ToggleSettingsRow(TileContent, TileChevronRotation)
+        ToggleSettingsRow(TileContent, TileChevronRotation, "SettingsTileExpanded")
     End Sub
 
     Private Sub WelcomeHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
-        ToggleSettingsRow(WelcomeContent, WelcomeChevronRotation)
+        ToggleSettingsRow(WelcomeContent, WelcomeChevronRotation, "SettingsWelcomeExpanded")
     End Sub
 
     Private Sub AboutHeader_Tapped(sender As Object, e As TappedRoutedEventArgs)
-        ToggleSettingsRow(AboutContent, AboutChevronRotation)
+        ToggleSettingsRow(AboutContent, AboutChevronRotation, "SettingsAboutExpanded")
     End Sub
 
-    Private Sub ToggleSettingsRow(content As StackPanel, chevronTransform As RotateTransform)
-        If content.Visibility = Visibility.Collapsed Then
+    ''' <summary>
+    ''' Toggle settings row with state persistence
+    ''' </summary>
+    Private Sub ToggleSettingsRow(content As StackPanel, chevronTransform As RotateTransform, Optional settingKey As String = Nothing)
+        Dim isExpanded = content.Visibility = Visibility.Collapsed
+        
+        If isExpanded Then
             content.Visibility = Visibility.Visible
             chevronTransform.Angle = 90
         Else
             content.Visibility = Visibility.Collapsed
             chevronTransform.Angle = 0
         End If
+        
+        ' Save state if key is provided
+        If Not String.IsNullOrEmpty(settingKey) Then
+            Try
+                ApplicationData.Current.LocalSettings.Values(settingKey) = isExpanded
+            Catch ex As Exception
+                Debug.WriteLine($"MainPage: Failed to save panel state - {ex.Message}")
+            End Try
+        End If
+    End Sub
+    
+    ''' <summary>
+    ''' Restore settings panel expanded/collapsed states
+    ''' </summary>
+    Private Sub RestoreSettingsPanelStates()
+        Try
+            Dim localSettings = ApplicationData.Current.LocalSettings
+            
+            ' Restore each panel state
+            RestorePanelState("SettingsAppearanceExpanded", AppearanceContent, AppearanceChevronRotation)
+            RestorePanelState("SettingsStorageExpanded", StorageContent, StorageChevronRotation)
+            RestorePanelState("SettingsTileExpanded", TileContent, TileChevronRotation)
+            RestorePanelState("SettingsWelcomeExpanded", WelcomeContent, WelcomeChevronRotation)
+            RestorePanelState("SettingsAboutExpanded", AboutContent, AboutChevronRotation)
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Failed to restore panel states - {ex.Message}")
+        End Try
+    End Sub
+    
+    ''' <summary>
+    ''' Restore individual panel state
+    ''' </summary>
+    Private Sub RestorePanelState(settingKey As String, content As StackPanel, chevronTransform As RotateTransform)
+        Try
+            Dim localSettings = ApplicationData.Current.LocalSettings
+            If localSettings.Values.ContainsKey(settingKey) Then
+                Dim isExpanded = CBool(localSettings.Values(settingKey))
+                If isExpanded Then
+                    content.Visibility = Visibility.Visible
+                    chevronTransform.Angle = 90
+                Else
+                    content.Visibility = Visibility.Collapsed
+                    chevronTransform.Angle = 0
+                End If
+            End If
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Failed to restore {settingKey} - {ex.Message}")
+        End Try
     End Sub
 
     Private Sub SettingsRow_PointerEntered(sender As Object, e As PointerRoutedEventArgs)
@@ -480,8 +576,10 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Function ShowWelcomeDialogAsync() As Task
-        If _isDialogOpen Then Return
-        _isDialogOpen = True
+        ' Use semaphore to prevent concurrent dialog opening
+        If Not Await _dialogSemaphore.WaitAsync(0) Then
+            Return ' Another dialog is already open
+        End If
 
         Try
             Dim dontShowCheckBox As New CheckBox()
@@ -541,7 +639,7 @@ Public NotInheritable Class MainPage
         Catch ex As Exception
             Debug.WriteLine($"MainPage: Welcome dialog failed – {ex.Message}")
         Finally
-            _isDialogOpen = False
+            _dialogSemaphore.Release()
         End Try
     End Function
 
@@ -590,6 +688,10 @@ Public NotInheritable Class MainPage
                 If item.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
                    item.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 Then
                     filtered.Add(item)
+                    ' Limit to 15 results to prevent UI overflow
+                    If filtered.Count >= 15 Then
+                        Exit For
+                    End If
                 End If
             Next
 
@@ -649,6 +751,12 @@ Public NotInheritable Class MainPage
     End Sub
 
     Private Async Function NavigateToSearchItem(item As SearchItem) As Task
+        ' Null check for item
+        If item Is Nothing Then
+            Debug.WriteLine("MainPage: NavigateToSearchItem called with null item")
+            Return
+        End If
+        
         If Not String.IsNullOrEmpty(item.Url) Then
             ' Validate URL before launching to avoid UriFormatException
             Dim uri As Uri = Nothing

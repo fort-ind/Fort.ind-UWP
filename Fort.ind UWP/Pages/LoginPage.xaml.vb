@@ -231,6 +231,55 @@ Public NotInheritable Class LoginPage
     End Sub
 
     ''' <summary>
+    ''' Real-time username validation
+    ''' </summary>
+    Private Sub RegUsernameBox_TextChanged(sender As Object, e As TextChangedEventArgs)
+        Dim username = RegUsernameBox.Text.Trim()
+        
+        If String.IsNullOrWhiteSpace(username) Then
+            RegUsernameHint.Visibility = Visibility.Collapsed
+            Return
+        End If
+        
+        If username.Length < 3 Then
+            RegUsernameHint.Text = "⚠ Username must be at least 3 characters"
+            RegUsernameHint.Foreground = New SolidColorBrush(Windows.UI.Colors.Orange)
+            RegUsernameHint.Visibility = Visibility.Visible
+        ElseIf Not IsValidUsername(username) Then
+            RegUsernameHint.Text = "⚠ Only letters, numbers, hyphens and underscores allowed"
+            RegUsernameHint.Foreground = New SolidColorBrush(Windows.UI.Colors.Red)
+            RegUsernameHint.Visibility = Visibility.Visible
+        Else
+            RegUsernameHint.Text = "✓ Username looks good"
+            RegUsernameHint.Foreground = New SolidColorBrush(Windows.UI.Colors.Green)
+            RegUsernameHint.Visibility = Visibility.Visible
+        End If
+    End Sub
+
+    ''' <summary>
+    ''' Real-time email validation
+    ''' </summary>
+    Private Sub RegEmailBox_TextChanged(sender As Object, e As TextChangedEventArgs)
+        Dim email = RegEmailBox.Text.Trim()
+        
+        If String.IsNullOrWhiteSpace(email) Then
+            RegEmailHint.Visibility = Visibility.Collapsed
+            Return
+        End If
+        
+        ' Basic email validation
+        If Not email.Contains("@") OrElse Not email.Contains(".") OrElse email.Length < 5 Then
+            RegEmailHint.Text = "⚠ Please enter a valid email address"
+            RegEmailHint.Foreground = New SolidColorBrush(Windows.UI.Colors.Orange)
+            RegEmailHint.Visibility = Visibility.Visible
+        Else
+            RegEmailHint.Text = "✓ Email format looks valid"
+            RegEmailHint.Foreground = New SolidColorBrush(Windows.UI.Colors.Green)
+            RegEmailHint.Visibility = Visibility.Visible
+        End If
+    End Sub
+
+    ''' <summary>
     ''' Returns a (label, hex-color) tuple for the given password
     ''' </summary>
     Friend Shared Function GetPasswordStrength(pwd As String) As (Label As String, Color As String)

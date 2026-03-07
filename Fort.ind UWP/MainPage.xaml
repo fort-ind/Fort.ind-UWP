@@ -50,6 +50,17 @@
                        Margin="12,0,0,0"
                        FontSize="12"
                        Opacity="0.8"/>
+            
+            <!-- Loading Indicator for Sitemap -->
+            <ProgressRing x:Name="LoadingIndicator"
+                          IsActive="False"
+                          Visibility="Collapsed"
+                          Width="16"
+                          Height="16"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Center"
+                          Margin="0,0,12,0"
+                          Foreground="{ThemeResource SystemAccentColor}"/>
         </Grid>
 
         <!-- Main Content -->
@@ -102,37 +113,55 @@
 
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Home" Tag="LatestNews"
-                                     ToolTipService.ToolTip="Home">
+                                     ToolTipService.ToolTip="Home (Alt+H)"
+                                     AccessKey="H"
+                                     AutomationProperties.Name="Home"
+                                     AutomationProperties.HelpText="Navigate to home page">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Home"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Games" Tag="Games"
-                                     ToolTipService.ToolTip="Games">
+                                     ToolTipService.ToolTip="Games (Alt+G)"
+                                     AccessKey="G"
+                                     AutomationProperties.Name="Games"
+                                     AutomationProperties.HelpText="Browse games">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Play"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Beta Programs" Tag="Betas"
-                                     ToolTipService.ToolTip="Beta Programs">
+                                     ToolTipService.ToolTip="Beta Programs (Alt+B)"
+                                     AccessKey="B"
+                                     AutomationProperties.Name="Beta Programs"
+                                     AutomationProperties.HelpText="Join beta programs">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="PreviewLink"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem x:Name="ProfileNavItem" Content="Your Profile" Tag="Profile"
-                                     ToolTipService.ToolTip="Your Profile">
+                                     ToolTipService.ToolTip="Your Profile (Alt+P)"
+                                     AccessKey="P"
+                                     AutomationProperties.Name="Your Profile"
+                                     AutomationProperties.HelpText="View and edit your profile">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Contact"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Social" Tag="Social"
-                                     ToolTipService.ToolTip="Social">
+                                     ToolTipService.ToolTip="Social (Alt+S)"
+                                     AccessKey="S"
+                                     AutomationProperties.Name="Social"
+                                     AutomationProperties.HelpText="Connect with the community">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="People"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="About" Tag="About"
-                                     ToolTipService.ToolTip="About">
+                                     ToolTipService.ToolTip="About (Alt+A)"
+                                     AccessKey="A"
+                                     AutomationProperties.Name="About"
+                                     AutomationProperties.HelpText="Learn more about Fort.ind">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Help"/>
                     </NavigationViewItem.Icon>

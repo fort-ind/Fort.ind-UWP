@@ -1,6 +1,7 @@
 Imports Windows.Storage
 Imports System.Runtime.Serialization.Json
 Imports System.IO
+Imports System.Threading
 
 ''' <summary>
 ''' Service for storing and retrieving data locally
@@ -42,14 +43,18 @@ Public Class LocalStorageService
     ''' <summary>
     ''' Saves a user profile to local storage as a JSON file :p (temporarily) until we implement a more secure storage solution like SQLite or server-side storage with encryption.
     ''' </summary>
-    Public Shared Async Function SaveProfileAsync(profile As UserProfile) As Task(Of Boolean)
+    Public Shared Async Function SaveProfileAsync(profile As UserProfile, Optional cancellationToken As CancellationToken = Nothing) As Task(Of Boolean)
         If profile Is Nothing OrElse String.IsNullOrWhiteSpace(profile.UserId) Then
             Return False
         End If
 
         Try
+            cancellationToken.ThrowIfCancellationRequested()
+
             ' Ensure profiles folder exists
             Dim profilesFolder = Await LocalFolder.CreateFolderAsync(PROFILES_FOLDER, CreationCollisionOption.OpenIfExists)
+
+            cancellationToken.ThrowIfCancellationRequested()
 
             ' Create file for this user
             Dim fileName = $"{profile.UserId}.json"
@@ -57,9 +62,12 @@ Public Class LocalStorageService
 
             ' Serialize and save
             Dim json = SerializeToJson(profile)
-            Await FileIO.WriteTextAsync(file, json)
+            Await FileIO.WriteTextAsync(file, json).AsTask(cancellationToken)
 
             Return True
+        Catch ex As OperationCanceledException
+            Debug.WriteLine("Profile save operation was cancelled")
+            Return False
         Catch ex As Exception
             Debug.WriteLine($"Error saving profile: {ex.Message}")
             Return False
@@ -69,16 +77,23 @@ Public Class LocalStorageService
     ''' <summary>
     ''' Loads a user profile by user ID
     ''' </summary>
-    Public Shared Async Function LoadProfileAsync(userId As String) As Task(Of UserProfile)
+    Public Shared Async Function LoadProfileAsync(userId As String, Optional cancellationToken As CancellationToken = Nothing) As Task(Of UserProfile)
         If String.IsNullOrWhiteSpace(userId) Then Return Nothing
 
         Try
+            cancellationToken.ThrowIfCancellationRequested()
+
             Dim profilesFolder = Await LocalFolder.GetFolderAsync(PROFILES_FOLDER)
             Dim fileName = $"{userId}.json"
             Dim file = Await profilesFolder.GetFileAsync(fileName)
 
-            Dim json = Await FileIO.ReadTextAsync(file)
+            cancellationToken.ThrowIfCancellationRequested()
+
+            Dim json = Await FileIO.ReadTextAsync(file).AsTask(cancellationToken)
             Return DeserializeFromJson(Of UserProfile)(json)
+        Catch ex As OperationCanceledException
+            Debug.WriteLine("Profile load operation was cancelled")
+            Return Nothing
         Catch ex As Exception
             Debug.WriteLine($"Error loading profile: {ex.Message}")
             Return Nothing
@@ -88,17 +103,21 @@ Public Class LocalStorageService
     ''' <summary>
     ''' Loads a user profile by username (scans files with early exit to avoid loading all profiles)
     ''' </summary>
-    Public Shared Async Function LoadProfileByUsernameAsync(username As String) As Task(Of UserProfile)
+    Public Shared Async Function LoadProfileByUsernameAsync(username As String, Optional cancellationToken As CancellationToken = Nothing) As Task(Of UserProfile)
         If String.IsNullOrWhiteSpace(username) Then Return Nothing
 
         Try
+            cancellationToken.ThrowIfCancellationRequested()
+
             Dim profilesFolder = Await LocalFolder.CreateFolderAsync(PROFILES_FOLDER, CreationCollisionOption.OpenIfExists)
             Dim files = Await profilesFolder.GetFilesAsync()
 
             For Each file In files
+                cancellationToken.ThrowIfCancellationRequested()
+
                 If file.Name.EndsWith(".json") Then
                     Try
-                        Dim json = Await FileIO.ReadTextAsync(file)
+                        Dim json = Await FileIO.ReadTextAsync(file).AsTask(cancellationToken)
                         Dim profile = DeserializeFromJson(Of UserProfile)(json)
                         If profile IsNot Nothing AndAlso String.Equals(profile.Username, username, StringComparison.OrdinalIgnoreCase) Then
                             Return profile
@@ -108,6 +127,9 @@ Public Class LocalStorageService
                     End Try
                 End If
             Next
+        Catch ex As OperationCanceledException
+            Debug.WriteLine("Profile search operation was cancelled")
+            Return Nothing
         Catch ex As Exception
             Debug.WriteLine($"Error loading profile by username: {ex.Message}")
         End Try

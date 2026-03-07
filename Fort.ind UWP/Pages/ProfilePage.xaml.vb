@@ -7,7 +7,7 @@ Public NotInheritable Class ProfilePage
     Inherits Page
 
     ' Guard to prevent multiple ContentDialogs from opening simultaneously
-    Private _isDialogOpen As Boolean = False
+    Private _dialogSemaphore As New Threading.SemaphoreSlim(1, 1)
 
     Public Sub New()
         Me.InitializeComponent()
@@ -21,8 +21,19 @@ Public NotInheritable Class ProfilePage
     End Sub
 
     Private Async Sub OnAuthStateChanged(sender As Object, isLoggedIn As Boolean)
-        Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
-            Sub() RefreshUI())
+        Try
+            Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
+                Sub() 
+                    Try
+                        RefreshUI()
+                    Catch ex As Exception
+                        Debug.WriteLine($"ProfilePage: RefreshUI failed - {ex.Message}")
+                    End Try
+                End Sub)
+        Catch ex As Exception
+            ' Critical: Catch exceptions in async void to prevent app crash
+            Debug.WriteLine($"ProfilePage: Auth state change handler failed - {ex.Message}")
+        End Try
     End Sub
 
     Private Sub ProfilePage_Loaded(sender As Object, e As RoutedEventArgs)
@@ -110,6 +121,11 @@ Public NotInheritable Class ProfilePage
         If ConfirmNewPasswordBox IsNot Nothing Then ConfirmNewPasswordBox.Password = ""
         If PasswordErrorText IsNot Nothing Then PasswordErrorText.Visibility = Visibility.Collapsed
         If EditErrorText IsNot Nothing Then EditErrorText.Visibility = Visibility.Collapsed
+
+        ' Set initial focus for better keyboard accessibility
+        If EditDisplayNameBox IsNot Nothing Then
+            EditDisplayNameBox.Focus(FocusState.Programmatic)
+        End If
     End Sub
 
     Private Sub SignInButton_Click(sender As Object, e As RoutedEventArgs)
@@ -126,6 +142,7 @@ Public NotInheritable Class ProfilePage
 
     Private Async Sub SaveProfileButton_Click(sender As Object, e As RoutedEventArgs)
         EditErrorText.Visibility = Visibility.Collapsed
+        EditSuccessText.Visibility = Visibility.Collapsed
 
         Dim displayName = EditDisplayNameBox.Text.Trim()
         Dim email = EditEmailBox.Text.Trim()
@@ -134,25 +151,51 @@ Public NotInheritable Class ProfilePage
         If String.IsNullOrWhiteSpace(displayName) Then
             displayName = ProfileService.CurrentUser.Username
         End If
+        
+        ' Basic email validation
+        If Not String.IsNullOrWhiteSpace(email) AndAlso
+           (Not email.Contains("@") OrElse Not email.Contains(".")) Then
+            EditErrorText.Text = "Please enter a valid email address"
+            EditErrorText.Visibility = Visibility.Visible
+            Return
+        End If
+
+        ' Show loading state
+        SaveProfileButton.IsEnabled = False
+        CancelEditButton.IsEnabled = False
+        SaveProfileProgress.IsActive = True
+        SaveProfileProgress.Visibility = Visibility.Visible
 
         Try
             Dim success = Await ProfileService.UpdateProfileAsync(displayName, email, bio)
 
             If success Then
+                EditSuccessText.Text = "Profile updated successfully!"
+                EditSuccessText.Visibility = Visibility.Visible
                 RefreshUI()
+                ' Auto-hide success message and return to view mode after delay
+                Await Task.Delay(1500)
                 ShowViewMode()
             Else
                 EditErrorText.Text = "Failed to save profile"
                 EditErrorText.Visibility = Visibility.Visible
             End If
         Catch ex As Exception
-            EditErrorText.Text = "An error occurred"
+            EditErrorText.Text = "An error occurred while saving"
             EditErrorText.Visibility = Visibility.Visible
+            Debug.WriteLine($"SaveProfileButton_Click error: {ex.Message}")
+        Finally
+            ' Hide loading state
+            SaveProfileButton.IsEnabled = True
+            CancelEditButton.IsEnabled = True
+            SaveProfileProgress.IsActive = False
+            SaveProfileProgress.Visibility = Visibility.Collapsed
         End Try
     End Sub
 
     Private Async Sub ChangePasswordButton_Click(sender As Object, e As RoutedEventArgs)
         PasswordErrorText.Visibility = Visibility.Collapsed
+        PasswordSuccessText.Visibility = Visibility.Collapsed
 
         Dim currentPwd = CurrentPasswordBox.Password
         Dim newPwd = NewPasswordBox.Password
@@ -178,6 +221,11 @@ Public NotInheritable Class ProfilePage
             Return
         End If
 
+        ' Show loading state
+        ChangePasswordButton.IsEnabled = False
+        ChangePasswordProgress.IsActive = True
+        ChangePasswordProgress.Visibility = Visibility.Visible
+
         Try
             Dim success = Await ProfileService.ChangePasswordAsync(currentPwd, newPwd)
 
@@ -186,19 +234,33 @@ Public NotInheritable Class ProfilePage
                 CurrentPasswordBox.Password = ""
                 NewPasswordBox.Password = ""
                 ConfirmNewPasswordBox.Password = ""
+                NewPasswordStrengthText.Visibility = Visibility.Collapsed
 
-                Await ShowMessageAsync("Success", "Password changed successfully!")
+                PasswordSuccessText.Text = "Password changed successfully!"
+                PasswordSuccessText.Visibility = Visibility.Visible
+                
+                ' Auto-hide success message after delay
+                Await Task.Delay(3000)
+                PasswordSuccessText.Visibility = Visibility.Collapsed
             Else
                 ShowPasswordError("Current password is incorrect")
             End If
         Catch ex As Exception
-            ShowPasswordError("An error occurred")
+            ShowPasswordError("An error occurred while changing password")
+            Debug.WriteLine($"ChangePasswordButton_Click error: {ex.Message}")
+        Finally
+            ' Hide loading state
+            ChangePasswordButton.IsEnabled = True
+            ChangePasswordProgress.IsActive = False
+            ChangePasswordProgress.Visibility = Visibility.Collapsed
         End Try
     End Sub
 
     Private Async Sub LogoutButton_Click(sender As Object, e As RoutedEventArgs)
-        If _isDialogOpen Then Return
-        _isDialogOpen = True
+        ' Use semaphore to prevent concurrent dialog opening
+        If Not Await _dialogSemaphore.WaitAsync(0) Then
+            Return ' Another dialog is already open
+        End If
 
         Try
             Dim dialog As New ContentDialog()
@@ -218,13 +280,15 @@ Public NotInheritable Class ProfilePage
         Catch ex As Exception
             Debug.WriteLine($"ProfilePage: Logout dialog failed – {ex.Message}")
         Finally
-            _isDialogOpen = False
+            _dialogSemaphore.Release()
         End Try
     End Sub
 
     Private Async Sub DeleteAccountButton_Click(sender As Object, e As RoutedEventArgs)
-        If _isDialogOpen Then Return
-        _isDialogOpen = True
+        ' Use semaphore to prevent concurrent dialog opening
+        If Not Await _dialogSemaphore.WaitAsync(0) Then
+            Return ' Another dialog is already open
+        End If
 
         Try
             Dim dialog As New ContentDialog()
@@ -260,7 +324,7 @@ Public NotInheritable Class ProfilePage
         Catch ex As Exception
             Debug.WriteLine($"ProfilePage: Delete account dialog failed – {ex.Message}")
         Finally
-            _isDialogOpen = False
+            _dialogSemaphore.Release()
         End Try
     End Sub
 
@@ -274,8 +338,10 @@ Public NotInheritable Class ProfilePage
     End Sub
 
     Private Async Function ShowMessageAsync(title As String, message As String) As Task
-        If _isDialogOpen Then Return
-        _isDialogOpen = True
+        ' Use semaphore to prevent concurrent dialog opening
+        If Not Await _dialogSemaphore.WaitAsync(0) Then
+            Return ' Another dialog is already open
+        End If
 
         Try
             Dim dialog As New ContentDialog()
@@ -287,7 +353,7 @@ Public NotInheritable Class ProfilePage
         Catch ex As Exception
             Debug.WriteLine($"ProfilePage: ShowMessage dialog failed – {ex.Message}")
         Finally
-            _isDialogOpen = False
+            _dialogSemaphore.Release()
         End Try
     End Function
 

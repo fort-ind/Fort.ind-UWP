@@ -143,10 +143,16 @@
                     <StackPanel Orientation="Horizontal" Spacing="12">
                         <Button x:Name="EditProfileButton"
                                 Content="?? Edit Profile"
-                                Click="EditProfileButton_Click"/>
+                                Click="EditProfileButton_Click"
+                                AccessKey="E"
+                                AutomationProperties.Name="Edit profile button"
+                                AutomationProperties.HelpText="Edit your profile information (Alt+E)"/>
                         <Button x:Name="LogoutButton"
                                 Content="?? Sign Out"
-                                Click="LogoutButton_Click"/>
+                                Click="LogoutButton_Click"
+                                AccessKey="O"
+                                AutomationProperties.Name="Sign out button"
+                                AutomationProperties.HelpText="Sign out of your account (Alt+O)"/>
                     </StackPanel>
                 </StackPanel>
 
@@ -163,13 +169,17 @@
 
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Display Name" FontSize="12" Opacity="0.7"/>
-                                <TextBox x:Name="EditDisplayNameBox"/>
+                                <TextBox x:Name="EditDisplayNameBox"
+                                         AutomationProperties.Name="Display name"
+                                         AutomationProperties.HelpText="Enter your display name"/>
                             </StackPanel>
 
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Email" FontSize="12" Opacity="0.7"/>
                                 <TextBox x:Name="EditEmailBox"
-                                         InputScope="EmailSmtpAddress"/>
+                                         InputScope="EmailSmtpAddress"
+                                         AutomationProperties.Name="Email address"
+                                         AutomationProperties.HelpText="Enter your email address"/>
                             </StackPanel>
 
                             <StackPanel Spacing="4">
@@ -177,11 +187,18 @@
                                 <TextBox x:Name="EditBioBox"
                                          AcceptsReturn="True"
                                          TextWrapping="Wrap"
-                                         MinHeight="100"/>
+                                         MinHeight="100"
+                                         AutomationProperties.Name="Bio"
+                                         AutomationProperties.HelpText="Enter your bio or description"/>
                             </StackPanel>
 
                             <TextBlock x:Name="EditErrorText"
                                        Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
+                                       FontSize="12"
+                                       Visibility="Collapsed"/>
+                            
+                            <TextBlock x:Name="EditSuccessText"
+                                       Foreground="#4CAF50"
                                        FontSize="12"
                                        Visibility="Collapsed"/>
 
@@ -189,10 +206,20 @@
                                 <Button x:Name="SaveProfileButton"
                                         Content="Save Changes"
                                         Click="SaveProfileButton_Click"
-                                        Style="{StaticResource AccentButtonStyle}"/>
+                                        Style="{StaticResource AccentButtonStyle}"
+                                        AutomationProperties.Name="Save changes button"
+                                        AutomationProperties.HelpText="Save all profile changes"/>
                                 <Button x:Name="CancelEditButton"
                                         Content="Cancel"
-                                        Click="CancelEditButton_Click"/>
+                                        Click="CancelEditButton_Click"
+                                        AutomationProperties.Name="Cancel button"
+                                        AutomationProperties.HelpText="Cancel editing and return to view mode"/>
+                                <ProgressRing x:Name="SaveProfileProgress"
+                                              Width="24"
+                                              Height="24"
+                                              IsActive="False"
+                                              Visibility="Collapsed"
+                                              VerticalAlignment="Center"/>
                             </StackPanel>
                         </StackPanel>
                     </Grid>
@@ -208,32 +235,54 @@
 
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Current Password" FontSize="12" Opacity="0.7"/>
-                                <PasswordBox x:Name="CurrentPasswordBox"/>
+                                <PasswordBox x:Name="CurrentPasswordBox"
+                                             AutomationProperties.Name="Current password"
+                                             AutomationProperties.HelpText="Enter your current password"/>
                             </StackPanel>
 
                             <StackPanel Spacing="4">
                                 <TextBlock Text="New Password" FontSize="12" Opacity="0.7"/>
                                 <PasswordBox x:Name="NewPasswordBox"
-                                             PasswordChanged="NewPasswordBox_PasswordChanged"/>
+                                             PasswordChanged="NewPasswordBox_PasswordChanged"
+                                             AutomationProperties.Name="New password"
+                                             AutomationProperties.HelpText="Enter your new password"/>
                                 <TextBlock x:Name="NewPasswordStrengthText"
                                            FontSize="11"
                                            Margin="0,-2,0,0"
-                                           Visibility="Collapsed"/>
+                                           Visibility="Collapsed"
+                                           AutomationProperties.LiveSetting="Polite"/>
                             </StackPanel>
 
                             <StackPanel Spacing="4">
                                 <TextBlock Text="Confirm New Password" FontSize="12" Opacity="0.7"/>
-                                <PasswordBox x:Name="ConfirmNewPasswordBox"/>
+                                <PasswordBox x:Name="ConfirmNewPasswordBox"
+                                             AutomationProperties.Name="Confirm new password"
+                                             AutomationProperties.HelpText="Re-enter your new password to confirm"/>
                             </StackPanel>
 
                             <TextBlock x:Name="PasswordErrorText"
                                        Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                        FontSize="12"
                                        Visibility="Collapsed"/>
+                            
+                            <TextBlock x:Name="PasswordSuccessText"
+                                       Foreground="#4CAF50"
+                                       FontSize="12"
+                                       Visibility="Collapsed"/>
 
-                            <Button x:Name="ChangePasswordButton"
-                                    Content="Update Password"
-                                    Click="ChangePasswordButton_Click"/>
+                            <StackPanel Orientation="Horizontal" Spacing="12">
+                                <Button x:Name="ChangePasswordButton"
+                                        Content="Update Password"
+                                        Click="ChangePasswordButton_Click"
+                                        AutomationProperties.Name="Update password button"
+                                        AutomationProperties.HelpText="Change your account password"/>
+                                <ProgressRing x:Name="ChangePasswordProgress"
+                                              Width="24"
+                                              Height="24"
+                                              IsActive="False"
+                                              Visibility="Collapsed"
+                                              VerticalAlignment="Center"/>
+                            </StackPanel>
                         </StackPanel>
                     </Grid>
 

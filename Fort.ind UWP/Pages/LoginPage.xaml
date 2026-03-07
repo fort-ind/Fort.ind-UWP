@@ -68,30 +68,44 @@
 
                     <!-- Login Form -->
                     <StackPanel x:Name="LoginForm" Spacing="12">
-                        <TextBox x:Name="UsernameBox"
-                                 PlaceholderText="Username"
-                                 FontSize="14"/>
+                        <StackPanel>
+                            <TextBox x:Name="UsernameBox"
+                                     PlaceholderText="Username"
+                                     FontSize="14"
+                                     AutomationProperties.Name="Username"
+                                     AutomationProperties.HelpText="Enter your username"/>
+                            <TextBlock x:Name="UsernameHint"
+                                       FontSize="11"
+                                       Margin="0,2,0,0"
+                                       Visibility="Collapsed"/>
+                        </StackPanel>
 
                         <PasswordBox x:Name="PasswordBox"
                                      PlaceholderText="Password"
                                      FontSize="14"
-                                     KeyDown="PasswordBox_KeyDown"/>
+                                     KeyDown="PasswordBox_KeyDown"
+                                     AutomationProperties.Name="Password"
+                                     AutomationProperties.HelpText="Enter your password"/>
 
                         <CheckBox x:Name="RememberMeCheck"
                                   Content="Remember me"
-                                  IsChecked="True"/>
+                                  IsChecked="True"
+                                  AutomationProperties.Name="Remember me checkbox"/>
 
                         <TextBlock x:Name="ErrorText"
                                    Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap"
-                                   Visibility="Collapsed"/>
+                                   Visibility="Collapsed"
+                                   AutomationProperties.LiveSetting="Assertive"/>
 
                         <Button x:Name="LoginButton"
                                 Content="Sign In"
                                 HorizontalAlignment="Stretch"
                                 Click="LoginButton_Click"
-                                Style="{StaticResource AccentButtonStyle}"/>
+                                Style="{StaticResource AccentButtonStyle}"
+                                AutomationProperties.Name="Sign in button"
+                                AutomationProperties.HelpText="Press to sign in with your account"/>
 
                         <StackPanel Orientation="Horizontal" 
                                     HorizontalAlignment="Center"
@@ -101,50 +115,79 @@
                                        VerticalAlignment="Center"/>
                             <HyperlinkButton x:Name="ShowRegisterLink"
                                              Content="Create one"
-                                             Click="ShowRegisterLink_Click"/>
+                                             Click="ShowRegisterLink_Click"
+                                             AutomationProperties.Name="Create account link"/>
                         </StackPanel>
                     </StackPanel>
 
                     <!-- Register Form (initially hidden) -->
                     <StackPanel x:Name="RegisterForm" Spacing="12" Visibility="Collapsed">
-                        <TextBox x:Name="RegUsernameBox"
-                                 PlaceholderText="Username"
-                                 FontSize="14"/>
+                        <StackPanel>
+                            <TextBox x:Name="RegUsernameBox"
+                                     PlaceholderText="Username"
+                                     FontSize="14"
+                                     TextChanged="RegUsernameBox_TextChanged"
+                                     AutomationProperties.Name="Username"
+                                     AutomationProperties.HelpText="Enter a username with only letters, numbers, hyphens and underscores"/>
+                            <TextBlock x:Name="RegUsernameHint"
+                                       FontSize="11"
+                                       Margin="0,2,0,0"
+                                       Visibility="Collapsed"/>
+                        </StackPanel>
 
                         <TextBox x:Name="RegDisplayNameBox"
                                  PlaceholderText="Display Name (optional)"
-                                 FontSize="14"/>
-
-                        <TextBox x:Name="RegEmailBox"
-                                 PlaceholderText="Email (optional)"
                                  FontSize="14"
-                                 InputScope="EmailSmtpAddress"/>
+                                 AutomationProperties.Name="Display name"
+                                 AutomationProperties.HelpText="Optional display name for your profile"/>
+
+                        <StackPanel>
+                            <TextBox x:Name="RegEmailBox"
+                                     PlaceholderText="Email (optional)"
+                                     FontSize="14"
+                                     InputScope="EmailSmtpAddress"
+                                     TextChanged="RegEmailBox_TextChanged"
+                                     AutomationProperties.Name="Email address"
+                                     AutomationProperties.HelpText="Optional email address for your account"/>
+                            <TextBlock x:Name="RegEmailHint"
+                                       FontSize="11"
+                                       Margin="0,2,0,0"
+                                       Visibility="Collapsed"/>
+                        </StackPanel>
 
                         <PasswordBox x:Name="RegPasswordBox"
                                      PlaceholderText="Password"
                                      FontSize="14"
-                                     PasswordChanged="RegPasswordBox_PasswordChanged"/>
+                                     PasswordChanged="RegPasswordBox_PasswordChanged"
+                                     AutomationProperties.Name="Password"
+                                     AutomationProperties.HelpText="Enter a password with at least 8 characters"/>
                         <TextBlock x:Name="RegPasswordStrengthText"
                                    FontSize="11"
                                    Margin="0,-4,0,0"
-                                   Visibility="Collapsed"/>
+                                   Visibility="Collapsed"
+                                   AutomationProperties.LiveSetting="Polite"/>
 
                         <PasswordBox x:Name="RegConfirmPasswordBox"
                                      PlaceholderText="Confirm Password"
                                      FontSize="14"
-                                     KeyDown="RegConfirmPasswordBox_KeyDown"/>
+                                     KeyDown="RegConfirmPasswordBox_KeyDown"
+                                     AutomationProperties.Name="Confirm password"
+                                     AutomationProperties.HelpText="Re-enter your password to confirm"/>
 
                         <TextBlock x:Name="RegErrorText"
                                    Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
                                    FontSize="12"
                                    TextWrapping="Wrap"
-                                   Visibility="Collapsed"/>
+                                   Visibility="Collapsed"
+                                   AutomationProperties.LiveSetting="Assertive"/>
 
                         <Button x:Name="RegisterButton"
                                 Content="Create Account"
                                 HorizontalAlignment="Stretch"
                                 Click="RegisterButton_Click"
-                                Style="{StaticResource AccentButtonStyle}"/>
+                                Style="{StaticResource AccentButtonStyle}"
+                                AutomationProperties.Name="Create account button"
+                                AutomationProperties.HelpText="Press to create your new account"/>
 
                         <StackPanel Orientation="Horizontal" 
                                     HorizontalAlignment="Center"
@@ -154,7 +197,8 @@
                                        VerticalAlignment="Center"/>
                             <HyperlinkButton x:Name="ShowLoginLink"
                                              Content="Sign in"
-                                             Click="ShowLoginLink_Click"/>
+                                             Click="ShowLoginLink_Click"
+                                             AutomationProperties.Name="Sign in link"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -163,7 +207,9 @@
                                      Content="Continue without account"
                                      HorizontalAlignment="Center"
                                      Opacity="0.6"
-                                     Click="SkipButton_Click"/>
+                                     Click="SkipButton_Click"
+                                     AutomationProperties.Name="Skip sign in"
+                                     AutomationProperties.HelpText="Continue using the app without signing in"/>
                 </StackPanel>
             </Grid>
         </Grid>
