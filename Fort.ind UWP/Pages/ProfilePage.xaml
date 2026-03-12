@@ -71,6 +71,9 @@
                           CornerRadius="40"
                           Background="{ThemeResource SystemControlBackgroundBaseLowBrush}"
                           Opacity="0">
+                                                <Image x:Name="ProfileImage"
+                                                             Stretch="UniformToFill"
+                                                             Visibility="Collapsed"/>
                         <TextBlock x:Name="ProfileInitials"
                                    Text="?"
                                    FontSize="32"
@@ -190,6 +193,22 @@
                                          MinHeight="100"
                                          AutomationProperties.Name="Bio"
                                          AutomationProperties.HelpText="Enter your bio or description"/>
+                            </StackPanel>
+
+                            <StackPanel Spacing="8">
+                                <TextBlock Text="Profile Picture" FontSize="12" Opacity="0.7"/>
+                                <StackPanel Orientation="Horizontal" Spacing="12">
+                                    <Button x:Name="ChoosePhotoButton"
+                                            Content="Choose Photo"
+                                            Click="ChoosePhotoButton_Click"/>
+                                    <Button x:Name="RemovePhotoButton"
+                                            Content="Remove"
+                                            Click="RemovePhotoButton_Click"/>
+                                </StackPanel>
+                                <TextBlock x:Name="PhotoStatusText"
+                                           FontSize="12"
+                                           Opacity="0.75"
+                                           Visibility="Collapsed"/>
                             </StackPanel>
 
                             <TextBlock x:Name="EditErrorText"

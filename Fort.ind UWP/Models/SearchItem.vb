@@ -38,15 +38,15 @@ Public Class SearchItem
 
     Private Shared Function GetIconGlyph(category As String) As String
         Select Case True
-            Case category = "Menu" : Return ChrW(&HE700)          ' GlobalNavButton
-            Case category = "Settings" : Return ChrW(&HE713)      ' Setting (gear)
-            Case category = "Profile" : Return ChrW(&HE77B)       ' Contact (person)
-            Case category.StartsWith("Games") : Return ChrW(&HE768) ' Play
-            Case category = "Social" : Return ChrW(&HE716)        ' People
-            Case category = "Emulators" : Return ChrW(&HE768)     ' Play (gaming)
-            Case category.StartsWith("Apps") : Return ChrW(&HE71D) ' Apps
-            Case category = "Extras" : Return ChrW(&HE734)        ' Favorite (star)
-            Case category = "Labs & Betas" : Return ChrW(&HE9D9)  ' Beaker
+            Case category = AppConstants.CategoryMenu : Return ChrW(&HE700)             ' GlobalNavButton
+            Case category = AppConstants.CategorySettings : Return ChrW(&HE713)         ' Setting (gear)
+            Case category = AppConstants.CategoryProfile : Return ChrW(&HE77B)          ' Contact (person)
+            Case category.StartsWith(AppConstants.CategoryGames) : Return ChrW(&HE768)  ' Play
+            Case category = AppConstants.CategorySocial : Return ChrW(&HE716)           ' People
+            Case category = AppConstants.CategoryEmulators : Return ChrW(&HE768)        ' Play (gaming)
+            Case category.StartsWith(AppConstants.CategoryApps) : Return ChrW(&HE71D)   ' Apps
+            Case category = AppConstants.CategoryExtras : Return ChrW(&HE734)           ' Favorite (star)
+            Case category = AppConstants.CategoryLabsAndBetas : Return ChrW(&HE9D9)     ' Beaker
             Case Else : Return ChrW(&HE774)                        ' Globe (fort1nd.com + default)
         End Select
     End Function

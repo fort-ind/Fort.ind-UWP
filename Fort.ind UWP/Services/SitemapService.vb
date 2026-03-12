@@ -13,6 +13,11 @@ Public Class SitemapService
         Dim items As New List(Of SearchItem)
 
         Try
+            Dim cachedUrls = Await TryLoadCachedUrlsAsync()
+            If cachedUrls IsNot Nothing AndAlso cachedUrls.Count > 0 Then
+                Return BuildSearchItemsFromUrls(cachedUrls)
+            End If
+
             Dim file = Await StorageFile.GetFileFromApplicationUriAsync(New Uri("ms-appx:///sitemap.xml"))
             Dim text = Await FileIO.ReadTextAsync(file)
             
@@ -26,6 +31,7 @@ Public Class SitemapService
             End Try
             
             Dim ns As XNamespace = "http://www.sitemaps.org/schemas/sitemap/0.9"
+            Dim urlsToCache As New List(Of String)()
 
             For Each urlElement In doc.Descendants(ns + "url")
                 Dim loc = urlElement.Element(ns + "loc")?.Value
@@ -34,9 +40,11 @@ Public Class SitemapService
                 Dim uri As Uri = Nothing
                 If Not Uri.TryCreate(loc, UriKind.Absolute, uri) Then Continue For
 
+                urlsToCache.Add(loc)
+
                 Dim path = uri.AbsolutePath.Trim("/"c)
                 If String.IsNullOrEmpty(path) Then
-                    items.Add(New SearchItem("Home", "fort1nd.com", Nothing, loc))
+                    items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, loc))
                     Continue For
                 End If
 
@@ -48,11 +56,110 @@ Public Class SitemapService
 
                 items.Add(New SearchItem(title, category, Nothing, loc))
             Next
+
+            If urlsToCache.Count > 0 Then
+                Await SaveCachedUrlsAsync(urlsToCache)
+            End If
         Catch ex As Exception
             Debug.WriteLine($"SitemapService: failed to load sitemap – {ex.Message}")
         End Try
 
         Return items
+    End Function
+
+    Private Shared Function BuildSearchItemsFromUrls(urls As IEnumerable(Of String)) As List(Of SearchItem)
+        Dim items As New List(Of SearchItem)()
+
+        For Each loc In urls
+            If String.IsNullOrWhiteSpace(loc) Then Continue For
+
+            Dim uri As Uri = Nothing
+            If Not Uri.TryCreate(loc, UriKind.Absolute, uri) Then Continue For
+
+            Dim path = uri.AbsolutePath.Trim("/"c)
+            If String.IsNullOrEmpty(path) Then
+                items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, loc))
+                Continue For
+            End If
+
+            If path = "404" Then Continue For
+
+            Dim category = GetCategory(path)
+            Dim title = GetTitle(path)
+            items.Add(New SearchItem(title, category, Nothing, loc))
+        Next
+
+        Return items
+    End Function
+
+    Private Shared Async Function TryLoadCachedUrlsAsync() As Task(Of List(Of String))
+        Try
+            Dim settings = ApplicationData.Current.LocalSettings
+            If Not settings.Values.ContainsKey(AppConstants.SitemapCacheTimestampKey) Then
+                Return Nothing
+            End If
+
+            Dim rawTimestamp = settings.Values(AppConstants.SitemapCacheTimestampKey)
+            Dim cacheUnixSeconds As Long
+            Try
+                cacheUnixSeconds = Convert.ToInt64(rawTimestamp)
+            Catch
+                Return Nothing
+            End Try
+
+            Dim nowUnixSeconds = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            Dim maxAgeSeconds = CLng(AppConstants.SitemapCacheTtlHours) * 60L * 60L
+            If (nowUnixSeconds - cacheUnixSeconds) > maxAgeSeconds Then
+                Return Nothing
+            End If
+
+            Dim cacheFile = Await ApplicationData.Current.LocalFolder.GetFileAsync(AppConstants.SitemapCacheFileName)
+            Dim content = Await FileIO.ReadTextAsync(cacheFile)
+            If String.IsNullOrWhiteSpace(content) Then
+                Return Nothing
+            End If
+
+            Dim urls As New List(Of String)()
+            Dim lines = content.Split({vbCrLf, vbLf}, StringSplitOptions.RemoveEmptyEntries)
+            For Each line In lines
+                Dim value = line.Trim()
+                If Not String.IsNullOrWhiteSpace(value) Then
+                    urls.Add(value)
+                End If
+            Next
+
+            If urls.Count = 0 Then
+                Return Nothing
+            End If
+
+            Return urls
+        Catch
+            Return Nothing
+        End Try
+    End Function
+
+    Private Shared Async Function SaveCachedUrlsAsync(urls As IEnumerable(Of String)) As Task
+        Try
+            Dim lines As New List(Of String)()
+            For Each url In urls
+                If Not String.IsNullOrWhiteSpace(url) Then
+                    lines.Add(url)
+                End If
+            Next
+
+            If lines.Count = 0 Then
+                Return
+            End If
+
+            Dim cacheFile = Await ApplicationData.Current.LocalFolder.CreateFileAsync(
+                AppConstants.SitemapCacheFileName,
+                CreationCollisionOption.ReplaceExisting)
+
+            Await FileIO.WriteTextAsync(cacheFile, String.Join(Environment.NewLine, lines))
+            ApplicationData.Current.LocalSettings.Values(AppConstants.SitemapCacheTimestampKey) = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+        Catch ex As Exception
+            Debug.WriteLine($"SitemapService: failed to save sitemap cache – {ex.Message}")
+        End Try
     End Function
 
     Private Shared Function GetCategory(path As String) As String
@@ -68,7 +175,7 @@ Public Class SitemapService
         If path.StartsWith("apps/") Then Return "Apps"
         If path.StartsWith("extras/") Then Return "Extras"
         If path.StartsWith("labs-betas/") Then Return "Labs & Betas"
-        Return "fort1nd.com"
+        Return AppConstants.CategoryFortWebsite
     End Function
 
     Private Shared Function GetTitle(path As String) As String

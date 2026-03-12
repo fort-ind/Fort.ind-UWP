@@ -1,4 +1,7 @@
 Imports Windows.UI.Xaml.Media.Animation
+Imports Windows.UI.Xaml.Media.Imaging
+Imports Windows.Storage
+Imports Windows.Storage.Pickers
 
 ''' <summary>
 ''' Profile viewing and editing page
@@ -8,6 +11,8 @@ Public NotInheritable Class ProfilePage
 
     ' Guard to prevent multiple ContentDialogs from opening simultaneously
     Private _dialogSemaphore As New Threading.SemaphoreSlim(1, 1)
+    Private _pendingProfilePicturePath As String = Nothing
+    Private _removeProfilePictureRequested As Boolean = False
 
     Public Sub New()
         Me.InitializeComponent()
@@ -71,14 +76,8 @@ Public NotInheritable Class ProfilePage
 
         ' Set initials (up to two letters: first letter of each word)
         Dim name = If(String.IsNullOrWhiteSpace(user.DisplayName), user.Username, user.DisplayName)
-        If name.Length > 0 Then
-            Dim parts = name.Trim().Split(" "c)
-            If parts.Length >= 2 AndAlso parts(1).Length > 0 Then
-                ProfileInitials.Text = (parts(0).Substring(0, 1) & parts(1).Substring(0, 1)).ToUpper()
-            Else
-                ProfileInitials.Text = parts(0).Substring(0, 1).ToUpper()
-            End If
-        End If
+        ProfileInitials.Text = GetInitials(name)
+        UpdateAvatarUI(user.ProfilePicturePath)
 
         ' Update bio
         BioText.Text = If(String.IsNullOrWhiteSpace(user.Bio), "No bio yet. Click Edit Profile to add one!", user.Bio)
@@ -113,6 +112,9 @@ Public NotInheritable Class ProfilePage
             If EditDisplayNameBox IsNot Nothing Then EditDisplayNameBox.Text = If(ProfileService.CurrentUser.DisplayName, "")
             If EditEmailBox IsNot Nothing Then EditEmailBox.Text = If(ProfileService.CurrentUser.Email, "")
             If EditBioBox IsNot Nothing Then EditBioBox.Text = If(ProfileService.CurrentUser.Bio, "")
+            _pendingProfilePicturePath = ProfileService.CurrentUser.ProfilePicturePath
+            _removeProfilePictureRequested = False
+            PhotoStatusText.Visibility = Visibility.Collapsed
         End If
 
         ' Clear password fields (with null checks)
@@ -137,7 +139,10 @@ Public NotInheritable Class ProfilePage
     End Sub
 
     Private Sub CancelEditButton_Click(sender As Object, e As RoutedEventArgs)
+        _pendingProfilePicturePath = Nothing
+        _removeProfilePictureRequested = False
         ShowViewMode()
+        RefreshUI()
     End Sub
 
     Private Async Sub SaveProfileButton_Click(sender As Object, e As RoutedEventArgs)
@@ -167,9 +172,15 @@ Public NotInheritable Class ProfilePage
         SaveProfileProgress.Visibility = Visibility.Visible
 
         Try
-            Dim success = Await ProfileService.UpdateProfileAsync(displayName, email, bio)
+            Dim updateProfilePicture = _removeProfilePictureRequested OrElse _pendingProfilePicturePath IsNot Nothing
+            Dim profilePicturePathToSave As String = If(_removeProfilePictureRequested, Nothing, _pendingProfilePicturePath)
+
+            Dim success = Await ProfileService.UpdateProfileAsync(displayName, email, bio, profilePicturePathToSave, updateProfilePicture)
 
             If success Then
+                _pendingProfilePicturePath = Nothing
+                _removeProfilePictureRequested = False
+                PhotoStatusText.Visibility = Visibility.Collapsed
                 EditSuccessText.Text = "Profile updated successfully!"
                 EditSuccessText.Visibility = Visibility.Visible
                 RefreshUI()
@@ -336,6 +347,117 @@ Public NotInheritable Class ProfilePage
     Private Sub NewPasswordBox_PasswordChanged(sender As Object, e As RoutedEventArgs)
         LoginPage.UpdateStrengthLabel(NewPasswordBox.Password, NewPasswordStrengthText)
     End Sub
+
+    Private Async Sub ChoosePhotoButton_Click(sender As Object, e As RoutedEventArgs)
+        EditErrorText.Visibility = Visibility.Collapsed
+
+        If ProfileService.CurrentUser Is Nothing Then
+            Return
+        End If
+
+        Try
+            Dim picker As New FileOpenPicker()
+            picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary
+            picker.ViewMode = PickerViewMode.Thumbnail
+            picker.FileTypeFilter.Add(".png")
+            picker.FileTypeFilter.Add(".jpg")
+            picker.FileTypeFilter.Add(".jpeg")
+            picker.FileTypeFilter.Add(".bmp")
+
+            Dim pickedFile = Await picker.PickSingleFileAsync()
+            If pickedFile Is Nothing Then
+                Return
+            End If
+
+            Dim relativePath = Await SaveAvatarToLocalStorageAsync(pickedFile)
+            If String.IsNullOrWhiteSpace(relativePath) Then
+                EditErrorText.Text = "Could not save selected photo"
+                EditErrorText.Visibility = Visibility.Visible
+                Return
+            End If
+
+            _pendingProfilePicturePath = relativePath
+            _removeProfilePictureRequested = False
+            PhotoStatusText.Text = "New profile photo selected. Save changes to apply."
+            PhotoStatusText.Visibility = Visibility.Visible
+            UpdateAvatarUI(relativePath)
+        Catch ex As Exception
+            EditErrorText.Text = "Could not open photo picker"
+            EditErrorText.Visibility = Visibility.Visible
+            Debug.WriteLine($"ProfilePage: Choose photo failed - {ex.Message}")
+        End Try
+    End Sub
+
+    Private Sub RemovePhotoButton_Click(sender As Object, e As RoutedEventArgs)
+        If ProfileService.CurrentUser Is Nothing Then
+            Return
+        End If
+
+        _pendingProfilePicturePath = Nothing
+        _removeProfilePictureRequested = True
+        PhotoStatusText.Text = "Profile photo will be removed when you save changes."
+        PhotoStatusText.Visibility = Visibility.Visible
+        UpdateAvatarUI(Nothing)
+    End Sub
+
+    Private Function GetInitials(name As String) As String
+        If String.IsNullOrWhiteSpace(name) Then
+            Return "?"
+        End If
+
+        Dim parts = name.Trim().Split(" "c)
+        If parts.Length >= 2 AndAlso parts(1).Length > 0 Then
+            Return (parts(0).Substring(0, 1) & parts(1).Substring(0, 1)).ToUpper()
+        End If
+
+        Return parts(0).Substring(0, 1).ToUpper()
+    End Function
+
+    Private Sub UpdateAvatarUI(profilePicturePath As String)
+        Try
+            If String.IsNullOrWhiteSpace(profilePicturePath) Then
+                ProfileImage.Source = Nothing
+                ProfileImage.Visibility = Visibility.Collapsed
+                ProfileInitials.Visibility = Visibility.Visible
+                Return
+            End If
+
+            Dim imageUri As Uri = Nothing
+            If profilePicturePath.StartsWith("ms-appdata:///", StringComparison.OrdinalIgnoreCase) Then
+                imageUri = New Uri(profilePicturePath)
+            Else
+                imageUri = New Uri($"ms-appdata:///local/{profilePicturePath.TrimStart("/"c)}")
+            End If
+
+            ProfileImage.Source = New BitmapImage(imageUri)
+            ProfileImage.Visibility = Visibility.Visible
+            ProfileInitials.Visibility = Visibility.Collapsed
+        Catch ex As Exception
+            Debug.WriteLine($"ProfilePage: Avatar load failed - {ex.Message}")
+            ProfileImage.Source = Nothing
+            ProfileImage.Visibility = Visibility.Collapsed
+            ProfileInitials.Visibility = Visibility.Visible
+        End Try
+    End Sub
+
+    Private Shared Async Function SaveAvatarToLocalStorageAsync(sourceFile As StorageFile) As Task(Of String)
+        Try
+            Dim extension = sourceFile.FileType
+            If String.IsNullOrWhiteSpace(extension) Then
+                extension = ".png"
+            End If
+
+            Dim localFolder = ApplicationData.Current.LocalFolder
+            Dim avatarFolder = Await localFolder.CreateFolderAsync(AppConstants.AvatarFolderName, CreationCollisionOption.OpenIfExists)
+            Dim fileName = $"{ProfileService.CurrentUser.UserId}{extension.ToLowerInvariant()}"
+
+            Await sourceFile.CopyAsync(avatarFolder, fileName, NameCollisionOption.ReplaceExisting)
+            Return $"{AppConstants.AvatarFolderName}/{fileName}"
+        Catch ex As Exception
+            Debug.WriteLine($"ProfilePage: Failed to persist avatar - {ex.Message}")
+            Return Nothing
+        End Try
+    End Function
 
     Private Async Function ShowMessageAsync(title As String, message As String) As Task
         ' Use semaphore to prevent concurrent dialog opening

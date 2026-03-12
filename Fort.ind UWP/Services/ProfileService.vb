@@ -161,7 +161,7 @@ Public Class ProfileService
     ''' <summary>
     ''' Updates the current user's profile
     ''' </summary>
-    Public Shared Async Function UpdateProfileAsync(displayName As String, email As String, bio As String) As Task(Of Boolean)
+    Public Shared Async Function UpdateProfileAsync(displayName As String, email As String, bio As String, Optional profilePicturePath As String = Nothing, Optional updateProfilePicture As Boolean = False) As Task(Of Boolean)
         If CurrentUser Is Nothing Then
             Return False
         End If
@@ -169,16 +169,21 @@ Public Class ProfileService
         Dim oldDisplayName = CurrentUser.DisplayName
         Dim oldEmail = CurrentUser.Email
         Dim oldBio = CurrentUser.Bio
+        Dim oldProfilePicturePath = CurrentUser.ProfilePicturePath
 
         CurrentUser.DisplayName = displayName
         CurrentUser.Email = email
         CurrentUser.Bio = bio
+        If updateProfilePicture Then
+            CurrentUser.ProfilePicturePath = profilePicturePath
+        End If
 
         Dim saved = Await LocalStorageService.SaveProfileAsync(CurrentUser)
         If Not saved Then
             CurrentUser.DisplayName = oldDisplayName
             CurrentUser.Email = oldEmail
             CurrentUser.Bio = oldBio
+            CurrentUser.ProfilePicturePath = oldProfilePicturePath
         End If
         Return saved
     End Function
