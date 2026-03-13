@@ -110,19 +110,28 @@ jobs:
         [IO.File]::WriteAllBytes($pfxPath, $certBytes)
 
         $cerPath = "Fort.ind UWP\Fort.ind_UWP.cer"
-        if (-not [string]::IsNullOrWhiteSpace($env:CERT_PASSWORD)) {
-          $x509 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
-          $x509.Import((Resolve-Path $pfxPath).Path, $env:CERT_PASSWORD, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
-          [IO.File]::WriteAllBytes($cerPath, $x509.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
-          Write-Host "Exported public certificate to: $cerPath"
-        } else {
-          Write-Host "CERT_PASSWORD is empty; skipping CER export"
-        }
+        try {
+          if (-not [string]::IsNullOrWhiteSpace($env:CERT_PASSWORD)) {
+            $x509 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2(
+              (Resolve-Path $pfxPath).Path,
+              $env:CERT_PASSWORD,
+              [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable
+            )
+            [IO.File]::WriteAllBytes($cerPath, $x509.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
+            Write-Host "Exported public certificate to: $cerPath"
+          } else {
+            Write-Host "CERT_PASSWORD is empty; skipping CER export"
+          }
 
-        "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
-        "CER_PATH=$cerPath" >> $env:GITHUB_ENV
-        "HAS_CERTIFICATE=true" >> $env:GITHUB_ENV
-        "has_certificate=true" >> $env:GITHUB_OUTPUT
+          "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
+          "CER_PATH=$cerPath" >> $env:GITHUB_ENV
+          "HAS_CERTIFICATE=true" >> $env:GITHUB_ENV
+          "has_certificate=true" >> $env:GITHUB_OUTPUT
+        } catch {
+          Write-Warning "Certificate processing failed, building unsigned instead. Error: $($_.Exception.Message)"
+          "HAS_CERTIFICATE=false" >> $env:GITHUB_ENV
+          "has_certificate=false" >> $env:GITHUB_OUTPUT
+        }
 
     - name: Build MSIX Package (Signed)
       if: steps.cert.outputs.has_certificate == 'true'
