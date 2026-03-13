@@ -29,7 +29,7 @@ NotInheritable Class App
             End If
 
             ' Apply saved theme before rendering to prevent a flash of the default theme
-            Dim savedTheme = Windows.Storage.ApplicationData.Current.LocalSettings.Values("AppTheme")?.ToString()
+            Dim savedTheme = Windows.Storage.ApplicationData.Current.LocalSettings.Values(AppConstants.SettingAppTheme)?.ToString()
             Select Case savedTheme
                 Case "Light" : rootFrame.RequestedTheme = ElementTheme.Light
                 Case "Dark"  : rootFrame.RequestedTheme = ElementTheme.Dark

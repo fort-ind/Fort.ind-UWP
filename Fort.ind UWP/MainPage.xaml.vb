@@ -203,7 +203,7 @@ Public NotInheritable Class MainPage
         Try
             ' Update Live Tile with latest news
             Dim newsItems As New List(Of NewsItem) From {
-                New NewsItem("Whats new?", "2026.1 has been released for web go to fort1nd.com to see whats new", "welcome"),
+                New NewsItem("What's new?", "2026.1 has been released for web go to fort1nd.com to see whats new", "welcome"),
                 New NewsItem("Get Started", "Hello! fort.uwp is now ready to use. :3", "features")
             }
 
@@ -283,8 +283,13 @@ Public NotInheritable Class MainPage
                 ContentFrame.Visibility = Visibility.Visible
                 Try
                     ' Null check for ContentFrame
-                    If ContentFrame IsNot Nothing AndAlso Not TypeOf ContentFrame.Content Is ProfilePage Then
-                        ContentFrame.Navigate(GetType(ProfilePage))
+                    If ContentFrame IsNot Nothing Then
+                        If TypeOf ContentFrame.Content Is ProfilePage Then
+                            ' Already on profile page – refresh the UI instead of re-navigating
+                            DirectCast(ContentFrame.Content, ProfilePage).RefreshUI()
+                        Else
+                            ContentFrame.Navigate(GetType(ProfilePage))
+                        End If
                     End If
                 Catch ex As Exception
                     ' Navigation failed – fall back to home
@@ -716,7 +721,15 @@ Public NotInheritable Class MainPage
                 Return
             End If
 
-            sender.ItemsSource = BuildSearchSuggestions(query)
+            ' Capture volatile references on the UI thread before going off-thread
+            Dim snapshot = _allSearchItems
+            Dim currentUser = ProfileService.CurrentUser
+
+            Dim results = Await Task.Run(Function() BuildSearchSuggestions(query, snapshot, currentUser), cancellationToken)
+
+            If Not cancellationToken.IsCancellationRequested Then
+                sender.ItemsSource = results
+            End If
         Catch ex As OperationCanceledException
             ' Expected while typing quickly.
         Catch ex As Exception
@@ -724,10 +737,7 @@ Public NotInheritable Class MainPage
         End Try
     End Sub
 
-    Private Function BuildSearchSuggestions(query As String) As List(Of SearchItem)
-        ' Read volatile reference – no lock or copy needed
-        Dim items = _allSearchItems
-
+    Private Shared Function BuildSearchSuggestions(query As String, items As IReadOnlyList(Of SearchItem), currentUser As UserProfile) As List(Of SearchItem)
         Dim filtered As New List(Of SearchItem)()
         For Each item In items
             If item.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
@@ -739,11 +749,11 @@ Public NotInheritable Class MainPage
             End If
         Next
 
-        ' Add profile-specific item if logged in and matches
-        If ProfileService.CurrentUser IsNot Nothing Then
-            Dim name = If(String.IsNullOrWhiteSpace(ProfileService.CurrentUser.DisplayName),
-                          ProfileService.CurrentUser.Username,
-                          ProfileService.CurrentUser.DisplayName)
+        ' Add profile-specific item if logged in and matches, respecting the suggestion limit
+        If filtered.Count < AppConstants.SearchSuggestionLimit AndAlso currentUser IsNot Nothing Then
+            Dim name = If(String.IsNullOrWhiteSpace(currentUser.DisplayName),
+                          currentUser.Username,
+                          currentUser.DisplayName)
             Dim profileTitle = $"Profile: {name}"
             If profileTitle.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 OrElse
                AppConstants.CategoryProfile.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 Then
@@ -752,7 +762,7 @@ Public NotInheritable Class MainPage
         End If
 
         Return filtered
-    End Sub
+    End Function
 
     Private Async Sub NavSearchBox_QuerySubmitted(sender As AutoSuggestBox, args As AutoSuggestBoxQuerySubmittedEventArgs)
         Try

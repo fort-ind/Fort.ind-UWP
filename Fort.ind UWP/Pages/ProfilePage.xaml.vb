@@ -122,7 +122,9 @@ Public NotInheritable Class ProfilePage
         If NewPasswordBox IsNot Nothing Then NewPasswordBox.Password = ""
         If ConfirmNewPasswordBox IsNot Nothing Then ConfirmNewPasswordBox.Password = ""
         If PasswordErrorText IsNot Nothing Then PasswordErrorText.Visibility = Visibility.Collapsed
+        If PasswordSuccessText IsNot Nothing Then PasswordSuccessText.Visibility = Visibility.Collapsed
         If EditErrorText IsNot Nothing Then EditErrorText.Visibility = Visibility.Collapsed
+        If EditSuccessText IsNot Nothing Then EditSuccessText.Visibility = Visibility.Collapsed
 
         ' Set initial focus for better keyboard accessibility
         If EditDisplayNameBox IsNot Nothing Then

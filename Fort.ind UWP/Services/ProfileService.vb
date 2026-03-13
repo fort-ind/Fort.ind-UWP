@@ -27,12 +27,25 @@ Public Class ProfileService
             Return New RegistrationResult(False, "Username must be at least 3 characters")
         End If
 
+        If username.Length > 50 Then
+            Return New RegistrationResult(False, "Username must be 50 characters or fewer")
+        End If
+
         If Not username.All(Function(c) Char.IsLetterOrDigit(c) OrElse c = "-"c OrElse c = "_"c) Then
             Return New RegistrationResult(False, "Username may only contain letters, numbers, hyphens and underscores")
         End If
 
         If String.IsNullOrWhiteSpace(password) OrElse password.Length < 8 Then
             Return New RegistrationResult(False, "Password must be at least 8 characters")
+        End If
+
+        ' Cap password length to prevent excessive PBKDF2 hashing time
+        If password.Length > 128 Then
+            Return New RegistrationResult(False, "Password must be 128 characters or fewer")
+        End If
+
+        If Not String.IsNullOrWhiteSpace(displayName) AndAlso displayName.Length > 100 Then
+            Return New RegistrationResult(False, "Display name must be 100 characters or fewer")
         End If
 
         If String.IsNullOrWhiteSpace(displayName) Then
