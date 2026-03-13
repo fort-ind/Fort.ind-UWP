@@ -34,17 +34,17 @@ Public Class SitemapService
             Dim urlsToCache As New List(Of String)()
 
             For Each urlElement In doc.Descendants(ns + "url")
-                Dim loc = urlElement.Element(ns + "loc")?.Value
-                If String.IsNullOrEmpty(loc) Then Continue For
+                Dim urlValue = urlElement.Element(ns + "loc")?.Value
+                If String.IsNullOrEmpty(urlValue) Then Continue For
 
                 Dim uri As Uri = Nothing
-                If Not Uri.TryCreate(loc, UriKind.Absolute, uri) Then Continue For
+                If Not Uri.TryCreate(urlValue, UriKind.Absolute, uri) Then Continue For
 
-                urlsToCache.Add(loc)
+                urlsToCache.Add(urlValue)
 
                 Dim path = uri.AbsolutePath.Trim("/"c)
                 If String.IsNullOrEmpty(path) Then
-                    items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, loc))
+                    items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, urlValue))
                     Continue For
                 End If
 
@@ -54,7 +54,7 @@ Public Class SitemapService
                 Dim category = GetCategory(path)
                 Dim title = GetTitle(path)
 
-                items.Add(New SearchItem(title, category, Nothing, loc))
+                items.Add(New SearchItem(title, category, Nothing, urlValue))
             Next
 
             If urlsToCache.Count > 0 Then
@@ -70,15 +70,15 @@ Public Class SitemapService
     Private Shared Function BuildSearchItemsFromUrls(urls As IEnumerable(Of String)) As List(Of SearchItem)
         Dim items As New List(Of SearchItem)()
 
-        For Each loc In urls
-            If String.IsNullOrWhiteSpace(loc) Then Continue For
+        For Each urlValue In urls
+            If String.IsNullOrWhiteSpace(urlValue) Then Continue For
 
             Dim uri As Uri = Nothing
-            If Not Uri.TryCreate(loc, UriKind.Absolute, uri) Then Continue For
+            If Not Uri.TryCreate(urlValue, UriKind.Absolute, uri) Then Continue For
 
             Dim path = uri.AbsolutePath.Trim("/"c)
             If String.IsNullOrEmpty(path) Then
-                items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, loc))
+                items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, urlValue))
                 Continue For
             End If
 
@@ -86,7 +86,7 @@ Public Class SitemapService
 
             Dim category = GetCategory(path)
             Dim title = GetTitle(path)
-            items.Add(New SearchItem(title, category, Nothing, loc))
+            items.Add(New SearchItem(title, category, Nothing, urlValue))
         Next
 
         Return items
