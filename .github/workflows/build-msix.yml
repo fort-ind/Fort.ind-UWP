@@ -37,15 +37,36 @@ jobs:
     - name: Setup NuGet
       uses: NuGet/setup-nuget@v2
 
-    - name: Setup Visual Studio shell
-      uses: egor-tensin/vs-shell@v2
-      with:
-        arch: x64
+    - name: Resolve Visual Studio MSBuild path
+      id: msbuild
+      shell: pwsh
+      run: |
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        if (-not (Test-Path $vswhere)) {
+          throw "vswhere.exe not found at expected path: $vswhere"
+        }
 
-    - name: Restore NuGet packages
-      run: nuget restore "${{ env.Solution_Name }}"
+        $msbuildPath = & $vswhere -latest -products * -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+        if ([string]::IsNullOrWhiteSpace($msbuildPath)) {
+          throw "Could not locate Visual Studio MSBuild.exe via vswhere"
+        }
+
+        Write-Host "Using MSBuild: $msbuildPath"
+        "msbuild_path=$msbuildPath" >> $env:GITHUB_OUTPUT
+
+    - name: Restore solution
+      shell: pwsh
+      run: |
+        & "${{ steps.msbuild.outputs.msbuild_path }}" "${{ env.Solution_Name }}" `
+          /t:Restore `
+          /p:Configuration=${{ matrix.configuration }} `
+          /p:Platform=${{ matrix.platform }} `
+          /p:VisualStudioVersion=17.0 `
+          /nologo
 
     - name: Update manifest version
+      id: version
+      shell: pwsh
       run: |
         if ("${{ github.ref }}" -match "refs/tags/v(.+)") {
           $version = $matches[1]
@@ -60,40 +81,59 @@ jobs:
         [xml]$manifest = Get-Content $manifestPath
         $manifest.Package.Identity.Version = $version
         $manifest.Save($manifestPath)
-        echo "APP_VERSION=$version" >> $env:GITHUB_ENV
+        "APP_VERSION=$version" >> $env:GITHUB_ENV
+        "app_version=$version" >> $env:GITHUB_OUTPUT
 
     - name: Decode signing certificate
-      if: github.event_name != 'pull_request'
+      id: cert
+      shell: pwsh
       env:
         SIGNING_CERT: ${{ secrets.SIGNING_CERTIFICATE }}
         CERT_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
       run: |
-        if ([string]::IsNullOrEmpty($env:SIGNING_CERT)) {
-          Write-Host "No signing certificate found, will build unsigned"
-          echo "HAS_CERTIFICATE=false" >> $env:GITHUB_ENV
-        } else {
-          $pfxPath = "Fort.ind UWP\Fort.ind UWP_TemporaryKey.pfx"
-          $certBytes = [Convert]::FromBase64String($env:SIGNING_CERT)
-          [IO.File]::WriteAllBytes($pfxPath, $certBytes)
-          $pfxFullPath = (Resolve-Path $pfxPath).Path
-          $securePassword = ConvertTo-SecureString -String $env:CERT_PASSWORD -Force -AsPlainText
-          $cert = Get-PfxCertificate -FilePath $pfxFullPath -Password $securePassword
-          $cerPath = "Fort.ind UWP\Fort.ind_UWP.cer"
-          Export-Certificate -Cert $cert -FilePath $cerPath -Type CERT | Out-Null
-          Write-Host "Exported public certificate to: $cerPath"
-          echo "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
-          echo "CER_PATH=$cerPath" >> $env:GITHUB_ENV
-          echo "HAS_CERTIFICATE=true" >> $env:GITHUB_ENV
+        if ("${{ github.event_name }}" -eq "pull_request") {
+          Write-Host "Pull request build: skipping certificate decode"
+          "HAS_CERTIFICATE=false" >> $env:GITHUB_ENV
+          "has_certificate=false" >> $env:GITHUB_OUTPUT
+          exit 0
         }
 
+        if ([string]::IsNullOrEmpty($env:SIGNING_CERT)) {
+          Write-Host "No signing certificate found, will build unsigned"
+          "HAS_CERTIFICATE=false" >> $env:GITHUB_ENV
+          "has_certificate=false" >> $env:GITHUB_OUTPUT
+          exit 0
+        }
+
+        $pfxPath = "Fort.ind UWP\Fort.ind UWP_TemporaryKey.pfx"
+        $certBytes = [Convert]::FromBase64String($env:SIGNING_CERT)
+        [IO.File]::WriteAllBytes($pfxPath, $certBytes)
+
+        $cerPath = "Fort.ind UWP\Fort.ind_UWP.cer"
+        if (-not [string]::IsNullOrWhiteSpace($env:CERT_PASSWORD)) {
+          $x509 = New-Object System.Security.Cryptography.X509Certificates.X509Certificate2
+          $x509.Import((Resolve-Path $pfxPath).Path, $env:CERT_PASSWORD, [System.Security.Cryptography.X509Certificates.X509KeyStorageFlags]::Exportable)
+          [IO.File]::WriteAllBytes($cerPath, $x509.Export([System.Security.Cryptography.X509Certificates.X509ContentType]::Cert))
+          Write-Host "Exported public certificate to: $cerPath"
+        } else {
+          Write-Host "CERT_PASSWORD is empty; skipping CER export"
+        }
+
+        "PFX_PATH=$pfxPath" >> $env:GITHUB_ENV
+        "CER_PATH=$cerPath" >> $env:GITHUB_ENV
+        "HAS_CERTIFICATE=true" >> $env:GITHUB_ENV
+        "has_certificate=true" >> $env:GITHUB_OUTPUT
+
     - name: Build MSIX Package (Signed)
-      if: github.event_name != 'pull_request' && env.HAS_CERTIFICATE == 'true'
+      if: steps.cert.outputs.has_certificate == 'true'
+      shell: pwsh
       env:
         CERT_PASSWORD: ${{ secrets.SIGNING_CERTIFICATE_PASSWORD }}
       run: |
-        msbuild "${{ env.Project_Path }}" `
+        & "${{ steps.msbuild.outputs.msbuild_path }}" "${{ env.Project_Path }}" `
           /p:Configuration=${{ matrix.configuration }} `
           /p:Platform=${{ matrix.platform }} `
+          /p:VisualStudioVersion=17.0 `
           /p:UapAppxPackageBuildMode=SideloadOnly `
           /p:AppxBundle=Never `
           /p:AppxPackageSigningEnabled=true `
@@ -103,11 +143,13 @@ jobs:
           /restore
 
     - name: Build MSIX Package (Unsigned)
-      if: github.event_name == 'pull_request' || env.HAS_CERTIFICATE != 'true'
+      if: steps.cert.outputs.has_certificate != 'true'
+      shell: pwsh
       run: |
-        msbuild "${{ env.Project_Path }}" `
+        & "${{ steps.msbuild.outputs.msbuild_path }}" "${{ env.Project_Path }}" `
           /p:Configuration=${{ matrix.configuration }} `
           /p:Platform=${{ matrix.platform }} `
+          /p:VisualStudioVersion=17.0 `
           /p:UapAppxPackageBuildMode=SideloadOnly `
           /p:AppxBundle=Never `
           /p:AppxPackageSigningEnabled=false `
@@ -133,7 +175,7 @@ jobs:
     - name: Upload MSIX Package
       uses: actions/upload-artifact@v4
       with:
-        name: MSIX-${{ matrix.platform }}-${{ matrix.configuration }}-v${{ env.APP_VERSION }}
+        name: MSIX-${{ matrix.platform }}-${{ matrix.configuration }}-v${{ steps.version.outputs.app_version }}
         path: |
           Fort.ind UWP\AppPackages\**\*.msix
           Fort.ind UWP\AppPackages\**\*.appx
