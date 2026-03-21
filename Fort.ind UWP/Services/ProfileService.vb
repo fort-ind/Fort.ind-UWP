@@ -9,6 +9,14 @@ Imports System.Text
 Public Class ProfileService
 
     ''' <summary>
+    ''' Result of a profile update operation.
+    ''' </summary>
+    Public Class ProfileUpdateResult
+        Public Property IsSuccess As Boolean
+        Public Property ErrorMessage As String
+    End Class
+
+    ''' <summary>
     ''' The currently logged-in user profile
     ''' </summary>
     Public Shared Property CurrentUser As UserProfile
@@ -174,9 +182,12 @@ Public Class ProfileService
     ''' <summary>
     ''' Updates the current user's profile
     ''' </summary>
-    Public Shared Async Function UpdateProfileAsync(displayName As String, email As String, bio As String, Optional profilePicturePath As String = Nothing, Optional updateProfilePicture As Boolean = False) As Task(Of Boolean)
+    Public Shared Async Function UpdateProfileAsync(displayName As String, email As String, bio As String, Optional profilePicturePath As String = Nothing, Optional updateProfilePicture As Boolean = False) As Task(Of ProfileUpdateResult)
         If CurrentUser Is Nothing Then
-            Return False
+            Return Task.FromResult(New ProfileUpdateResult With {
+                .IsSuccess = False,
+                .ErrorMessage = "No user is currently logged in."
+            })
         End If
 
         Dim oldDisplayName = CurrentUser.DisplayName
@@ -197,8 +208,16 @@ Public Class ProfileService
             CurrentUser.Email = oldEmail
             CurrentUser.Bio = oldBio
             CurrentUser.ProfilePicturePath = oldProfilePicturePath
+            Return New ProfileUpdateResult With {
+                .IsSuccess = False,
+                .ErrorMessage = "Failed to save profile changes."
+            }
         End If
-        Return saved
+
+        Return New ProfileUpdateResult With {
+            .IsSuccess = True,
+            .ErrorMessage = Nothing
+        }
     End Function
 
     ''' <summary>
