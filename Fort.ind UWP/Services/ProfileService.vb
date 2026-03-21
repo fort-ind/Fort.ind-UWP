@@ -278,6 +278,11 @@ Public Class ProfileService
     ''' </summary>
     Private Shared Function HashPassword(password As String) As String
         ' PBKDF2 configuration
+        ' Iteration count chosen based on OWASP Password Storage recommendations and
+        ' contemporary hardware benchmarks as of 2025. This value aims to make each
+        ' password hash intentionally expensive while remaining acceptable for the UI.
+        ' NOTE: Re-evaluate this iteration count periodically as hardware performance
+        ' improves and guidance is updated.
         Const iterations As Integer = 600000
         Const saltSize As Integer = 16   ' 128-bit salt
         Const keySize As Integer = 32    ' 256-bit derived key
