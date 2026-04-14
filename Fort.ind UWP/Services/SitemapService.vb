@@ -103,7 +103,11 @@ Public Class SitemapService
             Dim cacheUnixSeconds As Long
             Try
                 cacheUnixSeconds = Convert.ToInt64(rawTimestamp)
-            Catch
+            Catch ex As FormatException
+                Return Nothing
+            Catch ex As InvalidCastException
+                Return Nothing
+            Catch ex As OverflowException
                 Return Nothing
             End Try
 
