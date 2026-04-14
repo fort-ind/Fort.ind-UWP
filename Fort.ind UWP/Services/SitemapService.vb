@@ -133,7 +133,8 @@ Public Class SitemapService
             End If
 
             Return urls
-        Catch
+        Catch ex As Exception
+            Debug.WriteLine($"SitemapService: failed to load sitemap cache – {ex.Message}")
             Return Nothing
         End Try
     End Function
