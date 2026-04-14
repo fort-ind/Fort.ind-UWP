@@ -37,24 +37,12 @@ Public Class SitemapService
                 Dim urlValue = urlElement.Element(ns + "loc")?.Value
                 If String.IsNullOrEmpty(urlValue) Then Continue For
 
-                Dim uri As Uri = Nothing
-                If Not Uri.TryCreate(urlValue, UriKind.Absolute, uri) Then Continue For
-
                 urlsToCache.Add(urlValue)
 
-                Dim path = uri.AbsolutePath.Trim("/"c)
-                If String.IsNullOrEmpty(path) Then
-                    items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, urlValue))
-                    Continue For
+                Dim item = CreateSearchItemFromUrl(urlValue)
+                If item IsNot Nothing Then
+                    items.Add(item)
                 End If
-
-                ' Skip utility pages
-                If path = "404" Then Continue For
-
-                Dim category = GetCategory(path)
-                Dim title = GetTitle(path)
-
-                items.Add(New SearchItem(title, category, Nothing, urlValue))
             Next
 
             If urlsToCache.Count > 0 Then
@@ -67,26 +55,44 @@ Public Class SitemapService
         Return items
     End Function
 
+    ''' <summary>
+    ''' Creates a SearchItem instance from a URL string, or returns Nothing if the URL
+    ''' is invalid or should be skipped (e.g. utility pages like 404).
+    ''' </summary>
+    ''' <param name="urlValue">The absolute URL string.</param>
+    Private Shared Function CreateSearchItemFromUrl(urlValue As String) As SearchItem
+        If String.IsNullOrWhiteSpace(urlValue) Then
+            Return Nothing
+        End If
+
+        Dim uri As Uri = Nothing
+        If Not Uri.TryCreate(urlValue, UriKind.Absolute, uri) Then
+            Return Nothing
+        End If
+
+        Dim path = uri.AbsolutePath.Trim("/"c)
+        If String.IsNullOrEmpty(path) Then
+            Return New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, urlValue)
+        End If
+
+        ' Skip utility pages
+        If path = "404" Then
+            Return Nothing
+        End If
+
+        Dim category = GetCategory(path)
+        Dim title = GetTitle(path)
+        Return New SearchItem(title, category, Nothing, urlValue)
+    End Function
+
     Private Shared Function BuildSearchItemsFromUrls(urls As IEnumerable(Of String)) As List(Of SearchItem)
         Dim items As New List(Of SearchItem)()
 
         For Each urlValue In urls
-            If String.IsNullOrWhiteSpace(urlValue) Then Continue For
-
-            Dim uri As Uri = Nothing
-            If Not Uri.TryCreate(urlValue, UriKind.Absolute, uri) Then Continue For
-
-            Dim path = uri.AbsolutePath.Trim("/"c)
-            If String.IsNullOrEmpty(path) Then
-                items.Add(New SearchItem("Home", AppConstants.CategoryFortWebsite, Nothing, urlValue))
-                Continue For
+            Dim item = CreateSearchItemFromUrl(urlValue)
+            If item IsNot Nothing Then
+                items.Add(item)
             End If
-
-            If path = "404" Then Continue For
-
-            Dim category = GetCategory(path)
-            Dim title = GetTitle(path)
-            items.Add(New SearchItem(title, category, Nothing, urlValue))
         Next
 
         Return items
