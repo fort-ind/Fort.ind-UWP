@@ -142,9 +142,13 @@
     <Compile Include="MainPage.xaml.vb">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Models\GameGroup.vb" />
     <Compile Include="Models\SearchItem.vb" />
     <Compile Include="Models\UserProfile.vb" />
     <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="Pages\GamesPage.xaml.vb">
+      <DependentUpon>GamesPage.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Pages\LoginPage.xaml.vb">
       <DependentUpon>LoginPage.xaml</DependentUpon>
     </Compile>
@@ -228,6 +232,10 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Page Include="MainPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Pages\GamesPage.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </Page>

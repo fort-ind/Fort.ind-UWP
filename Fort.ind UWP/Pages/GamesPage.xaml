@@ -1,0 +1,306 @@
+<Page
+    x:Class="Fort.ind_UWP.GamesPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:Fort.ind_UWP"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="Transparent">
+
+    <Page.Resources>
+
+        <!-- Grouped data has to go through a CollectionViewSource, and BOTH SemanticZoom views
+             are pointed at this one instance so the framework keeps them in sync for us.
+             IsSourceGrouped/ItemsPath are set here, in markup, so they are already in place
+             before the code-behind assigns Source - setting Source first silently yields an
+             ungrouped view with no exception. Source is assigned exactly once, in the ctor.
+             The two views' ItemsSource is assigned in code (see EnsureItemsSources), NOT bound
+             here: a {Binding Path=View} resolves during InitializeComponent, before Source
+             exists, and View does not reliably re-notify afterwards - which leaves both views
+             silently empty. -->
+        <CollectionViewSource x:Key="GamesViewSource"
+                              IsSourceGrouped="True"
+                              ItemsPath="Items"/>
+
+        <!-- Double-line list item: 64px row, leading glyph, 12px gap, primary line
+             BaseTextBlockStyle, secondary line BodyTextBlockStyle. One Grid and three
+             TextBlocks - every element in here is instantiated once per realised row, so
+             there are deliberately no nested panels.
+             NoWrap/CharacterEllipsis are NOT redundant: BaseTextBlockStyle (which
+             BodyTextBlockStyle derives from) sets TextWrapping="Wrap" and TextTrimming="None",
+             which would wrap and clip inside a fixed 64px row. -->
+        <DataTemplate x:Key="GameItemTemplate">
+            <!-- MinHeight, not Height: the two star rows normalise to their tallest child, so
+                 the row is exactly 64 at normal scale but grows instead of clipping when the
+                 user turns Windows text scaling up. The glyph opts out of scaling so the icon
+                 stays put while the text around it grows. -->
+            <Grid MinHeight="64"
+                  AutomationProperties.Name="{Binding Title}"
+                  AutomationProperties.HelpText="{Binding Category}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Segoe MDL2 glyph in its own layout cell, never inline with the text. -->
+                <TextBlock Grid.RowSpan="2"
+                           Text="{Binding Icon}"
+                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                           FontSize="20"
+                           Margin="0,0,12,0"
+                           VerticalAlignment="Center"
+                           Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                           IsTextScaleFactorEnabled="False"
+                           AutomationProperties.AccessibilityView="Raw"/>
+
+                <TextBlock Grid.Column="1" Grid.Row="0"
+                           Text="{Binding Title}"
+                           Style="{StaticResource BaseTextBlockStyle}"
+                           Foreground="{ThemeResource SystemControlPageTextBaseHighBrush}"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Bottom"
+                           AutomationProperties.AccessibilityView="Raw"/>
+
+                <TextBlock Grid.Column="1" Grid.Row="1"
+                           Text="{Binding Category}"
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                           TextWrapping="NoWrap"
+                           TextTrimming="CharacterEllipsis"
+                           VerticalAlignment="Top"
+                           AutomationProperties.AccessibilityView="Raw"/>
+            </Grid>
+        </DataTemplate>
+
+        <!-- Group header. DataContext here is the GameGroup itself, so {Binding Key}. -->
+        <DataTemplate x:Key="GameGroupHeaderTemplate">
+            <TextBlock Text="{Binding Key}"
+                       Style="{StaticResource SubtitleTextBlockStyle}"
+                       TextWrapping="NoWrap"
+                       AutomationProperties.Name="{Binding Key}"/>
+        </DataTemplate>
+
+        <!-- Jump tile. DataContext here is an ICollectionViewGroup, so {Binding Group.Key}.
+             Just the letter - the tile's size, spacing and fill all live on the container style
+             below. Giving the template its own size/margin/background would make the visible
+             tile smaller than, and offset from, the GridViewItem that draws the hover and
+             reveal visuals, so the highlight lands misaligned and an opaque template
+             background paints straight over it. -->
+        <DataTemplate x:Key="GameJumpItemTemplate">
+            <TextBlock Text="{Binding Group.Key}"
+                       Style="{StaticResource SubtitleTextBlockStyle}"
+                       Foreground="{ThemeResource SystemControlPageTextBaseHighBrush}"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       AutomationProperties.Name="{Binding Group.Key}"/>
+        </DataTemplate>
+
+        <!-- ListViewItem.HorizontalContentAlignment defaults to Left, which would leave the row
+             hugging its content instead of filling the list width. Corners are left alone:
+             App.xaml pins ControlCornerRadius to 0 app-wide, and rounded inset rows are the
+             Windows 11 look. Reveal highlight is automatic on ListView in WinUI 2 - nothing
+             is added here for hover or press. -->
+        <Style x:Key="GameItemContainerStyle" TargetType="ListViewItem">
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+            <Setter Property="Padding" Value="12,0,12,0"/>
+            <Setter Property="Margin" Value="0"/>
+        </Style>
+
+        <!-- The container IS the tile: it owns the 72x72 box and the resting fill, so the
+             hover/pressed/reveal visuals the presenter draws line up with it exactly. Margin
+             sits outside the item's render bounds, so the 4px gutter between tiles never
+             offsets the highlight. -->
+        <Style x:Key="GameJumpItemContainerStyle" TargetType="GridViewItem">
+            <Setter Property="Width" Value="72"/>
+            <Setter Property="Height" Value="72"/>
+            <Setter Property="Margin" Value="0,0,4,4"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="{ThemeResource SystemControlBackgroundListLowBrush}"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        </Style>
+
+    </Page.Resources>
+
+    <!-- Padding is driven by the adaptive states below: 12px under 640px, 24px from 641px.
+         The page owns its own padding because ContentFrame - unlike ContentScrollViewer's
+         ContentPanel - is never padded by MainPage. -->
+    <Grid x:Name="RootGrid" Padding="24">
+
+        <VisualStateManager.VisualStateGroups>
+            <VisualStateGroup x:Name="WindowWidthStates">
+                <VisualState x:Name="NarrowState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="0"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="RootGrid.Padding" Value="12"/>
+                    </VisualState.Setters>
+                </VisualState>
+                <VisualState x:Name="WideState">
+                    <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="641"/>
+                    </VisualState.StateTriggers>
+                    <VisualState.Setters>
+                        <Setter Target="RootGrid.Padding" Value="24"/>
+                    </VisualState.Setters>
+                </VisualState>
+            </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <!-- The SemanticZoom has to be height-bounded, so it gets the star row. -->
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- The capped column is what sizes the filter box. Left-aligning the box directly
+             would collapse it to its own minimum (a stub barely wider than the icon), and
+             Stretch + MaxWidth would centre it. A star column capped at 480 gives a box that
+             fills the available width up to 480 and stays hard left. -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MaxWidth="480"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <AutoSuggestBox x:Name="FilterBox"
+                            Grid.Column="0"
+                            HorizontalAlignment="Stretch"
+                            QueryIcon="Find"
+                            PlaceholderText="search for games :p"
+                            IsEnabled="False"
+                            TextChanged="FilterBox_TextChanged"
+                            AutomationProperties.Name="Filter games"
+                            AutomationProperties.HelpText="Type to narrow the list of games by name"/>
+        </Grid>
+
+        <TextBlock x:Name="CountText"
+                   Grid.Row="1"
+                   Text=""
+                   Margin="0,0,0,8"
+                   Style="{StaticResource BodyTextBlockStyle}"
+                   Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                   TextWrapping="NoWrap"
+                   TextTrimming="CharacterEllipsis"
+                   AutomationProperties.LiveSetting="Polite"/>
+
+        <!-- Row 2 hosts the list and the three non-content states. Exactly one is visible at a
+             time (see GamesPage.SetState), so they never overlap. -->
+        <Grid Grid.Row="2">
+
+            <SemanticZoom x:Name="GamesZoom"
+                          Visibility="Collapsed"
+                          AutomationProperties.Name="Games list">
+
+                <SemanticZoom.ZoomedInView>
+                    <!-- ListView, not GridView: text is the focal point and the collection is
+                         meant to be read top to bottom. ItemsPanel is left alone
+                         (ItemsStackPanel) so virtualisation and sticky headers keep working.
+                         Right padding of 16 keeps rows out from under the overlay scroll bar.
+                         IsVerticalScrollChainingEnabled=False is required for a ListView
+                         hosted in a SemanticZoom. -->
+                    <ListView x:Name="GamesList"
+                              ItemTemplate="{StaticResource GameItemTemplate}"
+                              ItemContainerStyle="{StaticResource GameItemContainerStyle}"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              ItemClick="GamesList_ItemClick"
+                              Padding="0,0,16,0"
+                              ScrollViewer.IsVerticalScrollChainingEnabled="False"
+                              AutomationProperties.Name="Games">
+                        <ListView.GroupStyle>
+                            <GroupStyle HeaderTemplate="{StaticResource GameGroupHeaderTemplate}"
+                                        HidesIfEmpty="True"/>
+                        </ListView.GroupStyle>
+                    </ListView>
+                </SemanticZoom.ZoomedInView>
+
+                <SemanticZoom.ZoomedOutView>
+                    <!-- A-Z / # jump grid, bound to the SAME CollectionViewSource's
+                         CollectionGroups - that shared source is what auto-syncs the two views.
+                         IsHorizontalScrollChainingEnabled=False is required for a GridView
+                         hosted in a SemanticZoom. -->
+                    <GridView x:Name="GamesJumpGrid"
+                              ItemTemplate="{StaticResource GameJumpItemTemplate}"
+                              ItemContainerStyle="{StaticResource GameJumpItemContainerStyle}"
+                              SelectionMode="None"
+                              IsItemClickEnabled="True"
+                              Padding="0,0,16,0"
+                              ScrollViewer.IsHorizontalScrollChainingEnabled="False"
+                              AutomationProperties.Name="Jump to a letter"/>
+                </SemanticZoom.ZoomedOutView>
+
+            </SemanticZoom>
+
+            <StackPanel x:Name="LoadingPanel"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Spacing="12">
+                <ProgressRing x:Name="LoadingRing"
+                              IsActive="True"
+                              Width="32" Height="32"
+                              HorizontalAlignment="Center"/>
+                <TextBlock Text="Loading games..."
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                           HorizontalAlignment="Center"
+                           AutomationProperties.LiveSetting="Polite"/>
+            </StackPanel>
+
+            <StackPanel x:Name="EmptyPanel"
+                        Visibility="Collapsed"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MaxWidth="360"
+                        Spacing="12">
+                <TextBlock Text="&#xE721;"
+                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                           FontSize="32"
+                           HorizontalAlignment="Center"
+                           Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                           AutomationProperties.AccessibilityView="Raw"/>
+                <TextBlock x:Name="EmptyText"
+                           Text="No games match that filter"
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"
+                           AutomationProperties.LiveSetting="Polite"/>
+            </StackPanel>
+
+            <StackPanel x:Name="ErrorPanel"
+                        Visibility="Collapsed"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        MaxWidth="360"
+                        Spacing="12">
+                <TextBlock Text="&#xE783;"
+                           FontFamily="{StaticResource SymbolThemeFontFamily}"
+                           FontSize="32"
+                           HorizontalAlignment="Center"
+                           Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                           AutomationProperties.AccessibilityView="Raw"/>
+                <TextBlock Text="The games list could not be loaded."
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
+                           TextWrapping="Wrap"
+                           TextAlignment="Center"/>
+                <Button x:Name="RetryButton"
+                        Content="Try again"
+                        HorizontalAlignment="Center"
+                        Click="RetryButton_Click"
+                        AutomationProperties.Name="Try again"
+                        AutomationProperties.HelpText="Reload the games list"/>
+            </StackPanel>
+
+        </Grid>
+    </Grid>
+</Page>

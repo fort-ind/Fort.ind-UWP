@@ -6,10 +6,76 @@ Imports Windows.Storage
 ''' </summary>
 Public Class SitemapService
 
+    ' The sitemap ships inside the app package and the URL cache is already revalidated on a
+    ' 24h TTL, so re-reading and re-parsing it for every caller is pure waste. Reference swap
+    ' only, exactly like MainPage._allSearchItems: readers never observe a half-built list.
+    Private Shared s_allItems As IReadOnlyList(Of SearchItem)
+    Private Shared s_gameItems As IReadOnlyList(Of SearchItem)
+
+    ' Serialises the first parse so two callers racing at startup - MainPage's constructor
+    ' calls LoadSitemapItems, and GamesPage loads as soon as it is navigated to - cannot both
+    ' hit the file system and both parse the XML.
+    Private Shared ReadOnly s_loadGate As New Threading.SemaphoreSlim(1, 1)
+
     ''' <summary>
-    ''' Reads sitemap.xml from the app package and returns SearchItem objects allowing for the latest URLs to be searchable 
+    ''' Reads sitemap.xml from the app package and returns SearchItem objects allowing for the
+    ''' latest URLs to be searchable. Parsed at most once per process; an empty result (missing
+    ''' file, malformed XML) is deliberately NOT memoized so a later caller retries.
     ''' </summary>
-    Public Shared Async Function LoadSearchItemsAsync() As Task(Of List(Of SearchItem))
+    Public Shared Async Function LoadSearchItemsAsync() As Task(Of IReadOnlyList(Of SearchItem))
+        Dim cached = s_allItems
+        If cached IsNot Nothing Then Return cached
+
+        Await s_loadGate.WaitAsync()
+        Try
+            ' Re-check: a racing caller may have finished while we waited on the gate.
+            If s_allItems IsNot Nothing Then Return s_allItems
+
+            Dim parsed = Await ParseSitemapAsync()
+            Dim result = parsed.AsReadOnly()
+            If parsed.Count > 0 Then
+                s_allItems = result
+            End If
+            Return result
+        Finally
+            s_loadGate.Release()
+        End Try
+    End Function
+
+    ''' <summary>
+    ''' The game subset of the sitemap, in sitemap order. Memoized separately so the Games page
+    ''' does not re-filter every item each time it is shown.
+    ''' </summary>
+    Public Shared Async Function LoadGameItemsAsync() As Task(Of IReadOnlyList(Of SearchItem))
+        Dim cachedGames = s_gameItems
+        If cachedGames IsNot Nothing Then Return cachedGames
+
+        ' Deliberately NOT inside s_loadGate: LoadSearchItemsAsync takes that gate and
+        ' SemaphoreSlim is not reentrant, so taking it here would deadlock silently. Two
+        ' callers racing through here just each build an equivalent list from the same
+        ' memoized source and one of the two identical results wins - harmless.
+        Dim all = Await LoadSearchItemsAsync()
+
+        Dim games As New List(Of SearchItem)()
+        For Each item In all
+            If item.Category IsNot Nothing AndAlso
+               item.Category.StartsWith(AppConstants.CategoryGames, StringComparison.Ordinal) Then
+                games.Add(item)
+            End If
+        Next
+
+        Dim result = games.AsReadOnly()
+        If all.Count > 0 Then
+            s_gameItems = result
+        End If
+        Return result
+    End Function
+
+    ''' <summary>
+    ''' Parses the packaged sitemap (or the URL cache written from it) into SearchItems.
+    ''' Callers go through LoadSearchItemsAsync, which memoizes this.
+    ''' </summary>
+    Private Shared Async Function ParseSitemapAsync() As Task(Of List(Of SearchItem))
         Dim items As New List(Of SearchItem)
 
         Try
@@ -189,30 +255,91 @@ Public Class SitemapService
         Return AppConstants.CategoryFortWebsite
     End Function
 
+    ''' <summary>
+    ''' Slug tokens that are acronyms rather than words - plain title-casing turns them into
+    ''' "Cs" and "Fnaf", which reads wrong. Deliberately conservative: only tokens that are
+    ''' never an ordinary English word, so a regenerated sitemap cannot trip it. Note "us"
+    ''' (as in "amoung-us") is intentionally absent.
+    ''' </summary>
+    Private Shared ReadOnly s_upperCaseTokens As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase) From {
+        "cs", "css", "dbz", "fnaf", "gba", "gbc", "gta", "hd", "html", "mlb", "mlg",
+        "n64", "nba", "nds", "nes", "nfl", "nhl", "psp", "snes", "tmnt", "tv", "ufc",
+        "ufo", "wwe"
+    }
+
+    ''' <summary>
+    ''' Tokens that are the tail of a domain-style name - "diep-io" is diep.io, not "Diep Io".
+    ''' Glued onto the preceding token with a dot and left lowercase.
+    ''' </summary>
+    Private Shared ReadOnly s_domainSuffixTokens As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase) From {
+        "com", "gg", "io", "lol", "net", "org"
+    }
+
+    ''' <summary>
+    ''' Turns the last path segment into a display name: "games/html/rynis-game" -> "Rynis Game".
+    ''' Beyond plain title-casing, two generic rules clean up the shapes that show up in game
+    ''' slugs - domain suffixes are re-glued ("diep-io" -> "Diep.io") and runs of numeric tokens
+    ''' are treated as a version rather than separate words ("minecraft-1-8-8-fixed" ->
+    ''' "Minecraft 1.8.8 Fixed"). Both are rules rather than a lookup table, so a regenerated or
+    ''' extended sitemap gets the same treatment with nothing to maintain.
+    ''' </summary>
     Private Shared Function GetTitle(path As String) As String
-        ' Use the last segment of the path as the display name when showing results! example: "games/html/rynis-game" -> "Rynis Game"
         Dim trimmed = path.TrimEnd("/"c)
         Dim lastSlash = trimmed.LastIndexOf("/"c)
         Dim slug = If(lastSlash >= 0, trimmed.Substring(lastSlash + 1), trimmed)
 
         If String.IsNullOrEmpty(slug) Then Return path
 
-        ' Title-case in a single pass with one StringBuilder
+        Dim tokens = slug.Split({"-"c, "_"c}, StringSplitOptions.RemoveEmptyEntries)
+        If tokens.Length = 0 Then Return path
+
         Dim sb As New System.Text.StringBuilder(slug.Length)
-        Dim capitalizeNext As Boolean = True
-        For i = 0 To slug.Length - 1
-            Dim c = slug(i)
-            If c = "-"c OrElse c = "_"c Then
-                sb.Append(" "c)
-                capitalizeNext = True
-            ElseIf capitalizeNext Then
-                sb.Append(Char.ToUpper(c))
-                capitalizeNext = False
-            Else
-                sb.Append(Char.ToLower(c))
+        For i = 0 To tokens.Length - 1
+            Dim token = tokens(i)
+
+            ' A domain suffix never starts a name, so index 0 is always an ordinary word.
+            If i > 0 AndAlso s_domainSuffixTokens.Contains(token) Then
+                sb.Append("."c)
+                sb.Append(token.ToLowerInvariant())
+                Continue For
             End If
+
+            ' Two numbers in a row are a version ("1", "6" -> "1.6"), not two words. A number
+            ' after a word still gets a space, so "2048 Cupcakes" and "FNAF 2" are unaffected.
+            If i > 0 AndAlso IsAllDigits(token) AndAlso IsAllDigits(tokens(i - 1)) Then
+                sb.Append("."c)
+                sb.Append(token)
+                Continue For
+            End If
+
+            If i > 0 Then sb.Append(" "c)
+            sb.Append(FormatToken(token))
+        Next
+
+        Return sb.ToString()
+    End Function
+
+    ''' <summary>
+    ''' Upper-cases a known acronym, otherwise title-cases the token. Invariant casing
+    ''' throughout - these are URL slugs, not user text.
+    ''' </summary>
+    Private Shared Function FormatToken(token As String) As String
+        If s_upperCaseTokens.Contains(token) Then Return token.ToUpperInvariant()
+
+        Dim sb As New System.Text.StringBuilder(token.Length)
+        sb.Append(Char.ToUpperInvariant(token(0)))
+        For i = 1 To token.Length - 1
+            sb.Append(Char.ToLowerInvariant(token(i)))
         Next
         Return sb.ToString()
+    End Function
+
+    Private Shared Function IsAllDigits(token As String) As Boolean
+        If String.IsNullOrEmpty(token) Then Return False
+        For i = 0 To token.Length - 1
+            If Not Char.IsDigit(token(i)) Then Return False
+        Next
+        Return True
     End Function
 
 End Class

@@ -342,7 +342,7 @@ Public NotInheritable Class MainPage
 
     ''' <summary>
     ''' Central content switch. This is the single place that owns the decision between the
-    ''' app's two content hosts: page-backed views (currently only Profile) navigate the
+    ''' app's two content hosts: page-backed views (Profile and Games) navigate the
     ''' ContentFrame, while every other view is a lightweight inline panel shown in the
     ''' ContentScrollViewer. Adding a new page-backed view is a one-line Case here.
     ''' </summary>
@@ -354,7 +354,9 @@ Public NotInheritable Class MainPage
                 ' The one page-backed view: hosted in the Frame, not as an inline panel.
                 ShowProfilePage()
             Case AppConstants.NavigationGames
-                ShowInlinePanel(GamesPanel)
+                ' Second page-backed view: the grouped list needs a bounded height, which the
+                ' inline ContentScrollViewer cannot give it.
+                ShowGamesPage()
             Case AppConstants.NavigationBetas
                 ShowInlinePanel(BetasPanel)
             Case AppConstants.NavigationSocial
@@ -377,7 +379,6 @@ Public NotInheritable Class MainPage
         ContentScrollViewer.Visibility = Visibility.Visible
 
         LatestNewsPanel.Visibility = If(panel Is LatestNewsPanel, Visibility.Visible, Visibility.Collapsed)
-        GamesPanel.Visibility = If(panel Is GamesPanel, Visibility.Visible, Visibility.Collapsed)
         BetasPanel.Visibility = If(panel Is BetasPanel, Visibility.Visible, Visibility.Collapsed)
         SocialPanel.Visibility = If(panel Is SocialPanel, Visibility.Visible, Visibility.Collapsed)
         SettingsPanel.Visibility = If(panel Is SettingsPanel, Visibility.Visible, Visibility.Collapsed)
@@ -402,6 +403,28 @@ Public NotInheritable Class MainPage
         Catch ex As Exception
             ' Navigation failed – fall back to home
             Debug.WriteLine($"MainPage: Profile navigation failed – {ex.Message}")
+            NavView.Header = HeaderFor(AppConstants.NavigationLatestNews)
+            ShowInlinePanel(LatestNewsPanel)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Shows the Frame content host and navigates it to GamesPage. The page sets
+    ''' NavigationCacheMode.Required and owns its own loading/empty/error states, so re-entering
+    ''' it is a no-op rather than a reload. Falls back to the Home panel if navigation fails.
+    ''' </summary>
+    Private Sub ShowGamesPage()
+        ContentScrollViewer.Visibility = Visibility.Collapsed
+        ContentFrame.Visibility = Visibility.Visible
+        Try
+            If ContentFrame IsNot Nothing Then
+                If Not (TypeOf ContentFrame.Content Is GamesPage) Then
+                    ContentFrame.Navigate(GetType(GamesPage))
+                End If
+            End If
+        Catch ex As Exception
+            ' Navigation failed – fall back to home
+            Debug.WriteLine($"MainPage: Games navigation failed – {ex.Message}")
             NavView.Header = HeaderFor(AppConstants.NavigationLatestNews)
             ShowInlinePanel(LatestNewsPanel)
         End Try

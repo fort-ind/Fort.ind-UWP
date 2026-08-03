@@ -259,12 +259,7 @@
                             </Grid>
                         </StackPanel>
 
-                        <!-- Games Content -->
-                        <StackPanel x:Name="GamesPanel" Visibility="Collapsed">
-                            <TextBlock Text="Visit https://www.fort1nd.com to explore our games"
-                                       Style="{StaticResource BodyTextBlockStyle}"
-                                       TextWrapping="Wrap"/>
-                        </StackPanel>
+                        <!-- Games Content is now handled by GamesPage via Frame -->
 
                         <!-- Betas Content -->
                         <StackPanel x:Name="BetasPanel" Visibility="Collapsed">
