@@ -3,6 +3,7 @@ Imports System.Diagnostics
 Imports System.Text
 Imports Windows.UI.Notifications
 Imports Windows.Data.Xml.Dom
+Imports Microsoft.Toolkit.Uwp.Notifications
 
 ''' <summary>
 ''' Service for managing Live Tile updates with news and notifications
@@ -65,88 +66,153 @@ Public Class LiveTileService
     End Sub
 
     ''' <summary>
-    ''' Creates the tile XML for different tile sizes with animations
+    ''' Builds the adaptive tile content for all four tile sizes with the requested animation
+    ''' style, using the Notifications library's typed object model instead of hand-written XML
+    ''' strings - removes the need to hand-escape every field into a raw XML string.
     ''' </summary>
     Private Shared Function CreateTileXml(title As String, message As String, branding As String, Optional animation As TileAnimation = TileAnimation.FadeIn) As XmlDocument
-        Dim textStyleAttr = GetTextStyleAttribute(animation)
-        Dim safeBranding = EscapeXml(branding)
-        Dim safeTitle = EscapeXml(title)
-        Dim safeMessage = EscapeXml(message)
-        Dim smallTileText = EscapeXml(GetTileMonogram(title, branding))
+        Dim titleStyle = GetTitleTextStyle(animation)
+        Dim safeBranding = ParseBranding(branding)
+        Dim safeTitle = SanitizeText(title)
+        Dim safeMessage = SanitizeText(message)
+        Dim smallTileText = SanitizeText(GetTileMonogram(title, branding))
 
-        ' Adaptive tile template supporting all sizes with validated content
-        Dim tileXmlString = $"
-<tile>
-    <visual branding=""{safeBranding}"" displayName=""Fort.ind"">
-        <binding template=""TileSmall"" hint-textStacking=""center"">
-            <text hint-style=""caption"" hint-align=""center"">{smallTileText}</text>
-        </binding>
+        Dim content As New TileContent()
+        content.Visual = New TileVisual()
+        content.Visual.DisplayName = "Fort.ind"
+        content.Visual.Branding = safeBranding
 
-        <!-- Medium Tile (150x150) -->
-        <binding template=""TileMedium"">
-            <group>
-                <subgroup>
-                    <text {textStyleAttr} hint-wrap=""true"">{safeTitle}</text>
-                    <text hint-style=""captionSubtle"" hint-wrap=""true"" hint-maxLines=""3"">{safeMessage}</text>
-                </subgroup>
-            </group>
-        </binding>
+        ' Small tile: centered monogram
+        Dim smallText As New AdaptiveText()
+        smallText.Text = smallTileText
+        smallText.HintStyle = AdaptiveTextStyle.Caption
+        smallText.HintAlign = AdaptiveTextAlign.Center
 
-        <!-- Wide Tile (310x150) -->
-        <binding template=""TileWide"">
-            <group>
-                <subgroup>
-                    <text {textStyleAttr}>{safeTitle}</text>
-                    <text hint-style=""body"" hint-wrap=""true"" hint-maxLines=""2"">{safeMessage}</text>
-                </subgroup>
-            </group>
-        </binding>
+        Dim smallContent As New TileBindingContentAdaptive()
+        smallContent.TextStacking = TileTextStacking.Center
+        smallContent.Children.Add(smallText)
 
-        <!-- Large Tile (310x310) -->
-        <binding template=""TileLarge"" hint-textStacking=""center"">
-            <group>
-                <subgroup>
-                    <text {textStyleAttr} hint-align=""center"">{safeTitle}</text>
-                </subgroup>
-            </group>
-            <text hint-style=""body"" hint-wrap=""true"" hint-maxLines=""6"" hint-align=""center"">{safeMessage}</text>
-            <text hint-style=""captionSubtle"" hint-align=""center"">Fort.ind Desktop</text>
-        </binding>
+        content.Visual.TileSmall = New TileBinding()
+        content.Visual.TileSmall.Content = smallContent
 
-    </visual>
-</tile>"
+        ' Medium and wide tiles: title + wrapped message in a group/subgroup, differing only in
+        ' whether the title itself wraps and how many message lines are allowed
+        content.Visual.TileMedium = New TileBinding()
+        content.Visual.TileMedium.Content = BuildTitleMessageGroup(safeTitle, titleStyle, True, safeMessage, AdaptiveTextStyle.CaptionSubtle, 3)
 
-        Dim tileXml As New XmlDocument()
-        tileXml.LoadXml(tileXmlString)
-        Return tileXml
+        content.Visual.TileWide = New TileBinding()
+        content.Visual.TileWide.Content = BuildTitleMessageGroup(safeTitle, titleStyle, False, safeMessage, AdaptiveTextStyle.Body, 2)
+
+        ' Large tile: centered title in a group, message and static branding line below it
+        Dim largeContent As New TileBindingContentAdaptive()
+        largeContent.TextStacking = TileTextStacking.Center
+
+        Dim largeTitleText As New AdaptiveText()
+        largeTitleText.Text = safeTitle
+        largeTitleText.HintStyle = titleStyle
+        largeTitleText.HintAlign = AdaptiveTextAlign.Center
+
+        Dim largeSubgroup As New AdaptiveSubgroup()
+        largeSubgroup.Children.Add(largeTitleText)
+
+        Dim largeGroup As New AdaptiveGroup()
+        largeGroup.Children.Add(largeSubgroup)
+
+        Dim largeMessageText As New AdaptiveText()
+        largeMessageText.Text = safeMessage
+        largeMessageText.HintStyle = AdaptiveTextStyle.Body
+        largeMessageText.HintWrap = True
+        largeMessageText.HintMaxLines = 6
+        largeMessageText.HintAlign = AdaptiveTextAlign.Center
+
+        Dim largeBrandingText As New AdaptiveText()
+        largeBrandingText.Text = "Fort.ind Desktop"
+        largeBrandingText.HintStyle = AdaptiveTextStyle.CaptionSubtle
+        largeBrandingText.HintAlign = AdaptiveTextAlign.Center
+
+        largeContent.Children.Add(largeGroup)
+        largeContent.Children.Add(largeMessageText)
+        largeContent.Children.Add(largeBrandingText)
+
+        content.Visual.TileLarge = New TileBinding()
+        content.Visual.TileLarge.Content = largeContent
+
+        Return content.GetXml()
     End Function
 
     ''' <summary>
-    ''' Gets the animation attribute string for the tile
+    ''' Builds a group/subgroup containing a styled title line and a wrapped message line -
+    ''' shared by the medium and wide tile bindings, which only differ in title wrap and
+    ''' message max-line settings.
     ''' </summary>
-    Private Shared Function GetTextStyleAttribute(animation As TileAnimation) As String
+    Private Shared Function BuildTitleMessageGroup(title As String, titleStyle As AdaptiveTextStyle, wrapTitle As Boolean, message As String, messageStyle As AdaptiveTextStyle, messageMaxLines As Integer) As TileBindingContentAdaptive
+        Dim titleText As New AdaptiveText()
+        titleText.Text = title
+        titleText.HintStyle = titleStyle
+        titleText.HintWrap = wrapTitle
+
+        Dim messageText As New AdaptiveText()
+        messageText.Text = message
+        messageText.HintStyle = messageStyle
+        messageText.HintWrap = True
+        messageText.HintMaxLines = messageMaxLines
+
+        Dim subgroup As New AdaptiveSubgroup()
+        subgroup.Children.Add(titleText)
+        subgroup.Children.Add(messageText)
+
+        Dim group As New AdaptiveGroup()
+        group.Children.Add(subgroup)
+
+        Dim result As New TileBindingContentAdaptive()
+        result.Children.Add(group)
+        Return result
+    End Function
+
+    ''' <summary>
+    ''' Maps the tile's requested animation to the AdaptiveText style used for the title line.
+    ''' </summary>
+    Private Shared Function GetTitleTextStyle(animation As TileAnimation) As AdaptiveTextStyle
         Select Case animation
             Case TileAnimation.FadeIn
-                Return "hint-style=""captionSubtle"""
+                Return AdaptiveTextStyle.CaptionSubtle
             Case TileAnimation.SlideUp
-                Return "hint-style=""base"""
+                Return AdaptiveTextStyle.Base
             Case TileAnimation.SlideDown
-                Return "hint-style=""body"""
+                Return AdaptiveTextStyle.Body
             Case TileAnimation.SlideLeft
-                Return "hint-style=""bodySubtle"""
+                Return AdaptiveTextStyle.BodySubtle
             Case TileAnimation.SlideRight
-                Return "hint-style=""subtitle"""
+                Return AdaptiveTextStyle.Subtitle
             Case Else
-                Return ""
+                Return AdaptiveTextStyle.Default
         End Select
     End Function
 
     ''' <summary>
-    ''' Escapes special XML characters. Valid surrogate pairs (e.g. emoji) are passed through
-    ''' unchanged - they encode code points in the XML-legal #x10000-#x10FFFF range - while
-    ''' unpaired surrogates and control characters are dropped, same as before.
+    ''' Maps the branding string (always "name" from current call sites, but kept as a
+    ''' parameter for compatibility) to the TileBranding enum the Notifications library expects.
     ''' </summary>
-    Private Shared Function EscapeXml(text As String) As String
+    Private Shared Function ParseBranding(branding As String) As TileBranding
+        Select Case If(branding, "").Trim().ToLowerInvariant()
+            Case "none"
+                Return TileBranding.None
+            Case "logo"
+                Return TileBranding.Logo
+            Case "nameandlogo"
+                Return TileBranding.NameAndLogo
+            Case Else
+                Return TileBranding.Name
+        End Select
+    End Function
+
+    ''' <summary>
+    ''' Strips characters that aren't legal in XML 1.0 (the Notifications library still
+    ''' serializes to XML under the hood) while passing valid surrogate pairs (e.g. emoji)
+    ''' through unchanged. Entity escaping (&amp;, &lt;, etc.) is handled by the library itself,
+    ''' so this only needs to guard against characters that would make the XML invalid outright.
+    ''' </summary>
+    Private Shared Function SanitizeText(text As String) As String
         If String.IsNullOrEmpty(text) Then Return ""
 
         Dim sanitized As New StringBuilder(text.Length)
@@ -170,7 +236,7 @@ Public Class LiveTileService
             i += 1
         End While
 
-        Return sanitized.ToString().Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("""", "&quot;").Replace("'", "&apos;")
+        Return sanitized.ToString()
     End Function
 
     ''' <summary>
@@ -234,13 +300,12 @@ Public Class LiveTileService
                 Return False
             End If
 
-            Dim toastXml As New XmlDocument()
-            toastXml.LoadXml(
-                $"<toast><visual><binding template=""ToastGeneric"">" &
-                $"<text>{EscapeXml(title)}</text>" &
-                $"<text>{EscapeXml(message)}</text>" &
-                "</binding></visual></toast>")
-            Dim toast As New ToastNotification(toastXml)
+            Dim toastContent = New ToastContentBuilder().
+                AddText(SanitizeText(title)).
+                AddText(SanitizeText(message)).
+                GetToastContent()
+
+            Dim toast As New ToastNotification(toastContent.GetXml())
             notifier.Show(toast)
             Return True
         Catch ex As Exception
