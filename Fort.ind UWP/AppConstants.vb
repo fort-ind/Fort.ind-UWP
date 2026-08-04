@@ -1,9 +1,29 @@
+Imports Windows.Foundation.Metadata
+Imports Windows.UI.Xaml
+Imports Windows.UI.Xaml.Controls
+
 ''' <summary>
 ''' Centralized app constants to avoid repeated literals and drift.
 ''' </summary>
 Public NotInheritable Class AppConstants
 
     Private Sub New()
+    End Sub
+
+    ''' <summary>
+    ''' UIElement.XamlRoot was added in Windows 10 1903 (10.0.18362.0). This app's
+    ''' TargetPlatformMinVersion is 1809 (10.0.17763.0), where the property doesn't exist -
+    ''' reading or setting it throws, which every ContentDialog call site swallows in a
+    ''' try/catch, so on 1809 dialogs silently never appear. A single-window UWP app shows
+    ''' ContentDialogs fine with XamlRoot left unset, so just skip it when unsupported.
+    ''' </summary>
+    Private Shared ReadOnly s_xamlRootSupported As Boolean =
+        ApiInformation.IsPropertyPresent("Windows.UI.Xaml.UIElement", "XamlRoot")
+
+    Public Shared Sub ApplyXamlRoot(dialog As ContentDialog, owner As UIElement)
+        If s_xamlRootSupported Then
+            dialog.XamlRoot = owner.XamlRoot
+        End If
     End Sub
 
     ' Search categories
@@ -51,6 +71,7 @@ Public NotInheritable Class AppConstants
     ' Sitemap cache
     Public Const SitemapCacheFileName As String = "sitemap_urls.cache"
     Public Const SitemapCacheTimestampKey As String = "SitemapCacheUnixSeconds"
+    Public Const SitemapCacheAppVersionKey As String = "SitemapCacheAppVersion"
     Public Const SitemapCacheTtlHours As Integer = 24
 
     ' Release channel suffix appended after the numeric version (e.g. "0.5.0 Beta")

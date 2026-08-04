@@ -148,7 +148,7 @@ Public NotInheritable Class ProfilePage
             dialog.PrimaryButtonText = "Sign Out"
             dialog.CloseButtonText = "Cancel"
             dialog.DefaultButton = ContentDialogButton.Close
-            dialog.XamlRoot = Me.XamlRoot
+            AppConstants.ApplyXamlRoot(dialog, Me)
 
             Dim result = Await dialog.ShowAsync()
 

@@ -171,6 +171,14 @@ Public Class SitemapService
                 Return Nothing
             End If
 
+            ' Ignore a cache written by a different app version - a bundled sitemap.xml can
+            ' change between releases (new pages/games), and honoring a still-fresh TTL from
+            ' before the update would hide anything new until the cache naturally expires.
+            Dim cachedVersion = settings.Values(AppConstants.SitemapCacheAppVersionKey)?.ToString()
+            If cachedVersion <> AppConstants.AppVersionDisplay Then
+                Return Nothing
+            End If
+
             Dim rawTimestamp = settings.Values(AppConstants.SitemapCacheTimestampKey)
             Dim cacheUnixSeconds As Long
             Try
@@ -234,6 +242,7 @@ Public Class SitemapService
 
             Await FileIO.WriteTextAsync(cacheFile, String.Join(Environment.NewLine, lines))
             ApplicationData.Current.LocalSettings.Values(AppConstants.SitemapCacheTimestampKey) = DateTimeOffset.UtcNow.ToUnixTimeSeconds()
+            ApplicationData.Current.LocalSettings.Values(AppConstants.SitemapCacheAppVersionKey) = AppConstants.AppVersionDisplay
         Catch ex As Exception
             Debug.WriteLine($"SitemapService: failed to save sitemap cache – {ex.Message}")
         End Try

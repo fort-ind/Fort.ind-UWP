@@ -474,7 +474,7 @@ Public NotInheritable Class MainPage
             dialog.PrimaryButtonText = "Clear"
             dialog.CloseButtonText = "Cancel"
             dialog.DefaultButton = ContentDialogButton.Close
-            dialog.XamlRoot = Me.XamlRoot
+            AppConstants.ApplyXamlRoot(dialog, Me)
 
             Dim result = Await dialog.ShowAsync()
 
@@ -511,7 +511,7 @@ Public NotInheritable Class MainPage
             explainDialog.PrimaryButtonText = "Continue"
             explainDialog.CloseButtonText = "Cancel"
             explainDialog.DefaultButton = ContentDialogButton.Close
-            explainDialog.XamlRoot = Me.XamlRoot
+            AppConstants.ApplyXamlRoot(explainDialog, Me)
 
             If Await explainDialog.ShowAsync() <> ContentDialogResult.Primary Then Return
 
@@ -521,7 +521,7 @@ Public NotInheritable Class MainPage
             confirmDialog.PrimaryButtonText = "Yes, Reset Everything"
             confirmDialog.CloseButtonText = "Cancel"
             confirmDialog.DefaultButton = ContentDialogButton.Close
-            confirmDialog.XamlRoot = Me.XamlRoot
+            AppConstants.ApplyXamlRoot(confirmDialog, Me)
 
             If Await confirmDialog.ShowAsync() <> ContentDialogResult.Primary Then Return
 
@@ -535,7 +535,7 @@ Public NotInheritable Class MainPage
             restartDialog.PrimaryButtonText = "Restart Now"
             restartDialog.CloseButtonText = "Later"
             restartDialog.DefaultButton = ContentDialogButton.Primary
-            restartDialog.XamlRoot = Me.XamlRoot
+            AppConstants.ApplyXamlRoot(restartDialog, Me)
 
             If Await restartDialog.ShowAsync() = ContentDialogResult.Primary Then
                 Await RequestAppRestartAsync()
@@ -839,9 +839,9 @@ Public NotInheritable Class MainPage
                 .Content = picker,
                 .PrimaryButtonText = "Apply",
                 .CloseButtonText = "Cancel",
-                .DefaultButton = ContentDialogButton.Primary,
-                .XamlRoot = Me.XamlRoot
+                .DefaultButton = ContentDialogButton.Primary
             }
+            AppConstants.ApplyXamlRoot(dialog, Me)
 
             ' Live preview: repaint the window as the user drags around the picker.
             Dim previewHandler As TypedEventHandler(Of ColorPicker, ColorChangedEventArgs) =
@@ -1017,7 +1017,7 @@ Public NotInheritable Class MainPage
             welcomeDialog.Content = contentPanel
             welcomeDialog.PrimaryButtonText = "got it"
             welcomeDialog.DefaultButton = ContentDialogButton.Primary
-            welcomeDialog.XamlRoot = Me.XamlRoot
+            AppConstants.ApplyXamlRoot(welcomeDialog, Me)
 
             Await welcomeDialog.ShowAsync()
 
@@ -1033,6 +1033,14 @@ Public NotInheritable Class MainPage
     End Function
 
     Private Async Sub ResetWelcomeButton_Click(sender As Object, e As RoutedEventArgs)
+        ' Check (without holding) that no other dialog is open before flipping the setting -
+        ' ShowWelcomeDialogAsync takes the semaphore itself, so if we held it here too, its
+        ' own WaitAsync(0) would immediately fail and the dialog would never show.
+        If Not Await _dialogSemaphore.WaitAsync(0) Then
+            Return ' Another dialog is already open
+        End If
+        _dialogSemaphore.Release()
+
         Try
             Dim localSettings = ApplicationData.Current.LocalSettings
             localSettings.Values(AppConstants.SettingHideWelcomeDialog) = False

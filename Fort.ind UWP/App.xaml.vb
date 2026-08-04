@@ -67,7 +67,7 @@ NotInheritable Class App
                 errorDialog.Title = "Startup Error"
                 errorDialog.Content = "The application failed to start properly. Please try restarting."
                 errorDialog.PrimaryButtonText = "OK"
-                errorDialog.XamlRoot = Window.Current.Content.XamlRoot
+                AppConstants.ApplyXamlRoot(errorDialog, Window.Current.Content)
                 Await errorDialog.ShowAsync()
             Catch
                 ' Nothing more we can do
@@ -131,7 +131,7 @@ NotInheritable Class App
             errorDialog.Content = $"Failed to load page. The application will return to the home screen."
             errorDialog.PrimaryButtonText = "OK"
             errorDialog.DefaultButton = ContentDialogButton.Primary
-            errorDialog.XamlRoot = Window.Current.Content.XamlRoot
+            AppConstants.ApplyXamlRoot(errorDialog, Window.Current.Content)
             Await errorDialog.ShowAsync()
         Catch ex As Exception
             ' If dialog fails, just log it
