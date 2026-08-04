@@ -33,6 +33,7 @@ Public NotInheritable Class MainPage
         New SearchItem("Light Mode", AppConstants.CategorySettings, AppConstants.NavigationSettings),
         New SearchItem("Background Color", AppConstants.CategorySettings, AppConstants.NavigationSettings),
         New SearchItem("Background Tint", AppConstants.CategorySettings, AppConstants.NavigationSettings),
+        New SearchItem("Custom Background Tint", AppConstants.CategorySettings, AppConstants.NavigationSettings),
         New SearchItem("Account", AppConstants.CategoryProfile, AppConstants.NavigationProfile),
         New SearchItem("Sign In", AppConstants.CategoryProfile, AppConstants.NavigationProfile)
     }
@@ -64,13 +65,20 @@ Public NotInheritable Class MainPage
     ' the pane no matter what they were looking at.
     Private _navViewInitialized As Boolean = False
 
-    ' Light-mode equivalents for each dark tint color
+    ' Light-mode equivalents for each dark preset tint color. Custom colors aren't in here -
+    ' they fall back to LightenForLightTheme(), which computes an approximation of the same
+    ' pastel treatment these hand-picked values use.
     Private Shared ReadOnly s_lightTintMap As New Dictionary(Of String, String) From {
         {"#1E3A5F", "#C8E0F5"},
         {"#2D1B69", "#DDD0F5"},
         {"#0F3D2E", "#C5E8D5"},
         {"#3D1515", "#F5CECE"},
-        {"#1A1A2E", "#D0D0EA"}
+        {"#1A1A2E", "#D0D0EA"},
+        {"#0E3A3A", "#C5E8E8"},
+        {"#3D2A0F", "#F5E3C0"},
+        {"#3D1533", "#F5CEE9"},
+        {"#2E3D0F", "#DEEBC0"},
+        {"#232323", "#DCDCDC"}
     }
 
     Public Sub New()
@@ -587,8 +595,20 @@ Public NotInheritable Class MainPage
             If localSettings.Values.ContainsKey(AppConstants.SettingAppTintColor) Then
                 tintTag = localSettings.Values(AppConstants.SettingAppTintColor).ToString()
             End If
+            ' Reset the custom swatch to its palette glyph first - this runs again after an app
+            ' reset, and a stale color chip would imply a custom tint that no longer exists.
+            TintCustomButton.ClearValue(Control.BackgroundProperty)
+            TintCustomIcon.Visibility = Visibility.Visible
+
             ApplyTintColor(tintTag)
             UpdateTintSelection(tintTag)
+
+            ' Keep the last custom pick visible on its swatch even while a preset is active.
+            ' The glyph still being visible means UpdateTintSelection didn't paint a chip.
+            Dim rememberedCustom = TryCast(localSettings.Values(AppConstants.SettingAppCustomTintColor), String)
+            If TintCustomIcon.Visibility = Visibility.Visible AndAlso Not String.IsNullOrEmpty(rememberedCustom) Then
+                ShowCustomSwatchColor(rememberedCustom)
+            End If
 
             ' Restore settings panel states
             RestoreSettingsPanelStates()
@@ -634,17 +654,16 @@ Public NotInheritable Class MainPage
                                 Application.Current.RequestedTheme = ApplicationTheme.Dark,
                                 effTheme = ElementTheme.Dark)
 
-                Dim hexToApply As String = colorTag
+                Dim c = HexToColor(colorTag)
                 Dim tintOpacity As Double = 0.8
                 If Not isDark Then
                     Dim lightHex As String = Nothing
-                    If s_lightTintMap.TryGetValue(colorTag, lightHex) Then
-                        hexToApply = lightHex
-                    End If
+                    c = If(s_lightTintMap.TryGetValue(colorTag, lightHex),
+                           HexToColor(lightHex),
+                           LightenForLightTheme(c))
                     tintOpacity = 0.6
                 End If
 
-                Dim c = HexToColor(hexToApply)
                 RootGrid.Background = New AcrylicBrush() With {
                     .BackgroundSource = AcrylicBackgroundSource.HostBackdrop,
                     .TintColor = c,
@@ -669,29 +688,52 @@ Public NotInheritable Class MainPage
         {"#2D1B69", "Deep Purple background tint"},
         {"#0F3D2E", "Forest Green background tint"},
         {"#3D1515", "Deep Red background tint"},
-        {"#1A1A2E", "Dark Slate background tint"}
+        {"#1A1A2E", "Dark Slate background tint"},
+        {"#0E3A3A", "Deep Teal background tint"},
+        {"#3D2A0F", "Bronze background tint"},
+        {"#3D1533", "Deep Rose background tint"},
+        {"#2E3D0F", "Olive background tint"},
+        {"#232323", "Graphite background tint"}
     }
 
+    ''' <summary>
+    ''' Every preset swatch, in display order. The custom swatch is deliberately excluded -
+    ''' it has no fixed Tag, so it is matched by elimination rather than by lookup.
+    ''' </summary>
+    Private ReadOnly Property TintPresetSwatches As Button()
+        Get
+            Return {TintDefaultButton, TintBlueButton, TintPurpleButton, TintGreenButton,
+                    TintRedButton, TintSlateButton, TintTealButton, TintBronzeButton,
+                    TintRoseButton, TintOliveButton, TintGraphiteButton}
+        End Get
+    End Property
+
     Private Sub UpdateTintSelection(selectedTag As String)
-        Dim swatches As Button() = {TintDefaultButton, TintBlueButton, TintPurpleButton,
-                                    TintGreenButton, TintRedButton, TintSlateButton}
-        For Each btn In swatches
+        selectedTag = If(String.IsNullOrEmpty(selectedTag), AppConstants.ThemeDefault, selectedTag)
+
+        Dim sel As Button = Nothing
+        For Each btn In TintPresetSwatches
             btn.BorderBrush = New SolidColorBrush(Colors.Transparent)
+            Dim tag = If(btn.Tag?.ToString(), "")
             Dim baseName As String = Nothing
-            If Not s_tintSwatchNames.TryGetValue(If(btn.Tag?.ToString(), ""), baseName) Then
-                baseName = btn.Tag?.ToString()
+            If Not s_tintSwatchNames.TryGetValue(tag, baseName) Then
+                baseName = tag
             End If
             Windows.UI.Xaml.Automation.AutomationProperties.SetName(btn, baseName)
+            If String.Equals(tag, selectedTag, StringComparison.OrdinalIgnoreCase) Then sel = btn
         Next
-        Dim sel As Button = Nothing
-        Select Case If(selectedTag, AppConstants.ThemeDefault)
-            Case AppConstants.ThemeDefault : sel = TintDefaultButton
-            Case "#1E3A5F" : sel = TintBlueButton
-            Case "#2D1B69" : sel = TintPurpleButton
-            Case "#0F3D2E" : sel = TintGreenButton
-            Case "#3D1515" : sel = TintRedButton
-            Case "#1A1A2E" : sel = TintSlateButton
-        End Select
+
+        ' Anything that isn't Default and isn't one of the presets is a custom color, so the
+        ' custom swatch both takes the selection border and previews the color itself.
+        TintCustomButton.BorderBrush = New SolidColorBrush(Colors.Transparent)
+        Windows.UI.Xaml.Automation.AutomationProperties.SetName(TintCustomButton, "Custom background tint")
+        If sel Is Nothing Then
+            sel = TintCustomButton
+            ShowCustomSwatchColor(selectedTag)
+            Windows.UI.Xaml.Automation.AutomationProperties.SetName(
+                TintCustomButton, $"Custom background tint {selectedTag}")
+        End If
+
         If sel IsNot Nothing Then
             Dim rootFrame = TryCast(Window.Current.Content, Frame)
             Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
@@ -712,6 +754,36 @@ Public NotInheritable Class MainPage
                               Convert.ToByte(hex.Substring(4, 2), 16))
     End Function
 
+    Private Shared Function ColorToHex(c As Color) As String
+        Return $"#{c.R:X2}{c.G:X2}{c.B:X2}"
+    End Function
+
+    ''' <summary>
+    ''' Approximates the pastel light-theme shade that <see cref="s_lightTintMap"/> stores by
+    ''' hand for the presets, for colors the user picked themselves. Blending most of the way
+    ''' to white keeps the hue but stops a saturated pick from turning a light window murky.
+    ''' </summary>
+    Private Shared Function LightenForLightTheme(c As Color) As Color
+        Const keep As Double = 0.22
+        Return Color.FromArgb(255,
+                              CByte(255 - (255 - CInt(c.R)) * keep),
+                              CByte(255 - (255 - CInt(c.G)) * keep),
+                              CByte(255 - (255 - CInt(c.B)) * keep))
+    End Function
+
+    ''' <summary>
+    ''' Paints the custom swatch with the given color and hides its palette glyph, so the
+    ''' button reads as a color chip once the user has actually chosen one.
+    ''' </summary>
+    Private Sub ShowCustomSwatchColor(hex As String)
+        Try
+            TintCustomButton.Background = New SolidColorBrush(HexToColor(hex))
+            TintCustomIcon.Visibility = Visibility.Collapsed
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: ShowCustomSwatchColor failed – {ex.Message}")
+        End Try
+    End Sub
+
     Private Sub AppearanceHeader_Tapped(sender As Object, e As RoutedEventArgs)
         ToggleSettingsRow(AppearanceContent, AppearanceChevronRotation, AppConstants.SettingSettingsAppearanceExpanded)
     End Sub
@@ -731,6 +803,84 @@ Public NotInheritable Class MainPage
             ApplyTintColor(tag)
             UpdateTintSelection(tag)
         End If
+    End Sub
+
+    ''' <summary>
+    ''' Opens a color picker so the user can choose a tint that isn't one of the presets. The
+    ''' pick is applied live while the dialog is open so the choice can be judged against the
+    ''' real window, and reverted to whatever was active before if the dialog is cancelled.
+    ''' </summary>
+    Private Async Sub CustomTintButton_Click(sender As Object, e As RoutedEventArgs)
+        If Not Await _dialogSemaphore.WaitAsync(0) Then
+            Return ' Another dialog is already open
+        End If
+
+        Dim localSettings = ApplicationData.Current.LocalSettings
+        Dim previousTag As String = If(localSettings.Values(AppConstants.SettingAppTintColor)?.ToString(),
+                                       AppConstants.ThemeDefault)
+
+        Try
+            ' Seed with the active tint if it's already a custom one, otherwise the last color
+            ' the user picked here, otherwise a neutral starting point.
+            Dim seed As String = previousTag
+            If seed = AppConstants.ThemeDefault OrElse s_tintSwatchNames.ContainsKey(seed) Then
+                seed = If(localSettings.Values(AppConstants.SettingAppCustomTintColor)?.ToString(), "#1E3A5F")
+            End If
+
+            Dim picker As New ColorPicker() With {
+                .IsAlphaEnabled = False,
+                .IsHexInputVisible = True,
+                .IsColorChannelTextInputVisible = True,
+                .Color = HexToColor(seed)
+            }
+
+            Dim dialog As New ContentDialog() With {
+                .Title = "Custom background tint",
+                .Content = picker,
+                .PrimaryButtonText = "Apply",
+                .CloseButtonText = "Cancel",
+                .DefaultButton = ContentDialogButton.Primary,
+                .XamlRoot = Me.XamlRoot
+            }
+
+            ' Live preview: repaint the window as the user drags around the picker.
+            Dim previewHandler As TypedEventHandler(Of ColorPicker, ColorChangedEventArgs) =
+                Sub(s, args) ApplyTintColorPreview(ColorToHex(args.NewColor))
+            AddHandler picker.ColorChanged, previewHandler
+
+            Dim result = Await dialog.ShowAsync()
+            RemoveHandler picker.ColorChanged, previewHandler
+
+            If result = ContentDialogResult.Primary Then
+                Dim hex = ColorToHex(picker.Color)
+                localSettings.Values(AppConstants.SettingAppCustomTintColor) = hex
+                ApplyTintColor(hex)
+                UpdateTintSelection(hex)
+            Else
+                ApplyTintColor(previousTag)
+                UpdateTintSelection(previousTag)
+            End If
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Custom tint dialog failed – {ex.Message}")
+            ApplyTintColor(previousTag)
+            UpdateTintSelection(previousTag)
+        Finally
+            _dialogSemaphore.Release()
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Repaints the window with a tint without persisting it - used while the color picker is
+    ''' open so an abandoned dialog leaves no trace in LocalSettings.
+    ''' </summary>
+    Private Sub ApplyTintColorPreview(hex As String)
+        Dim wasLoading = _loadingSettings
+        _loadingSettings = True
+        Try
+            ApplyTintColor(hex)
+        Finally
+            _loadingSettings = wasLoading
+        End Try
     End Sub
 
     ' ── Settings row expand/collapse ──

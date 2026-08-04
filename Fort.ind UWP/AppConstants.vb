@@ -35,6 +35,9 @@ Public NotInheritable Class AppConstants
     Public Const SettingHideWelcomeDialog As String = "HideWelcomeDialog"
     Public Const SettingAppTheme As String = "AppTheme"
     Public Const SettingAppTintColor As String = "AppTintColor"
+    ' Remembers the last color picked in the custom-tint dialog so the custom swatch keeps
+    ' showing it even while a preset is the active tint.
+    Public Const SettingAppCustomTintColor As String = "AppCustomTintColor"
     Public Const SettingSettingsAppearanceExpanded As String = "SettingsAppearanceExpanded"
     Public Const SettingSettingsStorageExpanded As String = "SettingsStorageExpanded"
     Public Const SettingSettingsTileExpanded As String = "SettingsTileExpanded"
