@@ -28,13 +28,96 @@
                                   TintOpacity="0.65"
                                   FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
 
-                    <!-- NavigationViewItem foreground: high-contrast when idle, accent when selected -->
-                    <SolidColorBrush x:Key="NavigationViewItemForeground" Color="{ThemeResource SystemBaseHighColor}"/>
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="{ThemeResource SystemBaseHighColor}"/>
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="{ThemeResource SystemAccentColor}"/>
-                    <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="{ThemeResource SystemAccentColor}"/>
-
                     <!-- Reveal is intentionally NOT applied globally -->
+
+                    <!-- ...but the nav pane is a commanding surface, so it has to keep the Reveal
+                         it gets from the OS. The system NavigationViewItemPresenter template already
+                         does the wiring (RevealBrush.State on hover/press, a RevealBorder element);
+                         it just paints with whatever brush sits behind these keys. WinUI 2's own
+                         NavigationView uses the SAME key names - its resources.pri defines
+                         NavigationViewItemBackgroundPointerOver, though the Generic.xaml shipped in
+                         the package is only a partial copy and does not show it - and
+                         XamlControlsResources merges app-wide, so whichever of WinUI or the OS
+                         supplies a flat brush, the pane loses the border glow ListView/GridView
+                         still get. Defining the keys here settles it: this dictionary is merged
+                         last, so it wins over both.
+
+                         The resting (unsuffixed) and Selected keys matter as much as the hover
+                         ones - they are what makes items NEAR the cursor light up, which is most of
+                         what Reveal looks like. They also need no RevealBrush.State: the border
+                         light is ambient, so these keep working even if a future OS template drops
+                         the State wiring.
+
+                         Values are copied from the OS defaults rather than aliased with
+                         StaticResource: an alias resolves once at load, and this app switches theme
+                         at runtime. Reveal border brushes are genuinely Transparent - the glow comes
+                         from the border light, not the colour.
+
+                         The item foregrounds (high-contrast when idle, accent when selected) live in
+                         here too rather than as loose entries: sitting outside the theme
+                         dictionaries they also applied in High Contrast, painting accent text on the
+                         HC highlight background. HC gets the OS pairing instead - ButtonText at
+                         rest, HighlightText once the row is filled with the highlight colour. -->
+                    <ResourceDictionary.ThemeDictionaries>
+
+                        <ResourceDictionary x:Key="Default">
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackground" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelected" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrush" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushSelected" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundPointerOver" TargetTheme="Dark" Color="#18FFFFFF" FallbackColor="#19FFFFFF"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" TargetTheme="Dark" Color="#18FFFFFF" FallbackColor="#19FFFFFF"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundPressed" TargetTheme="Dark" Color="#30FFFFFF" FallbackColor="#33FFFFFF"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelectedPressed" TargetTheme="Dark" Color="#30FFFFFF" FallbackColor="#33FFFFFF"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushPointerOver" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushPressed" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushSelectedPointerOver" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushSelectedPressed" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
+
+                            <SolidColorBrush x:Key="NavigationViewItemForeground" Color="{ThemeResource SystemBaseHighColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="{ThemeResource SystemBaseHighColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="{ThemeResource SystemAccentColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="{ThemeResource SystemAccentColor}"/>
+                        </ResourceDictionary>
+
+                        <ResourceDictionary x:Key="Light">
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackground" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelected" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrush" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushSelected" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundPointerOver" TargetTheme="Light" Color="#17000000" FallbackColor="#19000000"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" TargetTheme="Light" Color="#17000000" FallbackColor="#19000000"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundPressed" TargetTheme="Light" Color="#2E000000" FallbackColor="#33000000"/>
+                            <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelectedPressed" TargetTheme="Light" Color="#2E000000" FallbackColor="#33000000"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushPointerOver" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushPressed" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushSelectedPointerOver" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+                            <RevealBorderBrush x:Key="NavigationViewItemBorderBrushSelectedPressed" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
+
+                            <SolidColorBrush x:Key="NavigationViewItemForeground" Color="{ThemeResource SystemBaseHighColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="{ThemeResource SystemBaseHighColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="{ThemeResource SystemAccentColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="{ThemeResource SystemAccentColor}"/>
+                        </ResourceDictionary>
+
+                        <!-- High contrast has no Reveal at all: solid system colours, same as the OS does. -->
+                        <ResourceDictionary x:Key="HighContrast">
+                            <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="{ThemeResource SystemColorHighlightColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="{ThemeResource SystemColorHighlightColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="{ThemeResource SystemColorHighlightColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPressed" Color="{ThemeResource SystemColorHighlightColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemBorderBrushPointerOver" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemBorderBrushPressed" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemBorderBrushSelectedPointerOver" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemBorderBrushSelectedPressed" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+
+                            <SolidColorBrush x:Key="NavigationViewItemForeground" Color="{ThemeResource SystemColorButtonTextColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundPointerOver" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundSelected" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+                            <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="{ThemeResource SystemColorHighlightTextColor}"/>
+                        </ResourceDictionary>
+
+                    </ResourceDictionary.ThemeDictionaries>
 
                 </ResourceDictionary>
             </muxc:XamlControlsResources.MergedDictionaries>
