@@ -46,6 +46,18 @@ Public Class MisskeyAuthService
     Private Shared s_pendingCompletion As TaskCompletionSource(Of Boolean) = Nothing
 
     ''' <summary>
+    ''' One client for the process. A new HttpClient per request throws away the pooled
+    ''' connection with it, so every sign-in and every background profile refresh paid for a
+    ''' fresh TCP connect plus TLS handshake against the same host.
+    ''' </summary>
+    Private Shared ReadOnly s_client As New HttpClient()
+
+    ''' <summary>
+    ''' How long SignInAsync waits for the browser to hand control back before giving up.
+    ''' </summary>
+    Private Shared ReadOnly SignInTimeout As TimeSpan = TimeSpan.FromMinutes(5)
+
+    ''' <summary>
     ''' Opens the fort.social consent page in the system browser, then waits for the browser
     ''' to redirect back into the app (via protocol activation) before exchanging the approved
     ''' session for an access token. Times out if the user never completes the browser flow.
@@ -79,7 +91,17 @@ Public Class MisskeyAuthService
             Return MisskeyAuthResult.Failed("Could not open your browser to sign in.")
         End Try
 
-        Dim finished = Await Task.WhenAny(completion.Task, Task.Delay(TimeSpan.FromMinutes(5)))
+        ' The timeout task is cancelled once the browser comes back, otherwise a completed
+        ' sign-in would still leave a live 5-minute timer (and its continuation) rooted.
+        Dim timeoutCts As New Threading.CancellationTokenSource()
+        Dim finished As Task = Nothing
+        Try
+            finished = Await Task.WhenAny(completion.Task, Task.Delay(SignInTimeout, timeoutCts.Token))
+        Finally
+            timeoutCts.Cancel()
+            timeoutCts.Dispose()
+        End Try
+
         If finished IsNot completion.Task Then
             ClearPending(session)
             Return MisskeyAuthResult.Failed("Sign-in timed out. Please try again.")
@@ -232,31 +254,31 @@ Public Class MisskeyAuthService
     ''' </summary>
     Private Shared Async Function CompleteSessionAsync(session As String) As Task(Of MisskeyAuthResult)
         Try
-            Using client As New HttpClient()
-                Dim checkUri As New Uri($"https://{InstanceHost}/api/miauth/{session}/check")
-                Dim content = New HttpStringContent("{}", Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/json")
-                Dim response = Await client.PostAsync(checkUri, content)
-                response.EnsureSuccessStatusCode()
+            Dim checkUri As New Uri($"https://{InstanceHost}/api/miauth/{Uri.EscapeDataString(session)}/check")
+            Using content As New HttpStringContent("{}", Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/json")
+                Using response = Await s_client.PostAsync(checkUri, content)
+                    response.EnsureSuccessStatusCode()
 
-                Dim body = Await response.Content.ReadAsStringAsync()
-                Dim json = JsonObject.Parse(body)
+                    Dim body = Await response.Content.ReadAsStringAsync()
+                    Dim json = JsonObject.Parse(body)
 
-                If Not json.GetNamedBoolean("ok", False) Then
-                    Return MisskeyAuthResult.Failed("fort.social did not approve the sign-in.")
-                End If
+                    If Not json.GetNamedBoolean("ok", False) Then
+                        Return MisskeyAuthResult.Failed("fort.social did not approve the sign-in.")
+                    End If
 
-                Dim token = json.GetNamedString("token", "")
-                If String.IsNullOrWhiteSpace(token) Then
-                    Return MisskeyAuthResult.Failed("fort.social did not return an access token.")
-                End If
+                    Dim token = json.GetNamedString("token", "")
+                    If String.IsNullOrWhiteSpace(token) Then
+                        Return MisskeyAuthResult.Failed("fort.social did not return an access token.")
+                    End If
 
-                Dim profile = ParseUser(GetNamedObjectOrNull(json, "user"))
-                If profile Is Nothing Then
-                    Return MisskeyAuthResult.Failed("fort.social did not return account details.")
-                End If
+                    Dim profile = ParseUser(GetNamedObjectOrNull(json, "user"))
+                    If profile Is Nothing Then
+                        Return MisskeyAuthResult.Failed("fort.social did not return account details.")
+                    End If
 
-                SaveToken(token)
-                Return MisskeyAuthResult.Succeeded(token, profile)
+                    SaveToken(token)
+                    Return MisskeyAuthResult.Succeeded(token, profile)
+                End Using
             End Using
         Catch ex As Exception
             Debug.WriteLine($"MisskeyAuthService: check failed - {ex.Message}")
@@ -272,17 +294,17 @@ Public Class MisskeyAuthService
         If String.IsNullOrWhiteSpace(token) Then Return Nothing
 
         Try
-            Using client As New HttpClient()
-                Dim uri As New Uri($"https://{InstanceHost}/api/i")
-                Dim bodyJson As New JsonObject()
-                bodyJson.Add("i", JsonValue.CreateStringValue(token))
-                Dim content = New HttpStringContent(bodyJson.Stringify(), Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/json")
+            Dim uri As New Uri($"https://{InstanceHost}/api/i")
+            Dim bodyJson As New JsonObject()
+            bodyJson.Add("i", JsonValue.CreateStringValue(token))
 
-                Dim response = Await client.PostAsync(uri, content)
-                If Not response.IsSuccessStatusCode Then Return Nothing
+            Using content As New HttpStringContent(bodyJson.Stringify(), Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/json")
+                Using response = Await s_client.PostAsync(uri, content)
+                    If Not response.IsSuccessStatusCode Then Return Nothing
 
-                Dim body = Await response.Content.ReadAsStringAsync()
-                Return ParseUser(JsonObject.Parse(body))
+                    Dim body = Await response.Content.ReadAsStringAsync()
+                    Return ParseUser(JsonObject.Parse(body))
+                End Using
             End Using
         Catch ex As Exception
             Debug.WriteLine($"MisskeyAuthService: /api/i failed - {ex.Message}")

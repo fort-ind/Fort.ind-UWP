@@ -1,4 +1,3 @@
-Imports System.Xml.Linq
 Imports Windows.Storage
 
 ''' <summary>
@@ -86,25 +85,16 @@ Public Class SitemapService
 
             Dim file = Await StorageFile.GetFileFromApplicationUriAsync(New Uri("ms-appx:///sitemap.xml"))
             Dim text = Await FileIO.ReadTextAsync(file)
-            
-            ' Protect against malformed XML
-            Dim doc As XDocument = Nothing
-            Try
-                doc = XDocument.Parse(text)
-            Catch xmlEx As Exception
-                Debug.WriteLine($"SitemapService: XML parsing failed – {xmlEx.Message}")
-                Return items ' Return empty list if XML is malformed
-            End Try
-            
-            Dim ns As XNamespace = "http://www.sitemaps.org/schemas/sitemap/0.9"
-            Dim urlsToCache As New List(Of String)()
 
-            For Each urlElement In doc.Descendants(ns + "url")
-                Dim urlValue = urlElement.Element(ns + "loc")?.Value
-                If String.IsNullOrEmpty(urlValue) Then Continue For
+            ' Streamed rather than XDocument.Parse: the only thing wanted out of the whole
+            ' document is each <loc> value, so building a DOM for it just to throw it away is
+            ' a peak-memory spike on the startup path for no benefit.
+            Dim urlsToCache = ReadLocValues(text)
+            If urlsToCache Is Nothing Then
+                Return items ' Malformed XML - return empty so a later caller retries.
+            End If
 
-                urlsToCache.Add(urlValue)
-
+            For Each urlValue In urlsToCache
                 Dim item = CreateSearchItemFromUrl(urlValue)
                 If item IsNot Nothing Then
                     items.Add(item)
@@ -122,17 +112,58 @@ Public Class SitemapService
     End Function
 
     ''' <summary>
+    ''' Pulls every &lt;loc&gt; value out of a sitemap document without materialising a DOM.
+    ''' Returns Nothing (not an empty list) if the XML is malformed, so the caller can tell
+    ''' "broken document" apart from "document with no URLs" and avoid memoizing the failure.
+    ''' </summary>
+    Private Shared Function ReadLocValues(documentText As String) As List(Of String)
+        Dim urls As New List(Of String)()
+
+        ' DTD processing off and no resolver: the sitemap is bundled, but this also parses
+        ' nothing that could reach out to an external entity if it ever stopped being.
+        Dim settings As New System.Xml.XmlReaderSettings() With {
+            .DtdProcessing = System.Xml.DtdProcessing.Prohibit,
+            .XmlResolver = Nothing,
+            .IgnoreComments = True,
+            .IgnoreWhitespace = True,
+            .IgnoreProcessingInstructions = True
+        }
+
+        Try
+            Using stringReader As New IO.StringReader(documentText)
+                Using reader = System.Xml.XmlReader.Create(stringReader, settings)
+                    While reader.Read()
+                        If reader.NodeType = System.Xml.XmlNodeType.Element AndAlso
+                           String.Equals(reader.LocalName, "loc", StringComparison.Ordinal) Then
+                            Dim value = reader.ReadElementContentAsString()
+                            If Not String.IsNullOrWhiteSpace(value) Then
+                                urls.Add(value.Trim())
+                            End If
+                        End If
+                    End While
+                End Using
+            End Using
+        Catch ex As Exception
+            Debug.WriteLine($"SitemapService: XML parsing failed – {ex.Message}")
+            Return Nothing
+        End Try
+
+        Return urls
+    End Function
+
+    ''' <summary>
     ''' Creates a SearchItem instance from a URL string, or returns Nothing if the URL
     ''' is invalid or should be skipped (e.g. utility pages like 404).
+    '''
+    ''' Only http/https URLs are accepted. Items built here are eventually handed to
+    ''' Launcher.LaunchUriAsync, and this is the choke point every URL passes through -
+    ''' including ones read back from the plain-text cache file in LocalFolder, which is not
+    ''' the app package and so is not trusted input.
     ''' </summary>
     ''' <param name="urlValue">The absolute URL string.</param>
     Private Shared Function CreateSearchItemFromUrl(urlValue As String) As SearchItem
-        If String.IsNullOrWhiteSpace(urlValue) Then
-            Return Nothing
-        End If
-
-        Dim uri As Uri = Nothing
-        If Not Uri.TryCreate(urlValue, UriKind.Absolute, uri) Then
+        Dim uri = AppConstants.TryCreateWebUri(urlValue)
+        If uri Is Nothing Then
             Return Nothing
         End If
 

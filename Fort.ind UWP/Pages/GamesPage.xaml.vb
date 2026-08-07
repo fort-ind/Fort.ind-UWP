@@ -280,13 +280,8 @@ Public NotInheritable Class GamesPage
             Dim item = TryCast(e.ClickedItem, SearchItem)
             If item Is Nothing OrElse String.IsNullOrEmpty(item.Url) Then Return
 
-            ' Validate the URL before launching to avoid UriFormatException.
-            Dim uri As Uri = Nothing
-            If Uri.TryCreate(item.Url, UriKind.Absolute, uri) Then
-                Await Windows.System.Launcher.LaunchUriAsync(uri)
-            Else
-                Debug.WriteLine($"GamesPage: Invalid game URL - {item.Url}")
-            End If
+            ' Only http/https is launched - see AppConstants.TryCreateWebUri.
+            Await AppConstants.LaunchWebUriAsync(item.Url)
         Catch ex As Exception
             ' Critical: catch exceptions in async void to prevent app crash
             Debug.WriteLine($"GamesPage: Failed to launch game - {ex.Message}")

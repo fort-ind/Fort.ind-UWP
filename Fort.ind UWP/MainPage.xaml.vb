@@ -85,10 +85,15 @@ Public NotInheritable Class MainPage
         Me.InitializeComponent()
         AboutVersionText.Text = $"Version {AppConstants.AppVersionDisplay}"
         SetupTitleBar()
-        UpdateLiveTile()
         UpdateProfileNavItem()
         LoadSitemapItems()
         LoadAppearanceSettings()
+
+        ' Building the adaptive tile payloads and pushing them to the shell is off the critical
+        ' path for showing the window, so it runs at Low priority - after layout and first
+        ' render - rather than inline in the constructor.
+        Dim ignored = Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low,
+                                          Sub() UpdateLiveTile())
 
         AddHandler Unloaded, AddressOf MainPage_Unloaded
         AddHandler Loaded, AddressOf MainPage_Loaded
@@ -107,19 +112,23 @@ Public NotInheritable Class MainPage
             AddHandler ProfileService.AuthStateChanged, AddressOf OnAuthStateChanged
             _authHandlerAttached = True
         End If
+
+        ' Re-read the current user *after* the handler is attached. Session restore now runs
+        ' in the background (App.RestoreSessionInBackground), so it can finish either side of
+        ' this point - if it landed before the handler existed, its AuthStateChanged was
+        ' raised into the void and only this call puts the account name on the nav item.
+        UpdateProfileNavItem()
     End Sub
 
+    ''' <summary>
+    ''' Loads the sitemap into the search index. Called from the constructor, so it starts on
+    ''' the UI thread and every continuation resumes there too - the indicator is therefore
+    ''' touched directly rather than through Dispatcher.RunAsync, which only added two queued
+    ''' round-trips to reach the thread we were already on.
+    ''' </summary>
     Private Async Sub LoadSitemapItems()
-        Dim shouldHideLoadingIndicator As Boolean = False
         Try
-            ' Show loading indicator
-            Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
-                Sub()
-                    If LoadingIndicator IsNot Nothing Then
-                        LoadingIndicator.IsActive = True
-                        LoadingIndicator.Visibility = Visibility.Visible
-                    End If
-                End Sub)
+            SetSitemapLoadingIndicator(True)
 
             Dim sitemapItems = Await SitemapService.LoadSearchItemsAsync()
             ' Build a new combined list and swap the reference (atomic, no lock needed)
@@ -130,19 +139,14 @@ Public NotInheritable Class MainPage
         Catch ex As Exception
             Debug.WriteLine($"MainPage: Failed to load sitemap items – {ex.Message}")
         Finally
-            shouldHideLoadingIndicator = True
+            SetSitemapLoadingIndicator(False)
         End Try
+    End Sub
 
-        If shouldHideLoadingIndicator Then
-            ' VB does not allow Await in Finally blocks.
-            Await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,
-                Sub()
-                    If LoadingIndicator IsNot Nothing Then
-                        LoadingIndicator.IsActive = False
-                        LoadingIndicator.Visibility = Visibility.Collapsed
-                    End If
-                End Sub)
-        End If
+    Private Sub SetSitemapLoadingIndicator(active As Boolean)
+        If LoadingIndicator Is Nothing Then Return
+        LoadingIndicator.IsActive = active
+        LoadingIndicator.Visibility = If(active, Visibility.Visible, Visibility.Collapsed)
     End Sub
 
     Private Sub MainPage_Unloaded(sender As Object, e As RoutedEventArgs)
@@ -207,12 +211,7 @@ Public NotInheritable Class MainPage
     Private Sub UpdateTitleBarColors()
         Dim titleBar = ApplicationView.GetForCurrentView().TitleBar
 
-        ' Determine effective theme
-        Dim rootFrame = TryCast(Window.Current.Content, Frame)
-        Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
-        Dim isDark = If(effTheme = ElementTheme.Default,
-                        Application.Current.RequestedTheme = ApplicationTheme.Dark,
-                        effTheme = ElementTheme.Dark)
+        Dim isDark = IsEffectiveThemeDark()
 
         Dim fgColor = If(isDark, Colors.White, Colors.Black)
         Dim inactiveFg = If(isDark, Color.FromArgb(128, 255, 255, 255), Color.FromArgb(128, 0, 0, 0))
@@ -406,6 +405,7 @@ Public NotInheritable Class MainPage
                     DirectCast(ContentFrame.Content, ProfilePage).RefreshUI()
                 Else
                     ContentFrame.Navigate(GetType(ProfilePage))
+                    TrimContentBackStack()
                 End If
             End If
         Catch ex As Exception
@@ -428,6 +428,7 @@ Public NotInheritable Class MainPage
             If ContentFrame IsNot Nothing Then
                 If Not (TypeOf ContentFrame.Content Is GamesPage) Then
                     ContentFrame.Navigate(GetType(GamesPage))
+                    TrimContentBackStack()
                 End If
             End If
         Catch ex As Exception
@@ -435,6 +436,25 @@ Public NotInheritable Class MainPage
             Debug.WriteLine($"MainPage: Games navigation failed – {ex.Message}")
             NavView.Header = HeaderFor(AppConstants.NavigationLatestNews)
             ShowInlinePanel(LatestNewsPanel)
+        End Try
+    End Sub
+
+    ''' <summary>
+    ''' Drops everything but the immediately previous entry from the content Frame's back stack.
+    '''
+    ''' Switching between the Profile and Games nav items pushes a PageStackEntry every time,
+    ''' and nothing ever popped them - a session spent flipping between the two grew the stack
+    ''' (and the strong references it holds) without bound. One entry is kept because LoginPage
+    ''' relies on Frame.GoBack to return to ProfilePage after signing in.
+    ''' </summary>
+    Private Sub TrimContentBackStack()
+        Try
+            Dim stack = ContentFrame.BackStack
+            While stack.Count > 1
+                stack.RemoveAt(0)
+            End While
+        Catch ex As Exception
+            Debug.WriteLine($"MainPage: Failed to trim content back stack - {ex.Message}")
         End Try
     End Sub
 
@@ -641,6 +661,15 @@ Public NotInheritable Class MainPage
         End If
     End Sub
 
+    ''' <summary>
+    ''' The one custom-tint acrylic brush, reused for the life of the page. A HostBackdrop
+    ''' AcrylicBrush is backed by a composition effect that samples the desktop, so building a
+    ''' fresh one per call was by far the most expensive thing the appearance code did - the
+    ''' colour picker's live preview calls this on every ColorChanged, i.e. continuously while
+    ''' the user drags. TintColor is a dependency property, so repainting is just a set.
+    ''' </summary>
+    Private _tintBrush As AcrylicBrush
+
     Private Sub ApplyTintColor(colorTag As String)
         If String.IsNullOrEmpty(colorTag) OrElse colorTag = AppConstants.ThemeDefault Then
             Dim original = TryCast(Me.Resources("AppAcrylicBrush"), Brush)
@@ -648,11 +677,7 @@ Public NotInheritable Class MainPage
         Else
             Try
                 ' Determine effective theme to choose the right tint shade
-                Dim rootFrame = TryCast(Window.Current.Content, Frame)
-                Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
-                Dim isDark = If(effTheme = ElementTheme.Default,
-                                Application.Current.RequestedTheme = ApplicationTheme.Dark,
-                                effTheme = ElementTheme.Dark)
+                Dim isDark = IsEffectiveThemeDark()
 
                 Dim c = HexToColor(colorTag)
                 Dim tintOpacity As Double = 0.8
@@ -664,12 +689,18 @@ Public NotInheritable Class MainPage
                     tintOpacity = 0.6
                 End If
 
-                RootGrid.Background = New AcrylicBrush() With {
-                    .BackgroundSource = AcrylicBackgroundSource.HostBackdrop,
-                    .TintColor = c,
-                    .TintOpacity = tintOpacity,
-                    .FallbackColor = c
-                }
+                If _tintBrush Is Nothing Then
+                    _tintBrush = New AcrylicBrush() With {
+                        .BackgroundSource = AcrylicBackgroundSource.HostBackdrop
+                    }
+                End If
+                _tintBrush.TintColor = c
+                _tintBrush.TintOpacity = tintOpacity
+                _tintBrush.FallbackColor = c
+
+                If Not ReferenceEquals(RootGrid.Background, _tintBrush) Then
+                    RootGrid.Background = _tintBrush
+                End If
             Catch ex As Exception
                 Debug.WriteLine($"MainPage: ApplyTintColor failed – {ex.Message}")
             End Try
@@ -678,6 +709,18 @@ Public NotInheritable Class MainPage
             ApplicationData.Current.LocalSettings.Values(AppConstants.SettingAppTintColor) = colorTag
         End If
     End Sub
+
+    ''' <summary>
+    ''' Whether the app is currently rendering dark - the root Frame's explicit theme if it has
+    ''' one, otherwise the system's. Three call sites needed this identically.
+    ''' </summary>
+    Private Shared Function IsEffectiveThemeDark() As Boolean
+        Dim rootFrame = TryCast(Window.Current.Content, Frame)
+        Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
+        Return If(effTheme = ElementTheme.Default,
+                  Application.Current.RequestedTheme = ApplicationTheme.Dark,
+                  effTheme = ElementTheme.Dark)
+    End Function
 
     ' Base accessible names for the tint swatches, keyed by control – selection state is
     ' appended below since the selected swatch is otherwise only shown via border color,
@@ -699,21 +742,39 @@ Public NotInheritable Class MainPage
     ''' <summary>
     ''' Every preset swatch, in display order. The custom swatch is deliberately excluded -
     ''' it has no fixed Tag, so it is matched by elimination rather than by lookup.
+    ''' Built once: the named fields never change, and this is walked on every tint click and
+    ''' every theme change.
     ''' </summary>
+    Private _tintPresetSwatches As Button()
+
     Private ReadOnly Property TintPresetSwatches As Button()
         Get
-            Return {TintDefaultButton, TintBlueButton, TintPurpleButton, TintGreenButton,
-                    TintRedButton, TintSlateButton, TintTealButton, TintBronzeButton,
-                    TintRoseButton, TintOliveButton, TintGraphiteButton}
+            If _tintPresetSwatches Is Nothing Then
+                _tintPresetSwatches = {TintDefaultButton, TintBlueButton, TintPurpleButton, TintGreenButton,
+                                       TintRedButton, TintSlateButton, TintTealButton, TintBronzeButton,
+                                       TintRoseButton, TintOliveButton, TintGraphiteButton}
+            End If
+            Return _tintPresetSwatches
         End Get
     End Property
+
+    ''' <summary>
+    ''' One shared brush for the unselected swatch outline, rather than twelve fresh
+    ''' SolidColorBrushes every time the selection or theme changes. Brushes are immutable as
+    ''' far as this code is concerned, so sharing one instance is safe.
+    ''' </summary>
+    Private Shared ReadOnly s_transparentBrush As New SolidColorBrush(Colors.Transparent)
+
+    ''' <summary>Selection outline for the active swatch - white on dark, black on light.</summary>
+    Private Shared ReadOnly s_selectedBrushDark As New SolidColorBrush(Colors.White)
+    Private Shared ReadOnly s_selectedBrushLight As New SolidColorBrush(Colors.Black)
 
     Private Sub UpdateTintSelection(selectedTag As String)
         selectedTag = If(String.IsNullOrEmpty(selectedTag), AppConstants.ThemeDefault, selectedTag)
 
         Dim sel As Button = Nothing
         For Each btn In TintPresetSwatches
-            btn.BorderBrush = New SolidColorBrush(Colors.Transparent)
+            btn.BorderBrush = s_transparentBrush
             Dim tag = If(btn.Tag?.ToString(), "")
             Dim baseName As String = Nothing
             If Not s_tintSwatchNames.TryGetValue(tag, baseName) Then
@@ -725,7 +786,7 @@ Public NotInheritable Class MainPage
 
         ' Anything that isn't Default and isn't one of the presets is a custom color, so the
         ' custom swatch both takes the selection border and previews the color itself.
-        TintCustomButton.BorderBrush = New SolidColorBrush(Colors.Transparent)
+        TintCustomButton.BorderBrush = s_transparentBrush
         Windows.UI.Xaml.Automation.AutomationProperties.SetName(TintCustomButton, "Custom background tint")
         If sel Is Nothing Then
             sel = TintCustomButton
@@ -735,12 +796,7 @@ Public NotInheritable Class MainPage
         End If
 
         If sel IsNot Nothing Then
-            Dim rootFrame = TryCast(Window.Current.Content, Frame)
-            Dim effTheme = If(rootFrame IsNot Nothing, rootFrame.RequestedTheme, ElementTheme.Default)
-            Dim isDark = If(effTheme = ElementTheme.Default,
-                            Application.Current.RequestedTheme = ApplicationTheme.Dark,
-                            effTheme = ElementTheme.Dark)
-            sel.BorderBrush = New SolidColorBrush(If(isDark, Colors.White, Colors.Black))
+            sel.BorderBrush = If(IsEffectiveThemeDark(), s_selectedBrushDark, s_selectedBrushLight)
             Dim selBaseName = Windows.UI.Xaml.Automation.AutomationProperties.GetName(sel)
             Windows.UI.Xaml.Automation.AutomationProperties.SetName(sel, selBaseName & " (selected)")
         End If
@@ -1201,13 +1257,8 @@ Public NotInheritable Class MainPage
         End If
 
         If Not String.IsNullOrEmpty(item.Url) Then
-            ' Validate URL before launching to avoid UriFormatException
-            Dim uri As Uri = Nothing
-            If Uri.TryCreate(item.Url, UriKind.Absolute, uri) Then
-                Await Windows.System.Launcher.LaunchUriAsync(uri)
-            Else
-                Debug.WriteLine($"MainPage: Invalid URL in search item – {item.Url}")
-            End If
+            ' Only http/https is launched - see AppConstants.TryCreateWebUri.
+            Await AppConstants.LaunchWebUriAsync(item.Url)
         ElseIf Not String.IsNullOrEmpty(item.NavigationTag) Then
             ShowContent(item.NavigationTag)
         End If

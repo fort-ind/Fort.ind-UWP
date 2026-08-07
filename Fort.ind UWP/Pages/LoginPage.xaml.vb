@@ -34,12 +34,7 @@ Public NotInheritable Class LoginPage
             Dim result = Await ProfileService.LoginWithMisskeyAsync()
 
             If result.Success Then
-                ' Navigate back instead of creating new MainPage instance
-                If Frame.CanGoBack Then
-                    Frame.GoBack()
-                Else
-                    Frame.Navigate(GetType(MainPage))
-                End If
+                GoBackToProfile()
             Else
                 ShowError(result.Message)
             End If
@@ -62,10 +57,23 @@ Public NotInheritable Class LoginPage
     ''' Skip sign-in and continue without an account
     ''' </summary>
     Private Sub SkipButton_Click(sender As Object, e As RoutedEventArgs)
+        GoBackToProfile()
+    End Sub
+
+    ''' <summary>
+    ''' Returns to the page that opened this one.
+    '''
+    ''' This page is always hosted in MainPage's ContentFrame (ProfilePage navigates here), so
+    ''' the fallback is ProfilePage, not MainPage - navigating to MainPage would load a second
+    ''' shell, nav pane and all, *inside* the first one's content area.
+    ''' </summary>
+    Private Sub GoBackToProfile()
+        If Frame Is Nothing Then Return
+
         If Frame.CanGoBack Then
             Frame.GoBack()
         Else
-            Frame.Navigate(GetType(MainPage))
+            Frame.Navigate(GetType(ProfilePage))
         End If
     End Sub
 

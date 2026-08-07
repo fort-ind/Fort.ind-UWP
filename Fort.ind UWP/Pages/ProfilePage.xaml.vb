@@ -127,9 +127,16 @@ Public NotInheritable Class ProfilePage
         If user Is Nothing Then Return
 
         Try
+            ' Host and username come from the instance's JSON and are cached to disk, so they
+            ' are treated as untrusted when they are spliced into a URL. An unchecked host
+            ' ("evil.com/x") or username ("a/../..") would silently point this link somewhere
+            ' other than the user's profile.
             Dim host = If(String.IsNullOrWhiteSpace(user.Host), MisskeyAuthService.InstanceHost, user.Host)
-            Dim uri As New Uri($"https://{host}/@{user.Username}")
-            Await Windows.System.Launcher.LaunchUriAsync(uri)
+            If Uri.CheckHostName(host) = UriHostNameType.Unknown Then
+                host = MisskeyAuthService.InstanceHost
+            End If
+
+            Await AppConstants.LaunchWebUriAsync($"https://{host}/@{Uri.EscapeDataString(user.Username)}")
         Catch ex As Exception
             Debug.WriteLine($"ProfilePage: Failed to open fort.social profile - {ex.Message}")
         End Try
@@ -197,15 +204,27 @@ Public NotInheritable Class ProfilePage
                 Return True
             End If
 
-            ' Decode at roughly the displayed 80x80 size (doubled for high-DPI), not the
-            ' source resolution - avatars served at 512px+ would otherwise sit in memory
-            ' fully decoded (several MB each) despite being drawn into an 80px circle.
+            ' Only http/https avatars are fetched - the URL comes from the instance's JSON via
+            ' the on-disk profile cache, and BitmapImage will happily resolve other schemes.
+            Dim avatarUri = AppConstants.TryCreateWebUri(avatarUrl)
+            If avatarUri Is Nothing Then
+                ProfileImage.Source = Nothing
+                ProfileImage.Visibility = Visibility.Collapsed
+                ProfileInitials.Visibility = Visibility.Visible
+                Return True
+            End If
+
+            ' Decode at the displayed 80x80 size, not the source resolution - avatars served
+            ' at 512px+ would otherwise sit in memory fully decoded (several MB each) despite
+            ' being drawn into an 80px circle. DecodePixelType.Logical means these are view
+            ' pixels, which XAML already scales by the display's rasterization scale, so the
+            ' high-DPI case is handled without asking for 2x here on top of it.
             ' Must be set before UriSource or the decode already happened at full size.
             Dim bitmap As New BitmapImage()
             bitmap.DecodePixelType = DecodePixelType.Logical
-            bitmap.DecodePixelWidth = 160
-            bitmap.DecodePixelHeight = 160
-            bitmap.UriSource = New Uri(avatarUrl)
+            bitmap.DecodePixelWidth = 80
+            bitmap.DecodePixelHeight = 80
+            bitmap.UriSource = avatarUri
             ProfileImage.Source = bitmap
             ProfileImage.Visibility = Visibility.Visible
             ProfileInitials.Visibility = Visibility.Collapsed

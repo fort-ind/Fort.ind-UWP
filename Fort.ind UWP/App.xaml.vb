@@ -41,19 +41,25 @@ NotInheritable Class App
         End If
 
         If e.PrelaunchActivated = False Then
-            If rootFrame.Content Is Nothing Then
-                ' Initialize storage service (loads settings and sets up database if needed)
-                Await LocalStorageService.InitializeAsync()
-
-                ' Try to restore user session
-                Dim hasSession = Await ProfileService.TryRestoreSessionAsync()
-
+            Dim isFirstNavigation = rootFrame.Content Is Nothing
+            If isFirstNavigation Then
                 ' Navigate to MainPage (it will handle the profile state)
                 rootFrame.Navigate(GetType(MainPage), e.Arguments)
             End If
 
             ' Ensure the current window is active
             Window.Current.Activate()
+
+            ' Session restore reads the credential vault, then the cached profile off disk,
+            ' and - when there is a token but no cached profile - makes a network call to
+            ' fort.social. Awaiting all that before the first Navigate/Activate meant a slow
+            ' or unreachable instance held the window blank for the whole HTTP timeout.
+            ' MainPage and ProfilePage both refresh from ProfileService.AuthStateChanged (and
+            ' re-read CurrentUser when they load), so a session that lands after first paint
+            ' is picked up normally.
+            If isFirstNavigation Then
+                RestoreSessionInBackground()
+            End If
         End If
         Catch ex As Exception
             ' Log critical startup error
@@ -76,6 +82,19 @@ NotInheritable Class App
     End Sub
 
     ''' <summary>
+    ''' Initializes storage and restores any saved session without blocking the first frame.
+    ''' Async Sub, so every path is wrapped - an unhandled exception here would crash the app.
+    ''' </summary>
+    Private Async Sub RestoreSessionInBackground()
+        Try
+            Await LocalStorageService.InitializeAsync()
+            Await ProfileService.TryRestoreSessionAsync()
+        Catch ex As Exception
+            Debug.WriteLine($"App: background session restore failed - {ex.Message}")
+        End Try
+    End Sub
+
+    ''' <summary>
     ''' Invoked when the app is activated by something other than a normal launch - here, only
     ''' the "fortind:" protocol, used as the MiAuth callback so the system browser can hand
     ''' control back to the app once the user approves sign-in on fort.social.
@@ -87,7 +106,9 @@ NotInheritable Class App
             Dim protocolArgs = TryCast(args, Windows.ApplicationModel.Activation.ProtocolActivatedEventArgs)
             If protocolArgs Is Nothing Then Return
 
-            Debug.WriteLine($"OnActivated: protocol callback received - {protocolArgs.Uri}")
+            ' Deliberately not logging the URI itself: its "session" parameter is the secret
+            ' that gets exchanged for an access token, and debug output is not a private sink.
+            Debug.WriteLine($"OnActivated: protocol callback received for {protocolArgs.Uri.Scheme}://{protocolArgs.Uri.Host}")
 
             Dim rootFrame As Frame = TryCast(Window.Current.Content, Frame)
             Dim isColdStart = rootFrame Is Nothing
