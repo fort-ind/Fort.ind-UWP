@@ -146,7 +146,6 @@ jobs:
         $manifest.Save($manifestPath)
         "APP_VERSION=$version" >> $env:GITHUB_ENV
         "app_version=$version" >> $env:GITHUB_OUTPUT
-        "### Version ``$version`` _($source)_" >> $env:GITHUB_STEP_SUMMARY
         exit 0
 
     - name: Decode signing certificate
