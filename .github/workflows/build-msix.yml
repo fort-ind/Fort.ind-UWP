@@ -8,6 +8,11 @@ on:
   pull_request:
     branches: [ master ]
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version override (e.g. 2.1.4.0). Leave empty to derive it from Package.appxmanifest.'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -30,6 +35,9 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v7
+      with:
+        # Full history: the build number is a commit count since the last Major.Minor bump.
+        fetch-depth: 0
 
     - name: Setup MSBuild
       uses: microsoft/setup-msbuild@v3
@@ -67,23 +75,79 @@ jobs:
     - name: Update manifest version
       id: version
       shell: pwsh
+      env:
+        # Passed as env rather than inlined with ${{ }} so ref/input text can't be
+        # spliced into the script body.
+        GH_REF: ${{ github.ref }}
+        GH_REF_NAME: ${{ github.ref_name }}
+        VERSION_INPUT: ${{ github.event.inputs.version }}
       run: |
-        if ("${{ github.ref }}" -match "refs/tags/v(.+)") {
-          $version = $matches[1]
-          $parts = $version.Split('.')
-          while ($parts.Count -lt 4) { $parts += "0" }
-          $version = $parts[0..3] -join '.'
-        } else {
-          $build = ${{ github.run_number }} - 111
-          $version = "2.0.$build.0"
-        }
-        Write-Host "Setting version to: $version"
+        # Version policy, in precedence order:
+        #   1. a v* tag           -> the tag is authoritative
+        #   2. workflow_dispatch  -> the optional "version" input
+        #   3. everything else    -> Major.Minor from Package.appxmanifest, and the build
+        #                            number is the commit count since that Major.Minor first
+        #                            appeared in the manifest.
+        # (3) means bumping the app version is a one-line manifest edit: the build number
+        # restarts at 0 on the bump commit on its own. Nothing to reset in this file.
+
         $manifestPath = "${{ env.Manifest_Path }}"
+        # git wants forward slashes even on Windows
+        $manifestGitPath = $manifestPath -replace '\\', '/'
+
         [xml]$manifest = Get-Content $manifestPath
+        $manifestVersion = [Version]$manifest.Package.Identity.Version
+        $series = "$($manifestVersion.Major).$($manifestVersion.Minor)"
+
+        function Format-FourPart([string]$raw) {
+          # Strip any prerelease suffix (v2.1.0-beta -> 2.1.0); MSIX versions are numeric only.
+          $parts = (($raw -split '-')[0]).Split('.')
+          while ($parts.Count -lt 4) { $parts += '0' }
+          return ($parts[0..3] -join '.')
+        }
+
+        if ($env:GH_REF -match '^refs/tags/v(.+)$') {
+          $version = Format-FourPart $matches[1]
+          $source = "tag $env:GH_REF_NAME"
+        }
+        elseif (-not [string]::IsNullOrWhiteSpace($env:VERSION_INPUT)) {
+          $version = Format-FourPart $env:VERSION_INPUT
+          $source = "workflow_dispatch input"
+        }
+        else {
+          # Walk the manifest's history newest-first; the oldest consecutive commit still
+          # carrying this Major.Minor is the commit that introduced it.
+          $bumpCommit = $null
+          foreach ($sha in @(git log --format=%H -- $manifestGitPath)) {
+            $blob = git show "${sha}:$manifestGitPath" 2>$null
+            if ($LASTEXITCODE -ne 0 -or -not $blob) { break }
+            # The manifest is BOM-prefixed; a leading U+FEFF makes the [xml] cast throw.
+            try { [xml]$old = ($blob -join "`n").TrimStart([char]0xFEFF, ' ', "`t", "`r", "`n") } catch { break }
+            $v = [Version]$old.Package.Identity.Version
+            if ("$($v.Major).$($v.Minor)" -ne $series) { break }
+            $bumpCommit = $sha
+          }
+
+          if ($bumpCommit) {
+            $build = [int](git rev-list --count "$bumpCommit..HEAD")
+            Write-Host "$series was introduced by $bumpCommit"
+          } else {
+            # The manifest at HEAD isn't the one in git history (e.g. an uncommitted bump).
+            Write-Warning "Could not locate the commit that introduced $series; using build 0"
+            $build = 0
+          }
+
+          $version = "$series.$build.0"
+          $source = "Package.appxmanifest + commit count"
+        }
+
+        Write-Host "Setting version to: $version (source: $source)"
         $manifest.Package.Identity.Version = $version
         $manifest.Save($manifestPath)
         "APP_VERSION=$version" >> $env:GITHUB_ENV
         "app_version=$version" >> $env:GITHUB_OUTPUT
+        "### Version ``$version`` _($source)_" >> $env:GITHUB_STEP_SUMMARY
+        exit 0
 
     - name: Decode signing certificate
       id: cert

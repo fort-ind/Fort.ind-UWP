@@ -162,7 +162,7 @@ namespace Fort.ind_UWP
             }
             catch
             {
-                return $"2.0.10 {VersionChannel}";
+                return $"2.1.0 {VersionChannel}";
             }
         }
 
