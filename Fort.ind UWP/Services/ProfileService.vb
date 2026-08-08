@@ -84,7 +84,7 @@ Public Class ProfileService
     ''' </summary>
     Public Shared Async Function TryRestoreSessionAsync() As Task(Of Boolean)
         Try
-            Dim token = MisskeyAuthService.TryGetToken()
+            Dim token = Await MisskeyAuthService.TryGetTokenAsync()
             If String.IsNullOrEmpty(token) Then
                 Return False
             End If
@@ -127,7 +127,7 @@ Public Class ProfileService
             ' while this network call was in flight. Applying a stale result in that case would
             ' silently resurrect a session the user just explicitly cleared (or clobber a newer
             ' one), so only apply it if our token is still the one currently signed in.
-            If Not String.Equals(MisskeyAuthService.TryGetToken(), token, StringComparison.Ordinal) Then
+            If Not String.Equals(Await MisskeyAuthService.TryGetTokenAsync(), token, StringComparison.Ordinal) Then
                 Return
             End If
 

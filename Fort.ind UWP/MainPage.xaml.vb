@@ -591,6 +591,15 @@ Public NotInheritable Class MainPage
         LiveTileService.ClearBadge()
     End Sub
 
+    ''' <summary>
+    ''' Turns the tile/taskbar badge on or off. The service clears an already-showing badge when
+    ''' this is switched off, so the change is visible without waiting for the next tile update.
+    ''' </summary>
+    Private Sub TileBadgeToggle_Toggled(sender As Object, e As RoutedEventArgs)
+        If _loadingSettings Then Return
+        LiveTileService.BadgeEnabled = TileBadgeToggle.IsOn
+    End Sub
+
     ' ── Appearance settings ──
 
     Private Sub LoadAppearanceSettings()
@@ -629,6 +638,10 @@ Public NotInheritable Class MainPage
             If TintCustomIcon.Visibility = Visibility.Visible AndAlso Not String.IsNullOrEmpty(rememberedCustom) Then
                 ShowCustomSwatchColor(rememberedCustom)
             End If
+
+            ' Restore the tile badge toggle. Inside the _loadingSettings guard so assigning IsOn
+            ' here doesn't bounce straight back through Toggled and rewrite the setting.
+            TileBadgeToggle.IsOn = LiveTileService.BadgeEnabled
 
             ' Restore settings panel states
             RestoreSettingsPanelStates()
@@ -674,6 +687,10 @@ Public NotInheritable Class MainPage
         If String.IsNullOrEmpty(colorTag) OrElse colorTag = AppConstants.ThemeDefault Then
             Dim original = TryCast(Me.Resources("AppAcrylicBrush"), Brush)
             If original IsNot Nothing Then RootGrid.Background = original
+            ' Drop the cached brush once it is off the visual tree. A HostBackdrop AcrylicBrush
+            ' owns a composition effect that samples the desktop; holding a detached one in a
+            ' field keeps that alive for nothing. It is rebuilt on the next custom tint.
+            _tintBrush = Nothing
         Else
             Try
                 ' Determine effective theme to choose the right tint shade

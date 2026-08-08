@@ -104,6 +104,8 @@ Public NotInheritable Class AppConstants
     Public Const SettingSettingsAppearanceExpanded As String = "SettingsAppearanceExpanded"
     Public Const SettingSettingsStorageExpanded As String = "SettingsStorageExpanded"
     Public Const SettingSettingsTileExpanded As String = "SettingsTileExpanded"
+    ' Whether the app may show a badge on its tile / taskbar icon. Absent means "on".
+    Public Const SettingShowTileBadge As String = "ShowTileBadge"
     Public Const SettingSettingsWelcomeExpanded As String = "SettingsWelcomeExpanded"
     Public Const SettingSettingsAboutExpanded As String = "SettingsAboutExpanded"
 

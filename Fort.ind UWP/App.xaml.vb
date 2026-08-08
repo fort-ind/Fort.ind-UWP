@@ -57,8 +57,15 @@ NotInheritable Class App
             ' MainPage and ProfilePage both refresh from ProfileService.AuthStateChanged (and
             ' re-read CurrentUser when they load), so a session that lands after first paint
             ' is picked up normally.
+            '
+            ' Queued at Low priority rather than started here: calling it inline only moves the
+            ' work off the pre-Activate path and onto the UI thread's continuation queue, where
+            ' it interleaves with MainPage's first layout and render. The window then appears
+            ' promptly but stutters before it settles, which reads as a slower launch than
+            ' blocking behind the splash screen did. Low runs it once the first frame is done.
             If isFirstNavigation Then
-                RestoreSessionInBackground()
+                Dim ignored = rootFrame.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low,
+                                                            AddressOf RestoreSessionInBackground)
             End If
         End If
         Catch ex As Exception

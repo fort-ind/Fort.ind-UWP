@@ -600,6 +600,13 @@
                                             <Rectangle Height="1" Margin="0,0,0,14"
                                                        Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                        Opacity="0.08"/>
+                                            <ToggleSwitch x:Name="TileBadgeToggle"
+                                                          Header="Notification badge"
+                                                          OnContent="On" OffContent="Off"
+                                                          Toggled="TileBadgeToggle_Toggled"/>
+                                            <TextBlock Text="The small counter that appears on the app's tile and taskbar icon when the Live Tile has new content."
+                                                       FontSize="12" TextWrapping="Wrap" Margin="0,0,0,14"
+                                                       Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                             <StackPanel Orientation="Horizontal" Spacing="12">
                                                 <Button x:Name="RefreshTileButton"
                                                         Click="RefreshTileButton_Click"

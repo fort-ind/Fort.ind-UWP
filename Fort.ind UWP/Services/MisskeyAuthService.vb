@@ -49,8 +49,15 @@ Public Class MisskeyAuthService
     ''' One client for the process. A new HttpClient per request throws away the pooled
     ''' connection with it, so every sign-in and every background profile refresh paid for a
     ''' fresh TCP connect plus TLS handshake against the same host.
+    '''
+    ''' Lazy, not a plain field initializer: this type's shared constructor runs as soon as
+    ''' anything touches it - including TryGetToken on the startup path - and constructing a
+    ''' Windows.Web.Http.HttpClient brings up a default HttpBaseProtocolFilter with its own
+    ''' response cache and cookie manager. A signed-out launch makes no request at all, so
+    ''' eagerly building (and never disposing) all of that just adds to the working set for
+    ''' the life of the process.
     ''' </summary>
-    Private Shared ReadOnly s_client As New HttpClient()
+    Private Shared ReadOnly s_client As New Lazy(Of HttpClient)(Function() New HttpClient())
 
     ''' <summary>
     ''' How long SignInAsync waits for the browser to hand control back before giving up.
@@ -256,7 +263,7 @@ Public Class MisskeyAuthService
         Try
             Dim checkUri As New Uri($"https://{InstanceHost}/api/miauth/{Uri.EscapeDataString(session)}/check")
             Using content As New HttpStringContent("{}", Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/json")
-                Using response = Await s_client.PostAsync(checkUri, content)
+                Using response = Await s_client.Value.PostAsync(checkUri, content)
                     response.EnsureSuccessStatusCode()
 
                     Dim body = Await response.Content.ReadAsStringAsync()
@@ -299,7 +306,7 @@ Public Class MisskeyAuthService
             bodyJson.Add("i", JsonValue.CreateStringValue(token))
 
             Using content As New HttpStringContent(bodyJson.Stringify(), Windows.Storage.Streams.UnicodeEncoding.Utf8, "application/json")
-                Using response = Await s_client.PostAsync(uri, content)
+                Using response = Await s_client.Value.PostAsync(uri, content)
                     If Not response.IsSuccessStatusCode Then Return Nothing
 
                     Dim body = Await response.Content.ReadAsStringAsync()
@@ -384,6 +391,16 @@ Public Class MisskeyAuthService
         Catch
             Return Nothing
         End Try
+    End Function
+
+    ''' <summary>
+    ''' TryGetToken, off the calling thread. PasswordVault is a cross-process call that is slow
+    ''' on first use, and "nothing stored" is signalled by an exception rather than a null - so
+    ''' the signed-out case is the expensive one. Startup calls this from the UI thread, where
+    ''' the synchronous version stalls the window after it has already been shown.
+    ''' </summary>
+    Public Shared Function TryGetTokenAsync() As Task(Of String)
+        Return Task.Run(Function() TryGetToken())
     End Function
 
     ''' <summary>

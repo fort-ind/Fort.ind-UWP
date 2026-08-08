@@ -240,10 +240,43 @@ Public Class LiveTileService
     End Function
 
     ''' <summary>
+    ''' Whether the app may put a badge on its tile and taskbar icon. Backed by LocalSettings so
+    ''' the choice survives a restart, and enforced here rather than at each call site so no
+    ''' caller can bypass it. Absent (or unreadable) means enabled, which is how the app behaved
+    ''' before this setting existed. ClearBadge deliberately ignores this - clearing is always
+    ''' allowed.
+    ''' </summary>
+    Public Shared Property BadgeEnabled As Boolean
+        Get
+            Try
+                Dim stored = Windows.Storage.ApplicationData.Current.LocalSettings.Values(AppConstants.SettingShowTileBadge)
+                If stored Is Nothing Then Return True
+                Return Convert.ToBoolean(stored)
+            Catch ex As Exception
+                Debug.WriteLine($"LiveTileService: BadgeEnabled read failed – {ex.GetType().Name}: {ex.Message}")
+                Return True
+            End Try
+        End Get
+        Set(value As Boolean)
+            Try
+                Windows.Storage.ApplicationData.Current.LocalSettings.Values(AppConstants.SettingShowTileBadge) = value
+            Catch ex As Exception
+                Debug.WriteLine($"LiveTileService: BadgeEnabled write failed – {ex.GetType().Name}: {ex.Message}")
+            End Try
+
+            ' Switching it off takes effect on the tile now, rather than leaving the badge
+            ' already on screen sitting there until something else happens to clear it.
+            If Not value Then ClearBadge()
+        End Set
+    End Property
+
+    ''' <summary>
     ''' Updates the badge on the tile (shows a number or glyph)
     ''' </summary>
     Public Shared Sub UpdateBadge(count As Integer)
         Try
+            If Not BadgeEnabled Then Return
+
             If count <= 0 Then
                 ClearBadge()
                 Return
@@ -268,6 +301,8 @@ Public Class LiveTileService
         If String.IsNullOrWhiteSpace(glyph) Then Return
 
         Try
+            If Not BadgeEnabled Then Return
+
             Dim normalizedGlyph = glyph.Trim()
             If Not IsSupportedBadgeGlyph(normalizedGlyph) Then
                 Debug.WriteLine($"LiveTileService: UpdateBadgeGlyph skipped unsupported glyph '{normalizedGlyph}'.")
