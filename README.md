@@ -1,6 +1,6 @@
 # fort.desktop 
 (yes uwp is finally in a state where i can rename this to just desktop woot woot)
-a sort of prototype version of fort.desktop not intended for use only for debugging or adding items, this MAY be rebuilt as plain WinUI
+a sort of prototype version of fort.desktop rebulit in unversial windows platform with winui and C#
 # requirements
 must at least be on version Windows 10 1809, the dependencies for the app are in the artifacts folder 
 # installing
