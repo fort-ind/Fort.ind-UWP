@@ -363,3 +363,6 @@ MigrationBackup/
 FodyWeavers.xsd
 /INSTALL.md
 /docs/windows10-uwp-design-guidance.md
+
+# XML documentation output from the project's DocumentationFile setting
+[Ff]ort.ind UWP/[Ff]ort.ind UWP.xml

@@ -24,7 +24,7 @@ jobs:
 
     env:
       Solution_Name: Fort.ind UWP.sln
-      Project_Path: Fort.ind UWP\Fort.ind UWP.vbproj
+      Project_Path: Fort.ind UWP\Fort.ind UWP.csproj
       Manifest_Path: Fort.ind UWP\Package.appxmanifest
 
     steps:
