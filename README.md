@@ -10,3 +10,5 @@ Just run as admin, and you're good to go!
 ### installing using the appx and cer 
 first install the .cer file to your local machine (otherwise it won't work 3:) click browse and select **trusted people**, NOT trusted root certificates authorities. Click next and finish 
 Then run the APPX file and click install 
+> [!NOTE]
+> If the script doesnt run (ps crashes right when you open it), right-click install.ps1 > properties > unblock file
