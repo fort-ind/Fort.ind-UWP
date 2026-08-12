@@ -76,6 +76,11 @@ namespace Fort.ind_UWP
         // the pane no matter what they were looking at.
         private bool _navViewInitialized = false;
 
+        // Avatar URL the profile nav item's icon was last built for, so the repeated
+        // UpdateProfileNavItem calls (constructor, Loaded, every AuthStateChanged) don't rebuild
+        // the same icon, and so a download that finishes after the account changed can tell.
+        private string _navAvatarUrl = null;
+
         // Light-mode equivalents for each dark preset tint color. Custom colors aren't in here -
         // they fall back to LightenForLightTheme(), which computes an approximation of the same
         // pastel treatment these hand-picked values use.
@@ -224,17 +229,82 @@ namespace Fort.ind_UWP
         private void UpdateProfileNavItem()
         {
             // Update profile nav item based on login state
-            if (ProfileService.CurrentUser != null)
+            var user = ProfileService.CurrentUser;
+            if (user != null)
             {
-                ProfileNavItem.Content = ProfileService.CurrentUser.DisplayName;
-                if (string.IsNullOrWhiteSpace(ProfileService.CurrentUser.DisplayName))
+                ProfileNavItem.Content = user.DisplayName;
+                if (string.IsNullOrWhiteSpace(user.DisplayName))
                 {
-                    ProfileNavItem.Content = ProfileService.CurrentUser.Username;
+                    ProfileNavItem.Content = user.Username;
                 }
             }
             else
             {
                 ProfileNavItem.Content = "Your Profile";
+            }
+
+            UpdateProfileNavIcon(user == null ? null : user.AvatarUrl);
+        }
+
+        /// <summary>
+        /// Swaps the profile nav item's contact glyph for the signed-in user's avatar, the way
+        /// Groove put the account picture in its own pane. The circular PNG is baked by
+        /// AvatarIconService (a BitmapIcon draws its bitmap as-is and there's no clip to apply);
+        /// the glyph stays as the fallback for signed out, for an account with no avatar set, and
+        /// for a download that didn't work out.
+        ///
+        /// Width/Height are pinned to the 16px the pane's icon column expects rather than left to
+        /// the bitmap's own 48px, so a template that doesn't scale the icon for us can't push the
+        /// nav item's layout around.
+        /// </summary>
+        private async void UpdateProfileNavIcon(string avatarUrl)
+        {
+            try
+            {
+                // Cheap re-entry guard: this method runs from the constructor, from Loaded, and
+                // from every AuthStateChanged, and the same avatar shouldn't be rebuilt each time.
+                if (string.Equals(avatarUrl, _navAvatarUrl, StringComparison.Ordinal))
+                {
+                    return;
+                }
+                _navAvatarUrl = avatarUrl;
+
+                if (string.IsNullOrWhiteSpace(avatarUrl))
+                {
+                    ProfileNavItem.Icon = new SymbolIcon(Symbol.Contact);
+                    return;
+                }
+
+                var iconUri = await AvatarIconService.GetCircularAvatarUriAsync(avatarUrl);
+
+                // Signing out - or a profile refresh landing a new avatar - while the download was
+                // in flight would otherwise stamp the stale picture onto the nav item.
+                if (!string.Equals(avatarUrl, _navAvatarUrl, StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                if (iconUri == null)
+                {
+                    // Forget the URL so a later refresh retries: the usual reason to land here is
+                    // a transient network failure, and the icon shouldn't stay generic until the
+                    // next launch because of one.
+                    _navAvatarUrl = null;
+                    ProfileNavItem.Icon = new SymbolIcon(Symbol.Contact);
+                    return;
+                }
+
+                var icon = new BitmapIcon();
+                icon.ShowAsMonochrome = false;
+                icon.UriSource = iconUri;
+                icon.Width = 16;
+                icon.Height = 16;
+                ProfileNavItem.Icon = icon;
+            }
+            catch (Exception ex)
+            {
+                // Critical: Catch exceptions in async void to prevent app crash
+                Debug.WriteLine($"MainPage: nav avatar update failed - {ex.Message}");
             }
         }
 

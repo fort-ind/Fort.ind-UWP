@@ -148,6 +148,7 @@
     <Compile Include="Pages\ProfilePage.xaml.cs">
       <DependentUpon>ProfilePage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Services\AvatarIconService.cs" />
     <Compile Include="Services\LiveTileService.cs" />
     <Compile Include="Services\LocalStorageService.cs" />
     <Compile Include="Services\MisskeyAuthService.cs" />
