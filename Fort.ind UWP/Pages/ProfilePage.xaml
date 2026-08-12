@@ -17,11 +17,9 @@
                              EasingFunction="{StaticResource FadeEase}"/>
         </Storyboard>
         <CubicEase x:Key="FadeEase" EasingMode="EaseOut"/>
-        <AcrylicBrush x:Key="CardAcrylicBrush"
-                      BackgroundSource="Backdrop"
-                      TintColor="{ThemeResource SystemChromeMediumHighColor}"
-                      TintOpacity="0.6"
-                      FallbackColor="{ThemeResource SystemChromeMediumHighColor}"/>
+        <!-- Card surfaces come from App.xaml's ThemeDictionaries (CardBackgroundBrush /
+             CardBorderBrush). A page-level copy would be theme-blind - see the note in
+             MainPage.xaml. -->
     </Page.Resources>
 
     <ScrollViewer HorizontalContentAlignment="Center">
@@ -29,7 +27,9 @@
 
             <!-- Not Logged In State -->
             <StackPanel x:Name="NotLoggedInPanel" Visibility="Collapsed">
-                <Grid Background="{StaticResource CardAcrylicBrush}"
+                <Grid Background="{ThemeResource CardBackgroundBrush}"
+                      BorderBrush="{ThemeResource CardBorderBrush}"
+                      BorderThickness="1"
                       CornerRadius="4"
                       Padding="24">
                     <StackPanel HorizontalAlignment="Center" Spacing="16">
@@ -57,7 +57,9 @@
             <StackPanel x:Name="LoggedInPanel" Spacing="16">
 
                 <!-- Profile Header -->
-                <Grid Background="{StaticResource CardAcrylicBrush}"
+                <Grid Background="{ThemeResource CardBackgroundBrush}"
+                      BorderBrush="{ThemeResource CardBorderBrush}"
+                      BorderThickness="1"
                       CornerRadius="4"
                       Padding="24">
                     <Grid.ColumnDefinitions>
@@ -106,7 +108,9 @@
                 </Grid>
 
                 <!-- Bio Section -->
-                <Grid Background="{StaticResource CardAcrylicBrush}"
+                <Grid Background="{ThemeResource CardBackgroundBrush}"
+                      BorderBrush="{ThemeResource CardBorderBrush}"
+                      BorderThickness="1"
                       CornerRadius="4"
                       Padding="20">
                     <StackPanel>

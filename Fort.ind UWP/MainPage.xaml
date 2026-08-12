@@ -8,30 +8,15 @@
     mc:Ignorable="d"
     Background="Transparent">
 
-    <Page.Resources>
-        <!-- App Background - Windows 10 Settings style acrylic -->
-        <AcrylicBrush x:Key="AppAcrylicBrush"
-                      BackgroundSource="HostBackdrop"
-                      TintColor="{ThemeResource SystemChromeMediumLowColor}"
-                      TintOpacity="0.8"
-                      FallbackColor="{ThemeResource SystemChromeMediumLowColor}"/>
+    <!-- The surface brushes this page paints with (AppSurfaceAcrylicBrush, the nav pane, cards)
+         are defined per-theme in App.xaml's ThemeDictionaries. They are deliberately NOT
+         redeclared here: a page-level copy shadows the themed one for this page's whole subtree,
+         and being outside a theme dictionary it would never repaint on a theme change.
 
-        <!-- NavigationView Pane Acrylic - matches Windows 10 Settings sidebar -->
-        <AcrylicBrush x:Key="NavigationViewExpandedPaneBackground"
-                      BackgroundSource="HostBackdrop"
-                      TintColor="{ThemeResource SystemChromeMediumColor}"
-                      TintOpacity="0.9"
-                      FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
-
-        <!-- Card Background - more prominent acrylic effect -->
-        <AcrylicBrush x:Key="CardAcrylicBrush"
-                      BackgroundSource="HostBackdrop"
-                      TintColor="{ThemeResource SystemChromeMediumHighColor}"
-                      TintOpacity="0.7"
-                      FallbackColor="{ThemeResource SystemChromeMediumHighColor}"/>
-    </Page.Resources>
-
-    <Grid x:Name="RootGrid" Background="{StaticResource AppAcrylicBrush}">
+         RootGrid's background is owned by MainPage.ApplyTintColor, which paints either the themed
+         surface acrylic or the user's tint. The value below only covers the moment before the
+         constructor's first ApplyTintColor call (and design time). -->
+    <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="32"/>
             <RowDefinition Height="137*"/>
@@ -201,7 +186,9 @@
 
                                 <!-- News Card 1 -->
                                 <Grid Grid.Column="0"
-                                      Background="{StaticResource CardAcrylicBrush}"
+                                      Background="{ThemeResource CardBackgroundBrush}"
+                                      BorderBrush="{ThemeResource CardBorderBrush}"
+                                      BorderThickness="1"
                                       CornerRadius="4"
                                       Padding="20"
                                       MinHeight="180">
@@ -230,7 +217,9 @@
 
                                 <!-- News Card 2 -->
                                 <Grid Grid.Column="2"
-                                      Background="{StaticResource CardAcrylicBrush}"
+                                      Background="{ThemeResource CardBackgroundBrush}"
+                                      BorderBrush="{ThemeResource CardBorderBrush}"
+                                      BorderThickness="1"
                                       CornerRadius="4"
                                       Padding="20"
                                       MinHeight="180">

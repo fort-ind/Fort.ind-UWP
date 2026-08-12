@@ -10,23 +10,9 @@
     Background="Transparent"
     Loaded="LoginPage_Loaded">
 
-    <Page.Resources>
-        <!-- Acrylic background -->
-        <AcrylicBrush x:Key="LoginAcrylicBrush"
-                      BackgroundSource="HostBackdrop"
-                      TintColor="{ThemeResource SystemChromeMediumLowColor}"
-                      TintOpacity="0.7"
-                      FallbackColor="{ThemeResource SystemChromeMediumLowColor}"/>
-
-        <!-- Card background -->
-        <AcrylicBrush x:Key="CardAcrylicBrush"
-                      BackgroundSource="Backdrop"
-                      TintColor="{ThemeResource SystemChromeMediumHighColor}"
-                      TintOpacity="0.7"
-                      FallbackColor="{ThemeResource SystemChromeMediumHighColor}"/>
-    </Page.Resources>
-
-    <Grid Background="{StaticResource LoginAcrylicBrush}">
+    <!-- Surfaces come from App.xaml's ThemeDictionaries so they repaint on a theme change -
+         see the note in MainPage.xaml. -->
+    <Grid Background="{ThemeResource AppSurfaceAcrylicBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
@@ -46,7 +32,9 @@
 
         <!-- Main Content -->
         <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <Grid Background="{StaticResource CardAcrylicBrush}"
+            <Grid Background="{ThemeResource CardBackgroundBrush}"
+                  BorderBrush="{ThemeResource CardBorderBrush}"
+                  BorderThickness="1"
                   CornerRadius="4"
                   Padding="40"
                   MinWidth="380"
