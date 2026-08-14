@@ -486,8 +486,11 @@ namespace Fort.ind_UWP
                 // Ensure pane starts closed
                 ClosePaneUnlessExpanded();
 
-                // DisplayModeChanged does not fire for the mode the control starts in.
+                // DisplayModeChanged does not fire for the mode the control starts in, and the
+                // pane events only fire on a change - a pane that was already closed above
+                // raises nothing - so both initial states are set by hand here.
                 UpdateContentPadding(NavView.DisplayMode);
+                UpdateAppTitleVisibility(NavView.IsPaneOpen);
 
                 // The toggle button is a template part, so this has to wait until the template
                 // has been applied - which Loaded guarantees.
@@ -572,6 +575,34 @@ namespace Fort.ind_UWP
         private void NavView_DisplayModeChanged(NavigationView sender, NavigationViewDisplayModeChangedEventArgs args)
         {
             UpdateContentPadding(args.DisplayMode);
+            UpdateAppTitleVisibility(sender.IsPaneOpen);
+        }
+
+        // The pane events, not the IsPaneOpen property: both fire as the pane starts to animate,
+        // and at that point the property has only caught up for one of them - it is already true
+        // in PaneOpening but still true in PaneClosing. Hence the explicit argument rather than
+        // reading it back.
+        private void NavView_PaneOpening(NavigationView sender, object args)
+        {
+            UpdateAppTitleVisibility(true);
+        }
+
+        private void NavView_PaneClosing(NavigationView sender, NavigationViewPaneClosingEventArgs args)
+        {
+            UpdateAppTitleVisibility(false);
+        }
+
+        /// <summary>
+        /// Shows the app name in the title bar only while the pane is open.
+        ///
+        /// The title bar sits over the pane rather than in a row of its own, so the name reads as
+        /// the pane's heading - but only while there is a pane under it to read against. Closed,
+        /// the pane is 48px in Compact and nothing at all in Minimal, and "Fort.ind" is wider than
+        /// either, so it spilled out over the content area.
+        /// </summary>
+        private void UpdateAppTitleVisibility(bool isPaneOpen)
+        {
+            AppTitleText.Visibility = isPaneOpen ? Visibility.Visible : Visibility.Collapsed;
         }
 
         /// <summary>

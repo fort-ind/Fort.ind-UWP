@@ -89,15 +89,22 @@
          RootGrid's background is owned by MainPage.ApplyTintColor, which paints either the themed
          surface acrylic or the user's tint. The value below only covers the moment before the
          constructor's first ApplyTintColor call (and design time). -->
+    <!-- Deliberately a single cell, not a title-bar row above a content row. The nav pane has to
+         reach the top of the window for its acrylic to run behind the app name (the Groove Music
+         layout); a row of its own would leave a band of RootGrid's background across the top and
+         cut the pane off 32px down.
+
+         So NavView fills the whole grid and AppTitleBar floats over it. The pane's controls are
+         kept clear of the drag region by the NavigationView itself: whenever the app extends into
+         the title bar (SetupTitleBar) *and* the control sits at y=0 in the window, it pushes
+         TemplateSettings.TopPadding = CoreTitleBar.Height into the three padding parts of its
+         template - TogglePaneTopPadding, ContentPaneTopPadding and ContentTopPadding - so the
+         hamburger, the pane content and the header all start below the bar. That auto-padding is
+         the documented behaviour for a custom SetTitleBar element and is on by default; the
+         property that turns it off (IsTitleBarAutoPaddingEnabled) is WinUI-2-only and does not
+         exist on this control anyway. It is also why nothing here reserves the 32px by hand -
+         doing so would double it. -->
     <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <Grid.RowDefinitions>
-            <!-- Height is driven by CoreTitleBar.Height in SetupTitleBar/OnTitleBarLayoutMetricsChanged,
-                 not pinned to 32: the system title bar is taller in tablet mode and changes with
-                 some accessibility settings, and a hardcoded row lets the caption buttons hang
-                 outside the drag region. Auto lets the handler's assignment win. -->
-            <RowDefinition x:Name="TitleBarRow" Height="Auto"/>
-            <RowDefinition Height="*"/>
-        </Grid.RowDefinitions>
 
         <!-- Custom Title Bar Area.
              Background="Transparent" is load-bearing, not cosmetic: a Grid with no background
@@ -108,10 +115,18 @@
              a fixed Margin, so the background still paints *under* the caption buttons (which
              this app makes transparent) while no content is ever placed beneath them. Which side
              the buttons land on is not fixed - it flips in RTL - so both ends are reserved and
-             the handler assigns whichever the system reports. -->
+             the handler assigns whichever the system reports.
+
+             VerticalAlignment and Canvas.ZIndex are what a row used to do: with both children
+             sharing one cell the bar would otherwise stretch over the whole window, and it is
+             declared before NavView so it would sit underneath it. The Height here is only the
+             value for the frame before the first ApplyTitleBarLayoutMetrics call - the system owns
+             the real one (taller in tablet mode, and it changes with some accessibility settings),
+             so it is never pinned to 32 anywhere that matters. -->
         <Grid x:Name="AppTitleBar"
-              Grid.Row="0"
               Height="32"
+              VerticalAlignment="Top"
+              Canvas.ZIndex="1"
               Background="Transparent">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="TitleBarLeftInset" Width="0"/>
@@ -119,7 +134,12 @@
                 <ColumnDefinition x:Name="TitleBarRightInset" Width="0"/>
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Column="1"
+            <!-- Shown only while the pane is open - see UpdateAppTitleVisibility. Now that the
+                 pane runs the full height of the window the app name reads as the pane's own
+                 heading, and a 48px compact pane is narrower than the word, so it would spill
+                 out over the content and sit on top of whatever the page draws there. -->
+            <TextBlock x:Name="AppTitleText"
+                       Grid.Column="1"
                        Text="Fort.ind"
                        VerticalAlignment="Center"
                        Margin="12,0,0,0"
@@ -157,7 +177,6 @@
              exists only on the WinUI control, so the title-bar padding it describes is not
              something this control does or can be told not to do. -->
         <NavigationView x:Name="NavView"
-                         Grid.Row="1"
                          PaneDisplayMode="Auto"
                          CompactPaneLength="48"
                          OpenPaneLength="320"
@@ -167,6 +186,8 @@
                          ItemInvoked="NavView_ItemInvoked"
                          Loaded="NavView_Loaded"
                          DisplayModeChanged="NavView_DisplayModeChanged"
+                         PaneOpening="NavView_PaneOpening"
+                         PaneClosing="NavView_PaneClosing"
                          Background="Transparent">
 
             <NavigationView.Resources>
