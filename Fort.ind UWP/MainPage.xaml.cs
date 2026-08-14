@@ -7,12 +7,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.UI;
+using Windows.UI.Core;
 using Windows.UI.ViewManagement;
 using Windows.ApplicationModel.Core;
 using Windows.Storage;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
+using Windows.UI.Xaml.Navigation;
 
 namespace Fort.ind_UWP
 {
@@ -52,18 +56,16 @@ namespace Fort.ind_UWP
         // All searchable items – volatile reference swapped once when sitemap loads (no lock needed for reads)
         private IReadOnlyList<SearchItem> _allSearchItems = s_staticSearchItems;
 
-        // Guard to prevent multiple ContentDialogs from opening simultaneously
-        private SemaphoreSlim _dialogSemaphore = new SemaphoreSlim(1, 1);
+        // Guard to prevent multiple ContentDialogs from opening simultaneously.
+        // Static, and so never disposed, for the reason spelled out on ProfilePage's copy: the
+        // scope of "is a dialog open right now" is the process, not one page instance.
+        private static readonly SemaphoreSlim _dialogSemaphore = new SemaphoreSlim(1, 1);
 
         // Guard to suppress appearance control event handlers during settings load
         private bool _loadingSettings = false;
 
         // Cancels stale search work while the user is still typing.
         private CancellationTokenSource _searchDebounceCts;
-
-        // Tracks whether the CoreWindow KeyDown handler is attached, so repeated Loaded/Unloaded
-        // cycles (which UWP can fire more than once) don't attach it multiple times.
-        private bool _keyHandlerAttached = false;
 
         // Tracks whether the AuthStateChanged handler is attached, for the same reason - and so
         // the handler is reliably reattached after an Unloaded/Loaded pair instead of leaving
@@ -73,6 +75,16 @@ namespace Fort.ind_UWP
         // Same guard again for ActualThemeChanged, which repaints the window when the system
         // theme flips underneath an app set to "System default".
         private bool _themeHandlerAttached = false;
+
+        // And again for CoreApplicationViewTitleBar.LayoutMetricsChanged, which keeps the custom
+        // title bar's height and caption-button insets matching the system's.
+        private bool _titleBarMetricsHandlerAttached = false;
+
+        // And for SystemNavigationManager.BackRequested, which is what makes Alt+Left, the mouse
+        // back button and the tablet-mode shell back button reach the content Frame. Unlike the
+        // others this one is a per-view singleton shared with the rest of the app, so leaving a
+        // handler on it outlives the page.
+        private bool _systemBackHandlerAttached = false;
 
         // Guards NavView_Loaded's one-time startup initialization (selecting Home, closing the
         // pane, showing the welcome dialog) against UWP firing Loaded more than once - without
@@ -123,15 +135,8 @@ namespace Fort.ind_UWP
 
         private void MainPage_Loaded(object sender, RoutedEventArgs e)
         {
-            // Attach keyboard handler only when loaded to prevent memory leaks.
-            // Guard against Loaded firing more than once, which would attach duplicate
-            // handlers and run the Ctrl+F / Escape logic multiple times per keypress.
-            if (!_keyHandlerAttached)
-            {
-                Window.Current.CoreWindow.KeyDown += OnCoreKeyDown;
-                _keyHandlerAttached = true;
-            }
-
+            // Ctrl+F and Escape are KeyboardAccelerators declared in MainPage.xaml - they need no
+            // attach/detach here, which is half the reason for using them.
             if (!_authHandlerAttached)
             {
                 ProfileService.AuthStateChanged += OnAuthStateChanged;
@@ -142,6 +147,22 @@ namespace Fort.ind_UWP
             {
                 ActualThemeChanged += OnActualThemeChanged;
                 _themeHandlerAttached = true;
+            }
+
+            if (!_titleBarMetricsHandlerAttached)
+            {
+                var coreTitleBar = CoreApplication.GetCurrentView().TitleBar;
+                coreTitleBar.LayoutMetricsChanged += OnTitleBarLayoutMetricsChanged;
+                _titleBarMetricsHandlerAttached = true;
+
+                // Catch anything that changed between the constructor's initial apply and here.
+                ApplyTitleBarLayoutMetrics(coreTitleBar);
+            }
+
+            if (!_systemBackHandlerAttached)
+            {
+                SystemNavigationManager.GetForCurrentView().BackRequested += OnSystemBackRequested;
+                _systemBackHandlerAttached = true;
             }
 
             // Re-read the current user *after* the handler is attached. Session restore now runs
@@ -201,18 +222,30 @@ namespace Fort.ind_UWP
                 _themeHandlerAttached = false;
             }
 
-            // Remove keyboard handler to prevent memory leaks
-            if (_keyHandlerAttached)
+            if (_titleBarMetricsHandlerAttached)
             {
                 try
                 {
-                    Window.Current.CoreWindow.KeyDown -= OnCoreKeyDown;
+                    CoreApplication.GetCurrentView().TitleBar.LayoutMetricsChanged -= OnTitleBarLayoutMetricsChanged;
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine($"MainPage: Failed to remove KeyDown handler - {ex.Message}");
+                    Debug.WriteLine($"MainPage: Failed to remove title bar metrics handler - {ex.Message}");
                 }
-                _keyHandlerAttached = false;
+                _titleBarMetricsHandlerAttached = false;
+            }
+
+            if (_systemBackHandlerAttached)
+            {
+                try
+                {
+                    SystemNavigationManager.GetForCurrentView().BackRequested -= OnSystemBackRequested;
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"MainPage: Failed to remove system back handler - {ex.Message}");
+                }
+                _systemBackHandlerAttached = false;
             }
 
             CancelPendingSearch();
@@ -333,8 +366,55 @@ namespace Fort.ind_UWP
             // Set the draggable title bar region
             Window.Current.SetTitleBar(AppTitleBar);
 
+            // The system owns the title bar's height and the width of the corner it reserves for
+            // the caption buttons, and it changes both at runtime - tablet mode makes the bar
+            // taller, and the reserved corner moves from right to left under RTL. Hardcoding 32px
+            // and a right margin was right for exactly one configuration; everywhere else the
+            // drag region and the caption buttons disagreed about where the title bar ended.
+            // The subscription itself is attached in MainPage_Loaded and released in
+            // MainPage_Unloaded, alongside the page's other handlers; this call is just the
+            // initial value, so the first frame is drawn with the right height instead of the
+            // XAML placeholder.
+            ApplyTitleBarLayoutMetrics(coreTitleBar);
+
             // Make title bar buttons transparent to match acrylic
             UpdateTitleBarColors();
+        }
+
+        /// <summary>
+        /// Mirrors the system's current title bar metrics onto the custom title bar: the row
+        /// height, and the two padding columns that keep content clear of the caption buttons.
+        ///
+        /// The insets are applied as Grid columns rather than a Margin so that AppTitleBar's
+        /// background still paints underneath the caption buttons - this app makes those buttons
+        /// transparent in <see cref="UpdateTitleBarColors"/>, so anything that stopped short of
+        /// the window edge would show as a notch of bare window behind them.
+        /// </summary>
+        private void ApplyTitleBarLayoutMetrics(CoreApplicationViewTitleBar coreTitleBar)
+        {
+            if (coreTitleBar == null) return;
+
+            // Height is 0 before the view is fully initialized; keep the XAML value until the
+            // system reports a real one rather than collapsing the bar to nothing.
+            if (coreTitleBar.Height > 0)
+            {
+                AppTitleBar.Height = coreTitleBar.Height;
+            }
+
+            TitleBarLeftInset.Width = new GridLength(coreTitleBar.SystemOverlayLeftInset);
+            TitleBarRightInset.Width = new GridLength(coreTitleBar.SystemOverlayRightInset);
+        }
+
+        private void OnTitleBarLayoutMetricsChanged(CoreApplicationViewTitleBar sender, object args)
+        {
+            try
+            {
+                ApplyTitleBarLayoutMetrics(sender);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Failed to apply title bar layout metrics - {ex.Message}");
+            }
         }
 
         private void UpdateTitleBarColors()
@@ -391,23 +471,27 @@ namespace Fort.ind_UWP
 
             try
             {
-                // Select the first item (Latest News) by default
-                if (NavView.MenuItems.Count > 0)
-                {
-                    NavView.SelectedItem = NavView.MenuItems[0];
-                }
+                // Home normally, or wherever the user was if Windows terminated the app.
+                // Resolved before the first ShowContent call, which would otherwise overwrite
+                // the stored tag with "LatestNews" before it could be read back.
+                var startupTag = ResolveStartupNavTag();
+                SelectNavItemForTag(startupTag);
 
                 // Assigning SelectedItem raises SelectionChanged, not ItemInvoked, so the
                 // initial view has to be set up by hand. Without this the header is never
                 // given a title, and a null header collapses the header row entirely -
                 // leaving the floating pane toggle button to overlap the content.
-                ShowContent(AppConstants.NavigationLatestNews);
+                ShowContent(startupTag);
 
                 // Ensure pane starts closed
                 ClosePaneUnlessExpanded();
 
                 // DisplayModeChanged does not fire for the mode the control starts in.
                 UpdateContentPadding(NavView.DisplayMode);
+
+                // The toggle button is a template part, so this has to wait until the template
+                // has been applied - which Loaded guarantees.
+                AlignPaneToggleButton();
 
                 // Clear the badge now that the user has opened the app
                 LiveTileService.ClearBadge();
@@ -509,6 +593,7 @@ namespace Fort.ind_UWP
         private void ShowContent(string tag)
         {
             NavView.Header = HeaderFor(tag);
+            RememberLastNavTag(tag);
 
             switch (tag)
             {
@@ -539,6 +624,150 @@ namespace Fort.ind_UWP
         }
 
         /// <summary>
+        /// Widens the pane toggle button from 40 to 48 so its box matches the glyph inside it.
+        ///
+        /// PaneToggleButtonStyle sets MinWidth from {StaticResource PaneToggleButtonWidth}, and a
+        /// StaticResource is resolved once, when generic.xaml is parsed - so it is permanently 40
+        /// and no app-level override can reach it. The same style's template sizes its first
+        /// column from {ThemeResource PaneToggleButtonWidth}, which *does* honour the override and
+        /// is 48. The glyph is centred in that column, so it lands on 24 and agrees with every
+        /// nav item icon below it; the button around it is still 40 wide and centred on 20.
+        ///
+        /// Nothing is visible at rest (the button's background is transparent here), but the
+        /// hover and press highlights trace the button, not the glyph - so the hamburger lit up a
+        /// 40px box with its icon sitting 4px right of centre, while the items below it lit up the
+        /// full pane width. Measured at runtime before being changed, not inferred.
+        ///
+        /// Done in code because the button is a template part - it cannot be reached by x:Name,
+        /// and restyling it in XAML would mean copying the whole style to change one number.
+        /// </summary>
+        private void AlignPaneToggleButton()
+        {
+            try
+            {
+                var toggleButton = FindDescendantByName(NavView, "TogglePaneButton") as Control;
+                if (toggleButton == null) return;
+
+                toggleButton.MinWidth = 48;
+                toggleButton.Width = 48;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Failed to align pane toggle button - {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Depth-first search for a named element inside a control's applied template. Template
+        /// parts are not page fields, so they cannot be reached by x:Name from code-behind.
+        /// </summary>
+        private static FrameworkElement FindDescendantByName(DependencyObject root, string name)
+        {
+            if (root == null) return null;
+
+            int count = VisualTreeHelper.GetChildrenCount(root);
+            for (int i = 0; i < count; i++)
+            {
+                var child = VisualTreeHelper.GetChild(root, i);
+
+                var element = child as FrameworkElement;
+                if (element != null && element.Name == name) return element;
+
+                var found = FindDescendantByName(child, name);
+                if (found != null) return found;
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Records which view the user is on, so a resume from termination can return to it.
+        /// Written eagerly on every switch rather than at suspend - see the note in
+        /// App.OnSuspending for why. A LocalSettings write is a cheap in-memory update that the
+        /// platform flushes for us, and this happens at most once per nav click.
+        /// </summary>
+        private static void RememberLastNavTag(string tag)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(tag)) return;
+                ApplicationData.Current.LocalSettings.Values[AppConstants.SettingLastNavTag] = tag;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Failed to record last nav tag - {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Picks the nav item to open on launch: the one the user was last on if Windows
+        /// terminated the app underneath them, otherwise Home.
+        ///
+        /// Deliberately not honoured after a normal close - App.ResumingFromTermination is only
+        /// true for a genuine termination. Reopening an app you closed yourself should start at
+        /// the top, and only a termination is the case where the user did not choose to leave.
+        /// </summary>
+        private static string ResolveStartupNavTag()
+        {
+            try
+            {
+                if (!App.ResumingFromTermination) return AppConstants.NavigationLatestNews;
+
+                var saved = ApplicationData.Current.LocalSettings.Values[AppConstants.SettingLastNavTag] as string;
+                if (string.IsNullOrEmpty(saved)) return AppConstants.NavigationLatestNews;
+
+                // Only tags this build still recognises - a value left behind by an older version
+                // that has since dropped a nav item would otherwise select nothing at all.
+                switch (saved)
+                {
+                    case AppConstants.NavigationLatestNews:
+                    case AppConstants.NavigationGames:
+                    case AppConstants.NavigationBetas:
+                    case AppConstants.NavigationProfile:
+                    case AppConstants.NavigationSocial:
+                    case AppConstants.NavigationSettings:
+                        return saved;
+                    default:
+                        return AppConstants.NavigationLatestNews;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Failed to resolve startup nav tag - {ex.Message}");
+                return AppConstants.NavigationLatestNews;
+            }
+        }
+
+        /// <summary>
+        /// Moves the NavigationView's selection to the item carrying <paramref name="tag"/>,
+        /// without invoking it - ShowContent is called separately by the caller. Settings is not
+        /// in MenuItems; it is the control's own SettingsItem.
+        /// </summary>
+        private void SelectNavItemForTag(string tag)
+        {
+            if (tag == AppConstants.NavigationSettings)
+            {
+                NavView.SelectedItem = NavView.SettingsItem;
+                return;
+            }
+
+            foreach (var item in NavView.MenuItems)
+            {
+                var navItem = item as NavigationViewItem;
+                if (navItem != null && (navItem.Tag as string) == tag)
+                {
+                    NavView.SelectedItem = navItem;
+                    return;
+                }
+            }
+
+            if (NavView.MenuItems.Count > 0)
+            {
+                NavView.SelectedItem = NavView.MenuItems[0];
+            }
+        }
+
+        /// <summary>
         /// Shows the inline content host (the ScrollViewer) and makes exactly one panel visible.
         /// Collapses the Frame so the two hosts are never on screen at the same time.
         /// </summary>
@@ -551,6 +780,96 @@ namespace Fort.ind_UWP
             BetasPanel.Visibility = panel == BetasPanel ? Visibility.Visible : Visibility.Collapsed;
             SocialPanel.Visibility = panel == SocialPanel ? Visibility.Visible : Visibility.Collapsed;
             SettingsPanel.Visibility = panel == SettingsPanel ? Visibility.Visible : Visibility.Collapsed;
+
+            PlayPanelEnterAnimation();
+        }
+
+        /// <summary>
+        /// Plays the inline content host's page-refresh animation (slide up + fade in).
+        ///
+        /// ContentFrame gets the equivalent for free - a Frame runs NavigationThemeTransition on
+        /// navigation, defaulting to page refresh - so without this, clicking Games animated and
+        /// clicking Beta Programs did not. Failure here is deliberately swallowed: a missing
+        /// animation must never take out navigation, and the panel is already visible by the time
+        /// this runs.
+        /// </summary>
+        private void PlayPanelEnterAnimation()
+        {
+            try
+            {
+                var storyboard = Resources["PanelEnterStoryboard"] as Storyboard;
+                if (storyboard == null) return;
+
+                // Stop first: re-entering while a previous run is mid-flight would otherwise
+                // leave ContentPanel at whatever opacity/offset it had reached.
+                storyboard.Stop();
+                storyboard.Begin();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Panel enter animation failed - {ex.Message}");
+            }
+        }
+
+
+        /// <summary>
+        /// Whether going back would land the user somewhere the nav pane still agrees with.
+        ///
+        /// Frame.CanGoBack on its own is the wrong question in this shell. The content Frame is
+        /// shared by two unrelated nav destinations, so after visiting Profile and then Games its
+        /// back stack holds ProfilePage - going "back" from Games would swap the content to
+        /// Profile while the pane stayed highlighted on Games. The Frame is also hidden entirely
+        /// while an inline panel is showing, where back means nothing at all.
+        ///
+        /// The one genuine back path in the app is LoginPage returning to ProfilePage, which
+        /// stays inside the Profile nav item - so that is the case this reports.
+        /// </summary>
+        private bool CanGoBackInPlace()
+        {
+            if (ContentFrame == null) return false;
+            if (ContentFrame.Visibility != Visibility.Visible) return false;
+            if (!ContentFrame.CanGoBack) return false;
+
+            return ContentFrame.Content is LoginPage;
+        }
+
+        /// <summary>
+        /// The shell's back gestures - Alt+Left, the mouse back button, gamepad B, and the
+        /// tablet-mode back button - all arrive here rather than through the nav pane's button.
+        ///
+        /// AppViewBackButtonVisibility is deliberately left alone: showing the shell's own back
+        /// button would put a second one in the title bar this page draws itself, and would move
+        /// SystemOverlayLeftInset out from under the layout that was just fixed to respect it.
+        /// Handling the event without requesting the visual gets the input without the chrome.
+        /// </summary>
+        private void OnSystemBackRequested(object sender, BackRequestedEventArgs e)
+        {
+            if (e.Handled) return;
+            e.Handled = TryGoBack();
+        }
+
+        /// <summary>
+        /// Walks the content Frame back one entry. Returns whether anything actually moved, so
+        /// the caller can leave BackRequested unhandled and let the system take its default
+        /// action (which, at the root of a desktop app, is nothing).
+        /// </summary>
+        private bool TryGoBack()
+        {
+            try
+            {
+                if (!CanGoBackInPlace()) return false;
+
+                ContentFrame.GoBack();
+
+                // The nav pane's selection and header need no correction: CanGoBackInPlace only
+                // returns true for LoginPage -> ProfilePage, which stays inside the Profile item.
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Back navigation failed - {ex.Message}");
+                return false;
+            }
         }
 
         /// <summary>
@@ -608,8 +927,17 @@ namespace Fort.ind_UWP
             }
             catch (Exception ex)
             {
-                // Navigation failed – fall back to home
-                Debug.WriteLine($"MainPage: Games navigation failed – {ex.Message}");
+                // Navigation failed - fall back to home.
+                //
+                // Logged with the exception type and inner exception, not just Message: when a
+                // page fails to parse, the useful detail ("Failed to create a
+                // 'Windows.System.VirtualKey' from the text '187'") is in the inner exception,
+                // and the outer Message alone reads as a generic navigation failure. This
+                // fallback silently turning a broken page into "the Home panel again" is exactly
+                // the shape of bug that is hard to spot from the outside, so it should at least
+                // be loud in the debugger.
+                Debug.WriteLine($"MainPage: Games navigation failed - {ex.GetType().Name}: {ex.Message}"
+                                + (ex.InnerException != null ? $" | inner: {ex.InnerException.Message}" : ""));
                 NavView.Header = HeaderFor(AppConstants.NavigationLatestNews);
                 ShowInlinePanel(LatestNewsPanel);
             }
@@ -1443,57 +1771,29 @@ namespace Fort.ind_UWP
 
             try
             {
-                CheckBox dontShowCheckBox = new CheckBox();
-                dontShowCheckBox.Content = "dont show me this again >:(";
-                dontShowCheckBox.Margin = new Thickness(0, 16, 0, 0);
+                // Content comes from markup (WelcomeDialogContentTemplate in MainPage.xaml) but
+                // the dialog itself is built fresh each time - see the note on the template for
+                // why a reused ContentDialog instance stops animating on its second showing.
+                var contentTemplate = Resources["WelcomeDialogContentTemplate"] as DataTemplate;
+                if (contentTemplate == null) return;
 
-                StackPanel contentPanel = new StackPanel();
-                contentPanel.Spacing = 12;
+                var dialogContent = contentTemplate.LoadContent() as FrameworkElement;
+                if (dialogContent == null) return;
 
-                // Icon row
-                StackPanel iconPanel = new StackPanel();
-                iconPanel.Orientation = Orientation.Horizontal;
-                iconPanel.HorizontalAlignment = HorizontalAlignment.Center;
-                iconPanel.Spacing = 24;
-                iconPanel.Margin = new Thickness(0, 8, 0, 8);
-
-                FontIcon starIcon = new FontIcon();
-                starIcon.Glyph = "\uE734";
-                starIcon.FontSize = 32;
-
-                FontIcon testTubeIcon = new FontIcon();
-                testTubeIcon.Glyph = "\uE9A1";
-                testTubeIcon.FontSize = 32;
-
-                FontIcon webIcon = new FontIcon();
-                webIcon.Glyph = "\uE774";
-                webIcon.FontSize = 32;
-
-                iconPanel.Children.Add(starIcon);
-                iconPanel.Children.Add(testTubeIcon);
-                iconPanel.Children.Add(webIcon);
-
-                contentPanel.Children.Add(iconPanel);
-
-                TextBlock descText = new TextBlock();
-                descText.Text = "Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do! ";
-                descText.TextWrapping = TextWrapping.Wrap;
-                descText.FontSize = 14;
-                descText.Opacity = 0.9;
-
-                contentPanel.Children.Add(descText);
-                contentPanel.Children.Add(dontShowCheckBox);
+                // x:Name inside a DataTemplate is not a page field; it is resolved against the
+                // stamped copy's own namescope.
+                var dontShowCheckBox = dialogContent.FindName("WelcomeDontShowCheckBox") as CheckBox;
 
                 ContentDialog welcomeDialog = new ContentDialog();
                 welcomeDialog.Title = "Hi :)";
-                welcomeDialog.Content = contentPanel;
-                welcomeDialog.PrimaryButtonText = "got it";
-                welcomeDialog.DefaultButton = ContentDialogButton.Primary;
+                welcomeDialog.Content = dialogContent;
+                welcomeDialog.CloseButtonText = "got it";
+                welcomeDialog.DefaultButton = ContentDialogButton.Close;
                 AppConstants.ApplyXamlRoot(welcomeDialog, this);
 
                 await welcomeDialog.ShowAsync();
 
-                if (dontShowCheckBox.IsChecked.GetValueOrDefault(false))
+                if (dontShowCheckBox != null && dontShowCheckBox.IsChecked.GetValueOrDefault(false))
                 {
                     var localSettings = ApplicationData.Current.LocalSettings;
                     localSettings.Values[AppConstants.SettingHideWelcomeDialog] = true;
@@ -1534,24 +1834,43 @@ namespace Fort.ind_UWP
 
         // ── Search bar handlers ──
 
-        private void OnCoreKeyDown(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.KeyEventArgs args)
+        /// <summary>
+        /// Ctrl+F - the standard Find accelerator - moves focus to the nav pane's search box.
+        /// Declared in MainPage.xaml; see the comment there for why this is an accelerator rather
+        /// than a CoreWindow key handler.
+        /// </summary>
+        private void FocusSearchAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
-            // Ctrl+F focuses the search box
-            var ctrl = (Windows.UI.Core.CoreWindow.GetForCurrentThread().GetKeyState(Windows.System.VirtualKey.Control) &
-                        Windows.UI.Core.CoreVirtualKeyStates.Down) == Windows.UI.Core.CoreVirtualKeyStates.Down;
-            if (ctrl && args.VirtualKey == Windows.System.VirtualKey.F)
+            try
             {
                 NavSearchBox.Focus(FocusState.Keyboard);
                 args.Handled = true;
-                return;
             }
-            // Escape clears the search box when it has text
-            if (args.VirtualKey == Windows.System.VirtualKey.Escape && !string.IsNullOrEmpty(NavSearchBox.Text))
+            catch (Exception ex)
             {
+                Debug.WriteLine($"MainPage: Focus search accelerator failed - {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Escape clears the search box, but only when it actually has text - leaving the event
+        /// unhandled otherwise so Escape keeps its normal meaning everywhere else on the page
+        /// (closing the nav pane's flyout in Minimal mode, for instance).
+        /// </summary>
+        private void ClearSearchAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(NavSearchBox.Text)) return;
+
                 CancelPendingSearch();
                 NavSearchBox.Text = "";
                 NavSearchBox.ItemsSource = null;
                 args.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Clear search accelerator failed - {ex.Message}");
             }
         }
 

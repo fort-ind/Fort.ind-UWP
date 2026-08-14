@@ -71,7 +71,13 @@ namespace Fort.ind_UWP
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                var file = await LocalFolder.GetFileAsync(PROFILE_FILE);
+                // TryGetItemAsync, not GetFileAsync: "no profile cached yet" is the ordinary
+                // state on a fresh install and after a sign-out, not an error. GetFileAsync
+                // signals that by throwing FileNotFoundException, which means the normal path
+                // costs an exception and shows up in the debugger on every launch.
+                var file = await LocalFolder.TryGetItemAsync(PROFILE_FILE) as StorageFile;
+                if (file == null) return null;
+
                 var json = await FileIO.ReadTextAsync(file).AsTask(cancellationToken);
                 return DeserializeFromJson<UserProfile>(json);
             }
@@ -94,12 +100,17 @@ namespace Fort.ind_UWP
         {
             try
             {
-                var file = await LocalFolder.GetFileAsync(PROFILE_FILE);
+                // Nothing to clear is success, not failure - see the note in LoadProfileAsync.
+                var file = await LocalFolder.TryGetItemAsync(PROFILE_FILE) as StorageFile;
+                if (file == null) return;
+
                 await file.DeleteAsync();
             }
-            catch
+            catch (Exception ex)
             {
-                // File doesn't exist, that's fine
+                // A file that exists but cannot be deleted (locked, ACL) still must not take down
+                // sign-out, which is the only caller.
+                Debug.WriteLine($"Error clearing profile: {ex.Message}");
             }
         }
 

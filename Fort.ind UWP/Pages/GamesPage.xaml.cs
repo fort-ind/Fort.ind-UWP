@@ -4,9 +4,12 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Foundation;
+using Windows.System;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Data;
+using Windows.UI.Xaml.Input;
 
 namespace Fort.ind_UWP
 {
@@ -73,8 +76,44 @@ namespace Fort.ind_UWP
             _viewSource.Source = _groups;
             EnsureItemsSources();
 
+            AddSemanticZoomAccelerators();
+
             Loaded += GamesPage_Loaded;
             Unloaded += GamesPage_Unloaded;
+        }
+
+        /// <summary>
+        /// Ctrl+Plus / Ctrl+Minus - the shortcuts Windows documents for semantic zoom. Before
+        /// this the A-Z jump grid was reachable only by mouse (the zoom-out button SemanticZoom
+        /// shows on pointer input) or by pinching.
+        ///
+        /// Built here rather than in markup because two of the four keys have no name in the
+        /// VirtualKey enum: the +/- on the main keyboard row are VK_OEM_PLUS (187) and
+        /// VK_OEM_MINUS (189), while Add/Subtract are the numeric keypad. A raw number in a XAML
+        /// enum attribute passes the XAML compiler and then throws when the page is parsed, which
+        /// takes down the entire page rather than just the accelerator.
+        ///
+        /// Direction follows the rest of Windows: minus zooms out to the letter grid, plus zooms
+        /// back in to the full list.
+        /// </summary>
+        private void AddSemanticZoomAccelerators()
+        {
+            const int VirtualKeyOemPlus = 187;
+            const int VirtualKeyOemMinus = 189;
+
+            AddAccelerator(VirtualKey.Add, ZoomInAccelerator_Invoked);
+            AddAccelerator((VirtualKey)VirtualKeyOemPlus, ZoomInAccelerator_Invoked);
+            AddAccelerator(VirtualKey.Subtract, ZoomOutAccelerator_Invoked);
+            AddAccelerator((VirtualKey)VirtualKeyOemMinus, ZoomOutAccelerator_Invoked);
+        }
+
+        private void AddAccelerator(VirtualKey key, TypedEventHandler<KeyboardAccelerator, KeyboardAcceleratorInvokedEventArgs> handler)
+        {
+            var accelerator = new KeyboardAccelerator();
+            accelerator.Modifiers = VirtualKeyModifiers.Control;
+            accelerator.Key = key;
+            accelerator.Invoked += handler;
+            KeyboardAccelerators.Add(accelerator);
         }
 
         /// <summary>
@@ -346,6 +385,45 @@ namespace Fort.ind_UWP
             {
                 // Critical: catch exceptions in async void to prevent app crash
                 Debug.WriteLine($"GamesPage: Failed to launch game - {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Ctrl+Minus - switch to the A-Z jump grid. Declared in GamesPage.xaml.
+        /// Does nothing unless the list is actually on screen: in the Loading, Empty and Failed
+        /// states the SemanticZoom is collapsed, and zooming a hidden control would leave the
+        /// page in the zoomed-out state the next time content appeared.
+        /// </summary>
+        private void ZoomOutAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            SetZoomedInViewActive(false, args);
+        }
+
+        /// <summary>Ctrl+Plus - back to the full list. See <see cref="ZoomOutAccelerator_Invoked"/>.</summary>
+        private void ZoomInAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            SetZoomedInViewActive(true, args);
+        }
+
+        private void SetZoomedInViewActive(bool zoomedIn, KeyboardAcceleratorInvokedEventArgs args)
+        {
+            try
+            {
+                if (GamesZoom.Visibility != Visibility.Visible) return;
+                if (GamesZoom.IsZoomedInViewActive == zoomedIn)
+                {
+                    // Already there. Still mark it handled so the keystroke does not fall through
+                    // to anything else while the user is holding the shortcut down.
+                    args.Handled = true;
+                    return;
+                }
+
+                GamesZoom.IsZoomedInViewActive = zoomedIn;
+                args.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"GamesPage: Semantic zoom accelerator failed - {ex.Message}");
             }
         }
 

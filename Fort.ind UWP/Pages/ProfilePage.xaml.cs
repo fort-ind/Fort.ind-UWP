@@ -15,8 +15,16 @@ namespace Fort.ind_UWP
     public sealed partial class ProfilePage : Page
     {
 
-        // Guard to prevent multiple ContentDialogs from opening simultaneously
-        private SemaphoreSlim _dialogSemaphore = new SemaphoreSlim(1, 1);
+        // Guard to prevent multiple ContentDialogs from opening simultaneously.
+        //
+        // Static, and therefore never disposed, on purpose. As an instance field this leaked a
+        // SemaphoreSlim on every visit to the profile: this page sets no NavigationCacheMode, so
+        // the Frame builds a fresh ProfilePage each time the user clicks the nav item, and
+        // nothing disposed the old one's semaphore. Disposing it in Unloaded is not an option
+        // either - UWP can raise Unloaded and then Loaded again on the same instance, which would
+        // leave WaitAsync throwing ObjectDisposedException. Process lifetime is the honest scope
+        // for a guard whose whole job is "is a dialog open in this app right now".
+        private static readonly SemaphoreSlim _dialogSemaphore = new SemaphoreSlim(1, 1);
 
         // Tracks whether the AuthStateChanged handler is attached, so repeated Loaded/Unloaded
         // cycles (which UWP can fire more than once) don't attach it more than once, and so
@@ -119,7 +127,7 @@ namespace Fort.ind_UWP
 
             if (user.LastLoginDate > DateTime.MinValue)
             {
-                LastLoginText.Text = $"Last signed in: {user.LastLoginDate:MMM d, yyyy h:mm tt}";
+                LastLoginText.Text = $"Last signed in: {FormatLastLogin(user.LastLoginDate)}";
                 LastLoginText.Visibility = Visibility.Visible;
             }
             else
@@ -217,6 +225,40 @@ namespace Fort.ind_UWP
             }
         }
 
+        /// <summary>
+        /// Formats a sign-in timestamp the way the user's own Windows region settings would.
+        ///
+        /// The previous "MMM d, yyyy h:mm tt" custom pattern baked in US conventions - month
+        /// before day, and a 12-hour clock with AM/PM - for every user regardless of locale.
+        /// DateTimeFormatter is the WinRT globalization API: given the abstract shapes
+        /// ("shortdate", "shorttime") it resolves ordering, separators and 12- vs 24-hour from
+        /// Settings > Time &amp; Language, so a German user gets 03.06.2026 14:05 without this
+        /// method knowing anything about German.
+        ///
+        /// Falls back to the invariant round-trip form if the formatter is unavailable, which is
+        /// wrong-looking but never misleading - unlike a US-shaped date shown to someone who
+        /// reads day-first, where 03/06 silently means the wrong day.
+        /// </summary>
+        private static string FormatLastLogin(DateTime value)
+        {
+            try
+            {
+                var dateFormatter = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("shortdate");
+                var timeFormatter = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("shorttime");
+
+                // DateTimeFormatter takes a DateTimeOffset; these timestamps are stored as local
+                // DateTimes, so let the conversion pick up the machine's current offset.
+                DateTimeOffset offset = new DateTimeOffset(value);
+
+                return $"{dateFormatter.Format(offset)} {timeFormatter.Format(offset)}";
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ProfilePage: Date formatting failed - {ex.Message}");
+                return value.ToString("u", System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
         private string GetInitials(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -224,13 +266,17 @@ namespace Fort.ind_UWP
                 return "?";
             }
 
+            // ToUpperInvariant, not ToUpper: ToUpper follows the *current* culture, so a user on a
+            // Turkish system would see a dotted "İ" for a name starting with "i". These are
+            // display initials for a fort.social handle, not culture-specific text. GamesPage's
+            // GroupKeyFor already uses the invariant form for the same reason.
             var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length >= 2 && parts[1].Length > 0)
             {
-                return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpper();
+                return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpperInvariant();
             }
 
-            return parts[0].Substring(0, 1).ToUpper();
+            return parts[0].Substring(0, 1).ToUpperInvariant();
         }
 
         /// <summary>

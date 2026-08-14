@@ -14,6 +14,21 @@
                     <CornerRadius x:Key="ControlCornerRadius">0</CornerRadius>
                     <CornerRadius x:Key="OverlayCornerRadius">0</CornerRadius>
 
+                    <!-- The pane toggle button draws a 1px rectangle around itself that this
+                         design never wants. PaneToggleButtonStyle takes BorderThickness from this
+                         key (default 1) and hands it to a Border named RevealBorder spanning BOTH
+                         of the button's columns - the glyph cell and the pane-title cell beside
+                         it - so the rectangle is always wider than the glyph it surrounds. It
+                         expects a RevealBorderBrush, invisible until the pointer is near; every
+                         other Reveal brush in this pane is redefined below, but the toggle
+                         button's is not, so it painted flat.
+
+                         Here at application scope rather than on the NavigationView instance
+                         purely because that is where it was observed to take effect. The pane's
+                         *sizing* resources stay on the control in MainPage.xaml, where they have
+                         always been. -->
+                    <Thickness x:Key="NavigationViewToggleBorderThickness">0</Thickness>
+
                     <!-- Reveal is intentionally NOT applied globally -->
 
                     <!-- ...but the nav pane is a commanding surface, so it has to keep the Reveal

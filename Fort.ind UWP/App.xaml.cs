@@ -28,6 +28,14 @@ namespace Fort.ind_UWP
         }
 
         /// <summary>
+        /// True when Windows terminated the app last time (to reclaim memory, typically) rather
+        /// than the user closing it. Only in that case is the app expected to put the user back
+        /// where they were; after a deliberate close, coming up on Home is the correct behaviour.
+        /// MainPage reads this once, when its NavigationView loads.
+        /// </summary>
+        public static bool ResumingFromTermination { get; private set; }
+
+        /// <summary>
         /// Invoked when the application is launched normally by the end user.  Other entry points
         /// will be used when the application is launched to open a specific file, to display
         /// search results, and so forth.
@@ -50,19 +58,11 @@ namespace Fort.ind_UWP
 
                     rootFrame.NavigationFailed += OnNavigationFailed;
 
-                    if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
-                    {
-                        // TODO: Load state from previously suspended application
-                    }
+                    // Recorded rather than acted on here: the state that needs restoring belongs
+                    // to MainPage (which nav item was open), and MainPage does not exist yet.
+                    ResumingFromTermination = e.PreviousExecutionState == ApplicationExecutionState.Terminated;
 
-                    // Apply saved theme before rendering to prevent a flash of the default theme
-                    var savedTheme = Windows.Storage.ApplicationData.Current.LocalSettings.Values[AppConstants.SettingAppTheme]?.ToString();
-                    switch (savedTheme)
-                    {
-                        case "Light": rootFrame.RequestedTheme = ElementTheme.Light; break;
-                        case "Dark": rootFrame.RequestedTheme = ElementTheme.Dark; break;
-                        default: rootFrame.RequestedTheme = ElementTheme.Default; break;
-                    }
+                    ApplySavedTheme(rootFrame);
 
                     // Place the frame in the current Window
                     Window.Current.Content = rootFrame;
@@ -111,10 +111,14 @@ namespace Fort.ind_UWP
             {
                 try
                 {
+                    // CloseButton, not PrimaryButton: the close button is the one a dialog is
+                    // required to have, and it is what Esc is wired to. An acknowledge-only
+                    // dialog whose single button is the *primary* one cannot be dismissed from
+                    // the keyboard at all.
                     ContentDialog errorDialog = new ContentDialog();
                     errorDialog.Title = "Startup Error";
                     errorDialog.Content = "The application failed to start properly. Please try restarting.";
-                    errorDialog.PrimaryButtonText = "OK";
+                    errorDialog.CloseButtonText = "OK";
                     AppConstants.ApplyXamlRoot(errorDialog, Window.Current.Content);
                     await errorDialog.ShowAsync();
                 }
@@ -122,6 +126,37 @@ namespace Fort.ind_UWP
                 {
                     // Nothing more we can do
                 }
+            }
+        }
+
+        /// <summary>
+        /// Applies the user's saved Light/Dark preference to a freshly created root Frame, before
+        /// it has anything in it, so the first frame is painted in the right theme instead of
+        /// flashing the system default and correcting itself.
+        ///
+        /// Called from both entry points that can create the root Frame. OnActivated is a real
+        /// cold-start path, not just a resume: the MiAuth callback can arrive after the app was
+        /// terminated while the user was approving sign-in in the browser, in which case
+        /// OnActivated - not OnLaunched - is what builds the window. Applying this in only one of
+        /// the two meant signing in that way brought the app up ignoring the saved theme.
+        /// </summary>
+        private static void ApplySavedTheme(Frame rootFrame)
+        {
+            if (rootFrame == null) return;
+
+            try
+            {
+                var savedTheme = Windows.Storage.ApplicationData.Current.LocalSettings.Values[AppConstants.SettingAppTheme]?.ToString();
+                switch (savedTheme)
+                {
+                    case AppConstants.ThemeLight: rootFrame.RequestedTheme = ElementTheme.Light; break;
+                    case AppConstants.ThemeDark: rootFrame.RequestedTheme = ElementTheme.Dark; break;
+                    default: rootFrame.RequestedTheme = ElementTheme.Default; break;
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"App: Failed to apply saved theme - {ex.Message}");
             }
         }
 
@@ -167,6 +202,7 @@ namespace Fort.ind_UWP
                 {
                     rootFrame = new Frame();
                     rootFrame.NavigationFailed += OnNavigationFailed;
+                    ApplySavedTheme(rootFrame);
                     Window.Current.Content = rootFrame;
                     await LocalStorageService.InitializeAsync();
                     await ProfileService.TryRestoreSessionAsync();
@@ -204,11 +240,12 @@ namespace Fort.ind_UWP
             // Show user-friendly error dialog
             try
             {
+                // See the note in OnLaunched about CloseButton vs PrimaryButton.
                 ContentDialog errorDialog = new ContentDialog();
                 errorDialog.Title = "Navigation Error";
-                errorDialog.Content = $"Failed to load page. The application will return to the home screen.";
-                errorDialog.PrimaryButtonText = "OK";
-                errorDialog.DefaultButton = ContentDialogButton.Primary;
+                errorDialog.Content = "Failed to load that page.";
+                errorDialog.CloseButtonText = "OK";
+                errorDialog.DefaultButton = ContentDialogButton.Close;
                 AppConstants.ApplyXamlRoot(errorDialog, Window.Current.Content);
                 await errorDialog.ShowAsync();
             }
@@ -229,7 +266,17 @@ namespace Fort.ind_UWP
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             SuspendingDeferral deferral = e.SuspendingOperation.GetDeferral();
-            // TODO: Save application state and stop any background activity
+
+            // Nothing to write here, and that is deliberate rather than unfinished. Every piece
+            // of state this app restores - the theme, the tint, which settings sections are
+            // expanded, and now the open nav item - is committed to LocalSettings at the moment
+            // the user changes it, not batched until suspend. That is the more robust ordering:
+            // suspend handlers run under a short deadline and are not guaranteed to complete, so
+            // state saved only here is exactly the state most likely to be lost.
+            //
+            // There is also no background activity to stop: the sitemap load and avatar fetches
+            // are one-shot awaits tied to page lifetime, and the live tile is pushed to the shell
+            // rather than kept alive in-process.
             deferral.Complete();
         }
 

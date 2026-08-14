@@ -283,7 +283,16 @@ namespace Fort.ind_UWP
                     return null;
                 }
 
-                var cacheFile = await ApplicationData.Current.LocalFolder.GetFileAsync(AppConstants.SitemapCacheFileName);
+                // TryGetItemAsync, not GetFileAsync: a missing cache is the expected state on
+                // first run and after a reset, and every early return above already treats
+                // "no usable cache" as a normal outcome. GetFileAsync would make that one case
+                // cost a FileNotFoundException on the startup path.
+                var cacheFile = await ApplicationData.Current.LocalFolder.TryGetItemAsync(AppConstants.SitemapCacheFileName) as StorageFile;
+                if (cacheFile == null)
+                {
+                    return null;
+                }
+
                 var content = await FileIO.ReadTextAsync(cacheFile);
                 if (string.IsNullOrWhiteSpace(content))
                 {

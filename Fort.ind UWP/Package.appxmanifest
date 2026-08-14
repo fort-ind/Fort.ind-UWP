@@ -4,8 +4,9 @@
   xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:uap18="http://schemas.microsoft.com/appx/manifest/uap/windows10/18"
-  IgnorableNamespaces="uap mp uap18">
+  IgnorableNamespaces="uap mp uap5 uap18">
 
   <Identity
     Name="fortind.desktopPreview"
@@ -45,11 +46,28 @@
             <uap:ShowOn Tile="square310x310Logo"/>
           </uap:ShowNameOnTiles>
         </uap:DefaultTile >
-        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+        <!-- BackgroundColor is explicit because the splash is painted by the shell before any
+             app code runs, so it cannot follow the user's Light/Dark setting - there is no MRT
+             theme qualifier for it. Left unset, UWP defaults it to #464646, a dark grey that
+             reads as "the app launched in the wrong theme" to anyone running Light. A saturated
+             brand colour reads as deliberate in either theme instead. #2D1B69 is the same
+             Deep Purple already in the app's own tint palette, and the splash PNG has a fully
+             transparent background, so this colour IS the entire backdrop.
+
+             uap5:Optional lets Windows skip the splash altogether when the app starts quickly
+             enough, which is the common case now that session restore is deferred off the
+             launch path - so most launches show no splash at all. It still appears when startup
+             genuinely drags, which is the only time it was earning its keep. Requires 1803;
+             this project's floor is 1809. -->
+        <uap:SplashScreen Image="Assets\SplashScreen.png"
+                          BackgroundColor="#2D1B69"
+                          uap5:Optional="true" />
 		  <uap:LockScreen BadgeLogo="Assets\BadgeLogo.png" Notification="badge"/>
 		  <uap:InitialRotationPreference>
 		  <uap:Rotation Preference="landscape"/>
-		  <uap:Rotation Preference="landscapeFlipped"/></uap:InitialRotationPreference>
+		  <uap:Rotation Preference="landscapeFlipped"/>
+		  <uap:Rotation Preference="portrait"/>
+		  <uap:Rotation Preference="portraitFlipped"/></uap:InitialRotationPreference>
       </uap:VisualElements>
       <Extensions>
         <uap:Extension Category="windows.protocol">

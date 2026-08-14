@@ -8,6 +8,79 @@
     mc:Ignorable="d"
     Background="Transparent">
 
+    <!-- Accelerators are declared here rather than hooked off CoreWindow.KeyDown.
+         The old handler sat on the window, so it fired for every keystroke reaching the app
+         regardless of what had focus - including while a ContentDialog was up, where Ctrl+F
+         would pull focus out of the modal dialog and into the nav search box behind it.
+         KeyboardAccelerator routes from the focused element up its own ancestor chain instead,
+         and a dialog's content lives in the popup root rather than under this page, so the two
+         no longer overlap. It also drops the manual Control key-state polling and the
+         attach/detach bookkeeping the window handler needed to avoid leaking. -->
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="FocusSearchAccelerator_Invoked"/>
+        <KeyboardAccelerator Key="Escape" Invoked="ClearSearchAccelerator_Invoked"/>
+    </Page.KeyboardAccelerators>
+
+    <Page.Resources>
+        <!-- The "page refresh" transition, hand-rolled for the inline content host.
+             ContentFrame gets this animation for free (a Frame applies NavigationThemeTransition
+             on navigation, and its default is page refresh), but the inline panels are switched
+             by Visibility inside a single StackPanel, and no theme transition fires for that.
+             The result was one nav gesture with two different motions depending on which item
+             the user clicked. Slide-up + fade-in is what page refresh is defined as, so this
+             reproduces it: 24px is between the 40px the settings list uses for a whole section
+             and the 20px its nested rows use.
+
+             Both properties animate off the UI thread (Opacity and a RenderTransform are
+             independent animations), so no EnableDependentAnimation is needed. -->
+        <CubicEase x:Key="PanelEnterEase" EasingMode="EaseOut"/>
+
+        <!-- First-run welcome dialog *content*, as a template rather than a live ContentDialog.
+             It used to be assembled element by element in code-behind, where it set FontSize and
+             Opacity numerically and sat outside the type ramp the rest of the app follows.
+
+             Declaring a whole ContentDialog in the page tree fixed that but cost the open
+             animation: a dialog instance that has already been loaded and shown once does not
+             replay its entrance transition on the next ShowAsync, and this dialog is deliberately
+             re-showable from Settings. Keeping the markup as a DataTemplate and stamping a fresh
+             copy per show gets both - ramp styles and localisable markup, and a dialog that is
+             genuinely new every time, which is what the animation keys off. -->
+        <DataTemplate x:Key="WelcomeDialogContentTemplate">
+            <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal"
+                            HorizontalAlignment="Center"
+                            Spacing="24"
+                            Margin="0,8,0,8">
+                    <FontIcon Glyph="&#xE734;" FontSize="32"/>
+                    <FontIcon Glyph="&#xE9A1;" FontSize="32"/>
+                    <FontIcon Glyph="&#xE774;" FontSize="32"/>
+                </StackPanel>
+
+                <TextBlock Text="Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do!"
+                           Style="{StaticResource BodyTextBlockStyle}"
+                           TextWrapping="Wrap"
+                           Opacity="0.9"/>
+
+                <CheckBox x:Name="WelcomeDontShowCheckBox"
+                          Content="dont show me this again >:("
+                          Margin="0,4,0,0"/>
+            </StackPanel>
+        </DataTemplate>
+
+        <Storyboard x:Key="PanelEnterStoryboard">
+            <DoubleAnimation Storyboard.TargetName="ContentPanel"
+                             Storyboard.TargetProperty="Opacity"
+                             From="0" To="1"
+                             Duration="0:0:0.3"
+                             EasingFunction="{StaticResource PanelEnterEase}"/>
+            <DoubleAnimation Storyboard.TargetName="ContentPanelTransform"
+                             Storyboard.TargetProperty="Y"
+                             From="24" To="0"
+                             Duration="0:0:0.3"
+                             EasingFunction="{StaticResource PanelEnterEase}"/>
+        </Storyboard>
+    </Page.Resources>
+
     <!-- The surface brushes this page paints with (AppSurfaceAcrylicBrush, the nav pane, cards)
          are defined per-theme in App.xaml's ThemeDictionaries. They are deliberately NOT
          redeclared here: a page-level copy shadows the themed one for this page's whole subtree,
@@ -18,23 +91,46 @@
          constructor's first ApplyTintColor call (and design time). -->
     <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="32"/>
-            <RowDefinition Height="137*"/>
-            <RowDefinition Height="347*"/>
+            <!-- Height is driven by CoreTitleBar.Height in SetupTitleBar/OnTitleBarLayoutMetricsChanged,
+                 not pinned to 32: the system title bar is taller in tablet mode and changes with
+                 some accessibility settings, and a hardcoded row lets the caption buttons hang
+                 outside the drag region. Auto lets the handler's assignment win. -->
+            <RowDefinition x:Name="TitleBarRow" Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Custom Title Bar Area -->
-        <Grid x:Name="AppTitleBar" 
-              Grid.Row="0" 
+        <!-- Custom Title Bar Area.
+             Background="Transparent" is load-bearing, not cosmetic: a Grid with no background
+             does not hit test, and Window.SetTitleBar would hand the system a region nothing
+             can actually be dragged by.
+
+             The two padding columns are sized from SystemOverlayLeftInset/RightInset rather than
+             a fixed Margin, so the background still paints *under* the caption buttons (which
+             this app makes transparent) while no content is ever placed beneath them. Which side
+             the buttons land on is not fixed - it flips in RTL - so both ends are reserved and
+             the handler assigns whichever the system reports. -->
+        <Grid x:Name="AppTitleBar"
+              Grid.Row="0"
+              Height="32"
               Background="Transparent">
-            <TextBlock Text="Fort.ind"
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="TitleBarLeftInset" Width="0"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition x:Name="TitleBarRightInset" Width="0"/>
+            </Grid.ColumnDefinitions>
+
+            <TextBlock Grid.Column="1"
+                       Text="Fort.ind"
                        VerticalAlignment="Center"
                        Margin="12,0,0,0"
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"/>
-            
-            <!-- Loading Indicator for Sitemap -->
+
+            <!-- Loading Indicator for Sitemap. In the middle column, so it cannot end up
+                 underneath the caption buttons the way a right-aligned child of the whole
+                 title bar did. -->
             <ProgressRing x:Name="LoadingIndicator"
+                          Grid.Column="1"
                           IsActive="False"
                           Visibility="Collapsed"
                           Width="16"
@@ -42,10 +138,24 @@
                           HorizontalAlignment="Right"
                           VerticalAlignment="Center"
                           Margin="0,0,12,0"
-                          Foreground="{ThemeResource SystemAccentColor}"/>
+                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}"/>
         </Grid>
 
         <!-- Main Content -->
+        <!-- IsBackButtonVisible is Collapsed, as it always has been. Showing the pane's back
+             button was tried and reverted: it sits in the same stack as the toggle button and
+             is sized by yet another independent resource, and getting it to line up turned into
+             a long chase for no real gain - it would have been enabled on exactly one screen
+             (LoginPage returning to ProfilePage), which already offers "skip" and "cancel".
+
+             Back navigation itself is still wired up and still works there: MainPage handles
+             SystemNavigationManager.BackRequested, so Alt+Left, the mouse back button and the
+             tablet-mode shell button all reach the content Frame. Only the pane button is gone.
+
+             Note this is the *platform* NavigationView (no muxc: prefix), not WinUI 2's. The two
+             share an article but not an API surface: IsTitleBarAutoPaddingEnabled, for instance,
+             exists only on the WinUI control, so the title-bar padding it describes is not
+             something this control does or can be told not to do. -->
         <NavigationView x:Name="NavView"
                          Grid.Row="1"
                          PaneDisplayMode="Auto"
@@ -57,7 +167,7 @@
                          ItemInvoked="NavView_ItemInvoked"
                          Loaded="NavView_Loaded"
                          DisplayModeChanged="NavView_DisplayModeChanged"
-                         Background="Transparent" Grid.RowSpan="2">
+                         Background="Transparent">
 
             <NavigationView.Resources>
                 <!-- Every pane glyph must centre on 24px (half of the 48px compact pane).
@@ -95,15 +205,19 @@
                                 QuerySubmitted="NavSearchBox_QuerySubmitted"
                                 SuggestionChosen="NavSearchBox_SuggestionChosen">
                     <AutoSuggestBox.ItemTemplate>
-                        <DataTemplate>
+                        <!-- x:Bind against x:DataType rather than {Binding}: compiled at build
+                             time instead of reflected per realised row, and OneTime by default
+                             inside a DataTemplate, which suits SearchItems that never change
+                             after the sitemap is parsed. -->
+                        <DataTemplate x:DataType="local:SearchItem">
                             <StackPanel Orientation="Horizontal" Spacing="10" Padding="0,4">
-                                <FontIcon Glyph="{Binding Icon}"
+                                <FontIcon Glyph="{x:Bind Icon}"
                                           FontSize="16"
                                           VerticalAlignment="Center"
                                           Opacity="0.8"/>
                                 <StackPanel VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding Title}"/>
-                                    <TextBlock Text="{Binding Category}"
+                                    <TextBlock Text="{x:Bind Title}"/>
+                                    <TextBlock Text="{x:Bind Category}"
                                                Style="{ThemeResource CaptionTextBlockStyle}"
                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"/>
                                 </StackPanel>
@@ -115,7 +229,7 @@
 
             <NavigationView.MenuItems>
                 <NavigationViewItem Content="Home" Tag="LatestNews"
-                                     ToolTipService.ToolTip="Home (Alt+H)"
+                                     ToolTipService.ToolTip="Home"
                                      AccessKey="H"
                                      AutomationProperties.Name="Home"
                                      AutomationProperties.HelpText="Navigate to home page">
@@ -124,7 +238,7 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Games" Tag="Games"
-                                     ToolTipService.ToolTip="Games (Alt+G)"
+                                     ToolTipService.ToolTip="Games"
                                      AccessKey="G"
                                      AutomationProperties.Name="Games"
                                      AutomationProperties.HelpText="Browse games">
@@ -133,7 +247,7 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Beta Programs" Tag="Betas"
-                                     ToolTipService.ToolTip="Beta Programs (Alt+B)"
+                                     ToolTipService.ToolTip="Beta Programs"
                                      AccessKey="B"
                                      AutomationProperties.Name="Beta Programs"
                                      AutomationProperties.HelpText="Join beta programs">
@@ -142,7 +256,7 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem x:Name="ProfileNavItem" Content="Your Profile" Tag="Profile"
-                                     ToolTipService.ToolTip="Your Profile (Alt+P)"
+                                     ToolTipService.ToolTip="Your Profile"
                                      AccessKey="P"
                                      AutomationProperties.Name="Your Profile"
                                      AutomationProperties.HelpText="View and edit your profile">
@@ -151,7 +265,7 @@
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
                 <NavigationViewItem Content="Social" Tag="Social"
-                                     ToolTipService.ToolTip="Social (Alt+S)"
+                                     ToolTipService.ToolTip="Social"
                                      AccessKey="S"
                                      AutomationProperties.Name="Social"
                                      AutomationProperties.HelpText="Connect with the community">
@@ -163,12 +277,19 @@
 
             <!-- Content Area -->
             <Grid Background="Transparent">
-                <!-- Frame for page navigation -->
+                <!-- Frame for page navigation. -->
                 <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
 
                 <ScrollViewer x:Name="ContentScrollViewer">
-                    <!-- Padding is set from NavView_DisplayModeChanged: 12px in Minimal, 24px otherwise. -->
-                    <StackPanel x:Name="ContentPanel">
+                    <!-- Padding is set from NavView_DisplayModeChanged: 12px in Minimal, 24px otherwise.
+                         The RenderTransform is the target of PanelEnterStoryboard (see Page.Resources):
+                         a Frame animates its own page changes, but the inline panels only flip
+                         Visibility, so without this the same nav gesture animates for Games/Profile
+                         and snaps for everything else. -->
+                    <StackPanel x:Name="ContentPanel" RenderTransformOrigin="0.5,0.5">
+                        <StackPanel.RenderTransform>
+                            <TranslateTransform x:Name="ContentPanelTransform"/>
+                        </StackPanel.RenderTransform>
                         <!-- Latest News Content (default view) -->
                         <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
                             <TextBlock Text="Check back here for the latest updates and announcements."
@@ -358,7 +479,7 @@
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <Button x:Name="TintDefaultButton" Tag="Default"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     BorderThickness="2" BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Default"
                                                                     AutomationProperties.Name="Default background tint">
@@ -366,35 +487,35 @@
                                                             </Button>
                                                             <Button x:Name="TintBlueButton" Tag="#1E3A5F"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1D6FA5" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Navy Blue"
                                                                     AutomationProperties.Name="Navy Blue background tint"/>
                                                             <Button x:Name="TintPurpleButton" Tag="#2D1B69"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#6041B0" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Deep Purple"
                                                                     AutomationProperties.Name="Deep Purple background tint"/>
                                                             <Button x:Name="TintGreenButton" Tag="#0F3D2E"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1B7A4E" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Forest Green"
                                                                     AutomationProperties.Name="Forest Green background tint"/>
                                                             <Button x:Name="TintRedButton" Tag="#3D1515"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B03232" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Deep Red"
                                                                     AutomationProperties.Name="Deep Red background tint"/>
                                                             <Button x:Name="TintSlateButton" Tag="#1A1A2E"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#404080" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Dark Slate"
@@ -403,42 +524,42 @@
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <Button x:Name="TintTealButton" Tag="#0E3A3A"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1B8A8A" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Deep Teal"
                                                                     AutomationProperties.Name="Deep Teal background tint"/>
                                                             <Button x:Name="TintBronzeButton" Tag="#3D2A0F"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B07D1B" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Bronze"
                                                                     AutomationProperties.Name="Bronze background tint"/>
                                                             <Button x:Name="TintRoseButton" Tag="#3D1533"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B03291" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Deep Rose"
                                                                     AutomationProperties.Name="Deep Rose background tint"/>
                                                             <Button x:Name="TintOliveButton" Tag="#2E3D0F"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#6E8A1B" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Olive"
                                                                     AutomationProperties.Name="Olive background tint"/>
                                                             <Button x:Name="TintGraphiteButton" Tag="#232323"
                                                                     Click="TintColorButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#5A5A5A" BorderThickness="2"
                                                                     BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Graphite"
                                                                     AutomationProperties.Name="Graphite background tint"/>
                                                             <Button x:Name="TintCustomButton"
                                                                     Click="CustomTintButton_Click"
-                                                                    Width="32" Height="32" Padding="0" MinWidth="32"
+                                                                    Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     BorderThickness="2" BorderBrush="Transparent"
                                                                     ToolTipService.ToolTip="Custom color…"
                                                                     AutomationProperties.Name="Custom background tint">
@@ -510,14 +631,14 @@
                                                 </StackPanel>
                                                 <TextBlock x:Name="CacheDescriptionText"
                                                            Text="Not signed in."
-                                                           FontSize="12" TextWrapping="Wrap"
+                                                           Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
                                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                            Margin="0,0,0,4"/>
                                                 <TextBlock x:Name="StoragePathText"
-                                                           FontSize="12" TextWrapping="Wrap"
+                                                           Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
                                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"/>
                                                 <TextBlock x:Name="UserCountText"
-                                                           FontSize="12"
+                                                           Style="{StaticResource CaptionTextBlockStyle}"
                                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 <StackPanel Orientation="Horizontal" Spacing="8"
                                                             HorizontalAlignment="Left"
@@ -594,7 +715,7 @@
                                                           OnContent="On" OffContent="Off"
                                                           Toggled="TileBadgeToggle_Toggled"/>
                                             <TextBlock Text="The small counter that appears on the app's tile and taskbar icon when the Live Tile has new content."
-                                                       FontSize="12" TextWrapping="Wrap" Margin="0,0,0,14"
+                                                       Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" Margin="0,0,0,14"
                                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                             <StackPanel Orientation="Horizontal" Spacing="12">
                                                 <Button x:Name="RefreshTileButton"
@@ -670,7 +791,7 @@
                                                        Opacity="0.08"/>
                                             <StackPanel Spacing="10">
                                                 <TextBlock Text="The welcome dialog appears the first time you open the app."
-                                                           FontSize="12" TextWrapping="Wrap"
+                                                           Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
                                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 <Button x:Name="ResetWelcomeButton"
                                                         Click="ResetWelcomeButton_Click"
@@ -764,7 +885,7 @@
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE774;" FontSize="12"/>
-                                                            <TextBlock Text="Website" FontSize="12"/>
+                                                            <TextBlock Text="Website" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                     <HyperlinkButton x:Name="GitHubLink"
@@ -772,7 +893,7 @@
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE943;" FontSize="12"/>
-                                                            <TextBlock Text="Source Code" FontSize="12"/>
+                                                            <TextBlock Text="Source Code" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                     <HyperlinkButton x:Name="IssuesLink"
@@ -780,7 +901,7 @@
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE946;" FontSize="12"/>
-                                                            <TextBlock Text="Report a Bug" FontSize="12"/>
+                                                            <TextBlock Text="Report a Bug" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                 </StackPanel>
@@ -805,5 +926,6 @@
             </Grid>
 
         </NavigationView>
+
     </Grid>
 </Page>

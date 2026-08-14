@@ -121,6 +121,10 @@ namespace Fort.ind_UWP
         public const string SettingShowTileBadge = "ShowTileBadge";
         public const string SettingSettingsWelcomeExpanded = "SettingsWelcomeExpanded";
         public const string SettingSettingsAboutExpanded = "SettingsAboutExpanded";
+        // The nav item the user was last looking at, so a resume from termination comes back to
+        // it instead of to Home. Written on every content switch rather than at suspend, which is
+        // the same eager approach the panel-expansion keys above use.
+        public const string SettingLastNavTag = "LastNavTag";
 
         // Search behavior
         public const int SearchDebounceMilliseconds = 300;

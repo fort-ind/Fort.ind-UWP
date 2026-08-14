@@ -5,8 +5,17 @@
     xmlns:local="using:Fort.ind_UWP"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:data="using:Windows.UI.Xaml.Data"
     mc:Ignorable="d"
     Background="Transparent">
+
+    <!-- The Ctrl+Plus / Ctrl+Minus accelerators are built in the constructor, not declared here.
+         Two of the four keys have no name in the VirtualKey enum - the +/- on the main keyboard
+         row are VK_OEM_PLUS (187) and VK_OEM_MINUS (189) - and a bare number in a XAML enum
+         attribute compiles without complaint but then fails to convert when the page is parsed.
+         That took the whole page down: Frame.Navigate threw, and MainPage's fallback quietly
+         showed Home instead, so "Games" looked like it simply did nothing. In C# the numbers are
+         an ordinary cast. See GamesPage.xaml.cs. -->
 
     <Page.Resources>
 
@@ -30,14 +39,21 @@
              NoWrap/CharacterEllipsis are NOT redundant: BaseTextBlockStyle (which
              BodyTextBlockStyle derives from) sets TextWrapping="Wrap" and TextTrimming="None",
              which would wrap and clip inside a fixed 64px row. -->
-        <DataTemplate x:Key="GameItemTemplate">
+        <!-- x:Bind, not Binding, throughout the item templates: x:Bind is resolved by the XAML
+             compiler into generated code against x:DataType, where {Binding} walks the property
+             path by reflection every time a container is realised. In a virtualised list that
+             cost is paid per row, on scroll. x:Bind also defaults to OneTime inside a
+             DataTemplate, which is exactly right here - a SearchItem never changes once the
+             sitemap is parsed - and it turns a typo in a property name into a build error
+             instead of a silently blank row. -->
+        <DataTemplate x:Key="GameItemTemplate" x:DataType="local:SearchItem">
             <!-- MinHeight, not Height: the two star rows normalise to their tallest child, so
                  the row is exactly 64 at normal scale but grows instead of clipping when the
                  user turns Windows text scaling up. The glyph opts out of scaling so the icon
                  stays put while the text around it grows. -->
             <Grid MinHeight="64"
-                  AutomationProperties.Name="{Binding Title}"
-                  AutomationProperties.HelpText="{Binding Category}">
+                  AutomationProperties.Name="{x:Bind Title}"
+                  AutomationProperties.HelpText="{x:Bind Category}">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto"/>
                     <ColumnDefinition Width="*"/>
@@ -49,7 +65,7 @@
 
                 <!-- Segoe MDL2 glyph in its own layout cell, never inline with the text. -->
                 <TextBlock Grid.RowSpan="2"
-                           Text="{Binding Icon}"
+                           Text="{x:Bind Icon}"
                            FontFamily="{StaticResource SymbolThemeFontFamily}"
                            FontSize="20"
                            Margin="0,0,12,0"
@@ -59,7 +75,7 @@
                            AutomationProperties.AccessibilityView="Raw"/>
 
                 <TextBlock Grid.Column="1" Grid.Row="0"
-                           Text="{Binding Title}"
+                           Text="{x:Bind Title}"
                            Style="{StaticResource BaseTextBlockStyle}"
                            Foreground="{ThemeResource SystemControlPageTextBaseHighBrush}"
                            TextWrapping="NoWrap"
@@ -68,7 +84,7 @@
                            AutomationProperties.AccessibilityView="Raw"/>
 
                 <TextBlock Grid.Column="1" Grid.Row="1"
-                           Text="{Binding Category}"
+                           Text="{x:Bind Category}"
                            Style="{StaticResource BodyTextBlockStyle}"
                            Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                            TextWrapping="NoWrap"
@@ -78,27 +94,29 @@
             </Grid>
         </DataTemplate>
 
-        <!-- Group header. DataContext here is the GameGroup itself, so {Binding Key}. -->
-        <DataTemplate x:Key="GameGroupHeaderTemplate">
-            <TextBlock Text="{Binding Key}"
+        <!-- Group header. DataContext here is the GameGroup itself, hence x:DataType. -->
+        <DataTemplate x:Key="GameGroupHeaderTemplate" x:DataType="local:GameGroup">
+            <TextBlock Text="{x:Bind Key}"
                        Style="{StaticResource SubtitleTextBlockStyle}"
                        TextWrapping="NoWrap"
-                       AutomationProperties.Name="{Binding Key}"/>
+                       AutomationProperties.Name="{x:Bind Key}"/>
         </DataTemplate>
 
-        <!-- Jump tile. DataContext here is an ICollectionViewGroup, so {Binding Group.Key}.
+        <!-- Jump tile. DataContext here is an ICollectionViewGroup, whose Group property is typed
+             as object - hence the cast to GameGroup in the x:Bind path, which the XAML compiler
+             resolves at build time.
              Just the letter - the tile's size, spacing and fill all live on the container style
              below. Giving the template its own size/margin/background would make the visible
              tile smaller than, and offset from, the GridViewItem that draws the hover and
              reveal visuals, so the highlight lands misaligned and an opaque template
              background paints straight over it. -->
-        <DataTemplate x:Key="GameJumpItemTemplate">
-            <TextBlock Text="{Binding Group.Key}"
+        <DataTemplate x:Key="GameJumpItemTemplate" x:DataType="data:ICollectionViewGroup">
+            <TextBlock Text="{x:Bind ((local:GameGroup)Group).Key}"
                        Style="{StaticResource SubtitleTextBlockStyle}"
                        Foreground="{ThemeResource SystemControlPageTextBaseHighBrush}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
-                       AutomationProperties.Name="{Binding Group.Key}"/>
+                       AutomationProperties.Name="{x:Bind ((local:GameGroup)Group).Key}"/>
         </DataTemplate>
 
         <!-- ListViewItem.HorizontalContentAlignment defaults to Left, which would leave the row
