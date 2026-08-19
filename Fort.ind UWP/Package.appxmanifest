@@ -5,8 +5,7 @@
   xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest"
   xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
   xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
-  xmlns:uap18="http://schemas.microsoft.com/appx/manifest/uap/windows10/18"
-  IgnorableNamespaces="uap mp uap5 uap18">
+  IgnorableNamespaces="uap mp uap5">
 
   <Identity
     Name="fortind.desktopPreview"
@@ -32,7 +31,7 @@
   <Applications>
     <Application Id="App"
       Executable="$targetnametoken$.exe"
-      EntryPoint="Fort.ind_UWP.App" uap18:RuntimeBehavior="windowsApp" uap18:TrustLevel="appContainer">
+      EntryPoint="Fort.ind_UWP.App">
       <uap:VisualElements
         DisplayName="fort.desktop"
         Square150x150Logo="Assets\Square150x150Logo.png"

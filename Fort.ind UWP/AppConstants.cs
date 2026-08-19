@@ -126,6 +126,16 @@ namespace Fort.ind_UWP
         // the same eager approach the panel-expansion keys above use.
         public const string SettingLastNavTag = "LastNavTag";
 
+        // Prefix on every jump list task's argument string, so an argument the app put there is
+        // distinguishable from any other way the app can be launched with arguments. The rest of
+        // the string is a navigation tag; JumpListService.ResolveNavTag is the only thing that
+        // should parse it, because the value arrives from the shell and is therefore untrusted.
+        public const string JumpArgumentPrefix = "jump:";
+
+        // Which revision of the jump list task table was last handed to the shell, so SaveAsync -
+        // a cross-process call - is skipped on launches that would rewrite an identical list.
+        public const string SettingJumpListRevision = "JumpListRevision";
+
         // Search behavior
         public const int SearchDebounceMilliseconds = 300;
         public const int SearchSuggestionLimit = 15;

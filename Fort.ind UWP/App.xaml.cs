@@ -36,6 +36,25 @@ namespace Fort.ind_UWP
         public static bool ResumingFromTermination { get; private set; }
 
         /// <summary>
+        /// Navigation tag from a jump list task that launched the app cold, held until MainPage's
+        /// NavigationView loads and can act on it. Same reasoning as ResumingFromTermination: the
+        /// state belongs to MainPage, which does not exist yet at the point OnLaunched sees it.
+        /// </summary>
+        private static string s_pendingLaunchNavTag;
+
+        /// <summary>
+        /// Reads the pending jump list tag and clears it, so it is acted on exactly once. Without
+        /// the clear, a MainPage rebuilt later in the same process would replay the tag and pull
+        /// the user off whatever they had navigated to since.
+        /// </summary>
+        internal static string TakePendingLaunchNavTag()
+        {
+            var tag = s_pendingLaunchNavTag;
+            s_pendingLaunchNavTag = null;
+            return tag;
+        }
+
+        /// <summary>
         /// Invoked when the application is launched normally by the end user.  Other entry points
         /// will be used when the application is launched to open a specific file, to display
         /// search results, and so forth.
@@ -71,10 +90,33 @@ namespace Fort.ind_UWP
                 if (e.PrelaunchActivated == false)
                 {
                     var isFirstNavigation = rootFrame.Content == null;
+
+                    // A jump list task launches the app with the argument string it was created
+                    // with, and Windows raises OnLaunched for it whether or not the app was
+                    // already running - so both paths have to be handled, and the warm one is
+                    // easy to miss because it previously fell through to nothing but Activate().
+                    // Anything unrecognised resolves to null, which is also what a plain launch
+                    // produces, so the no-argument case needs no separate branch.
+                    var jumpNavTag = JumpListService.ResolveNavTag(e.Arguments);
+
                     if (isFirstNavigation)
                     {
+                        // Cold start: MainPage's NavigationView has not loaded, so there is
+                        // nothing to drive yet. Handed over for ResolveStartupNavTag to pick up.
+                        s_pendingLaunchNavTag = jumpNavTag;
+
                         // Navigate to MainPage (it will handle the profile state)
                         rootFrame.Navigate(typeof(MainPage), e.Arguments);
+                    }
+                    else if (jumpNavTag != null)
+                    {
+                        // Warm start: the shell is the root Frame's content, and the page-backed
+                        // views live in a Frame inside it, so this cast is the live shell.
+                        var mainPage = rootFrame.Content as MainPage;
+                        if (mainPage != null)
+                        {
+                            mainPage.NavigateToTag(jumpNavTag);
+                        }
                     }
 
                     // Ensure the current window is active
@@ -170,6 +212,11 @@ namespace Fort.ind_UWP
             {
                 await LocalStorageService.InitializeAsync();
                 await ProfileService.TryRestoreSessionAsync();
+
+                // Jump list publishing rides along here for the same reason the session restore
+                // does: SaveAsync is cross-process shell work, and it has nothing to do with
+                // getting the first frame on screen. It no-ops entirely once the list is current.
+                await JumpListService.EnsureTasksAsync();
             }
             catch (Exception ex)
             {

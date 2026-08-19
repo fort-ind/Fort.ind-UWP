@@ -149,6 +149,7 @@
       <DependentUpon>ProfilePage.xaml</DependentUpon>
     </Compile>
     <Compile Include="Services\AvatarIconService.cs" />
+    <Compile Include="Services\JumpListService.cs" />
     <Compile Include="Services\LiveTileService.cs" />
     <Compile Include="Services\LocalStorageService.cs" />
     <Compile Include="Services\MisskeyAuthService.cs" />
@@ -161,6 +162,51 @@
     </AppxManifest>
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\JumpList\Home.scale-100.png" />
+    <Content Include="Assets\JumpList\Home.scale-200.png" />
+    <Content Include="Assets\JumpList\Home.scale-400.png" />
+    <Content Include="Assets\JumpList\Games.scale-100.png" />
+    <Content Include="Assets\JumpList\Games.scale-200.png" />
+    <Content Include="Assets\JumpList\Games.scale-400.png" />
+    <Content Include="Assets\JumpList\Social.scale-100.png" />
+    <Content Include="Assets\JumpList\Social.scale-200.png" />
+    <Content Include="Assets\JumpList\Social.scale-400.png" />
+    <Content Include="Assets\JumpList\Profile.scale-100.png" />
+    <Content Include="Assets\JumpList\Profile.scale-200.png" />
+    <Content Include="Assets\JumpList\Profile.scale-400.png" />
+    <Content Include="Assets\JumpList\Settings.scale-100.png" />
+    <Content Include="Assets\JumpList\Settings.scale-200.png" />
+    <Content Include="Assets\JumpList\Settings.scale-400.png" />
+    <Content Include="Assets\JumpList\Home.altform-unplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Home.altform-unplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Home.altform-unplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Home.altform-lightunplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Home.altform-lightunplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Home.altform-lightunplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Games.altform-unplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Games.altform-unplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Games.altform-unplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Games.altform-lightunplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Games.altform-lightunplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Games.altform-lightunplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Social.altform-unplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Social.altform-unplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Social.altform-unplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Social.altform-lightunplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Social.altform-lightunplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Social.altform-lightunplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Profile.altform-unplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Profile.altform-unplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Profile.altform-unplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Profile.altform-lightunplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Profile.altform-lightunplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Profile.altform-lightunplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Settings.altform-unplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Settings.altform-unplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Settings.altform-unplated_scale-400.png" />
+    <Content Include="Assets\JumpList\Settings.altform-lightunplated_scale-100.png" />
+    <Content Include="Assets\JumpList\Settings.altform-lightunplated_scale-200.png" />
+    <Content Include="Assets\JumpList\Settings.altform-lightunplated_scale-400.png" />
     <Content Include="Assets\BadgeLogo.scale-100.png" />
     <Content Include="Assets\BadgeLogo.scale-125.png" />
     <Content Include="Assets\BadgeLogo.scale-150.png" />

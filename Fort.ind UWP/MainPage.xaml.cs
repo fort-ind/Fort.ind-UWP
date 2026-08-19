@@ -655,6 +655,33 @@ namespace Fort.ind_UWP
         }
 
         /// <summary>
+        /// Drives the shell to a nav tag from outside the page - currently a jump list task that
+        /// arrived while the app was already running. Does what a pane click does: moves the
+        /// selection so the pane agrees with the content, switches the content, then closes the
+        /// pane the same way NavView_ItemInvoked would.
+        ///
+        /// Deliberately not routed through NavView_Loaded's startup path, which is one-shot
+        /// behind _navViewInitialized and so would do nothing on a second activation. Unknown
+        /// tags fall through ShowContent's default to Home; App resolves the argument through
+        /// JumpListService.ResolveNavTag before calling this, so that is belt and braces.
+        /// </summary>
+        internal void NavigateToTag(string tag)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(tag)) return;
+
+                SelectNavItemForTag(tag);
+                ShowContent(tag);
+                ClosePaneUnlessExpanded();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: NavigateToTag failed - {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Widens the pane toggle button from 40 to 48 so its box matches the glyph inside it.
         ///
         /// PaneToggleButtonStyle sets MinWidth from {StaticResource PaneToggleButtonWidth}, and a
@@ -742,6 +769,13 @@ namespace Fort.ind_UWP
         {
             try
             {
+                // A jump list task outranks both of the cases below: the user named a
+                // destination in the act of launching, which is more specific than "put me back
+                // where I was" and than the Home default. Taken (not just read) so it is acted on
+                // once - see App.TakePendingLaunchNavTag.
+                var pending = App.TakePendingLaunchNavTag();
+                if (!string.IsNullOrEmpty(pending)) return pending;
+
                 if (!App.ResumingFromTermination) return AppConstants.NavigationLatestNews;
 
                 var saved = ApplicationData.Current.LocalSettings.Values[AppConstants.SettingLastNavTag] as string;
