@@ -6,7 +6,7 @@ fort.ind, but on windows! with all the features you want (and profiles!), made w
 # requirements
 Must be at least on Windows 10 version 1809; the dependencies for the app are in the artifacts folder 
 # installing
-Grab the latest release from the Actions tab 
+If you want a stable experience, get the latest [release](https://github.com/fort-ind/uwp/releases/latest), or if you like seeing what we are cooking and are okay with rough edges, go to the Actions tab and grab it from there (or use our [nightly.link](https://nightly.link/fort-ind/uwp/workflows/build-msix/master))
 ### the included PS script (easiest :3)
 Just run as admin, and you're good to go!
 ### installing using the appx and cer 
