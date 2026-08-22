@@ -1,10 +1,12 @@
-# fort.desktop 
-(yes uwp is finally in a state where i can rename this to just desktop woot woot)
-a sort of prototype version of fort.desktop rebulit in unversial windows platform with winui and C#
+# fort.desktop
+fort.ind, but on windows! with all the features you want (and profiles!), made with winUI + C# ❤️ 
+
+<img width="1311" height="826" alt="image" src="https://github.com/user-attachments/assets/c698b6b0-2d43-4ccc-a70f-96fbaa25c35e" />
+
 # requirements
-must at least be on version Windows 10 1809, the dependencies for the app are in the artifacts folder 
+Must be at least on Windows 10 version 1809; the dependencies for the app are in the artifacts folder 
 # installing
-Grab the latest release from the actions tab 
+If you want a stable experience, get the latest [release](https://github.com/fort-ind/uwp/releases/latest), or if you like seeing what we are cooking and are okay with rough edges, go to the Actions tab and grab it from there (or use our [nightly.link](https://nightly.link/fort-ind/uwp/workflows/build-msix/master))
 ### the included PS script (easiest :3)
 Just run as admin, and you're good to go!
 ### installing using the appx and cer 
