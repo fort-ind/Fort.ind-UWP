@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -115,14 +116,7 @@ namespace Fort.ind_UWP
                     return items; // Malformed XML - return empty so a later caller retries.
                 }
 
-                foreach (var urlValue in urlsToCache)
-                {
-                    var item = CreateSearchItemFromUrl(urlValue);
-                    if (item != null)
-                    {
-                        items.Add(item);
-                    }
-                }
+                items = BuildSearchItemsFromUrls(urlsToCache);
 
                 if (urlsToCache.Count > 0)
                 {
@@ -224,18 +218,12 @@ namespace Fort.ind_UWP
 
         private static List<SearchItem> BuildSearchItemsFromUrls(IEnumerable<string> urls)
         {
-            List<SearchItem> items = new List<SearchItem>();
-
-            foreach (var urlValue in urls)
-            {
-                var item = CreateSearchItemFromUrl(urlValue);
-                if (item != null)
-                {
-                    items.Add(item);
-                }
-            }
-
-            return items;
+            // Nulls are the URLs CreateSearchItemFromUrl deliberately rejects (the 404 page), so
+            // they are filtered out rather than carried through as empty search results.
+            return urls
+                .Select(CreateSearchItemFromUrl)
+                .Where(item => item != null)
+                .ToList();
         }
 
         private static async Task<List<string>> TryLoadCachedUrlsAsync()

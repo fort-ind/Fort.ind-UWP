@@ -981,13 +981,10 @@ namespace Fort.ind_UWP
             ContentFrame.Visibility = Visibility.Visible;
             try
             {
-                if (ContentFrame != null)
+                if (ContentFrame != null && !(ContentFrame.Content is GamesPage))
                 {
-                    if (!(ContentFrame.Content is GamesPage))
-                    {
-                        ContentFrame.Navigate(typeof(GamesPage));
-                        TrimContentBackStack();
-                    }
+                    ContentFrame.Navigate(typeof(GamesPage));
+                    TrimContentBackStack();
                 }
             }
             catch (Exception ex)

@@ -113,16 +113,20 @@ namespace Fort.ind_UWP
 
             // The timeout task is cancelled once the browser comes back, otherwise a completed
             // sign-in would still leave a live 5-minute timer (and its continuation) rooted.
-            CancellationTokenSource timeoutCts = new CancellationTokenSource();
             Task finished = null;
-            try
+            using (var timeoutCts = new CancellationTokenSource())
             {
-                finished = await Task.WhenAny(completion.Task, Task.Delay(SignInTimeout, timeoutCts.Token));
-            }
-            finally
-            {
-                timeoutCts.Cancel();
-                timeoutCts.Dispose();
+                try
+                {
+                    finished = await Task.WhenAny(completion.Task, Task.Delay(SignInTimeout, timeoutCts.Token));
+                }
+                finally
+                {
+                    // Cancel before the using block disposes: disposing a CancellationTokenSource
+                    // does not cancel it, and an uncancelled Task.Delay keeps the 5-minute timer
+                    // (and its continuation) rooted after a sign-in that already came back.
+                    timeoutCts.Cancel();
+                }
             }
 
             if (finished != completion.Task)

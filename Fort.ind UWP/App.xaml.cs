@@ -87,7 +87,7 @@ namespace Fort.ind_UWP
                     Window.Current.Content = rootFrame;
                 }
 
-                if (e.PrelaunchActivated == false)
+                if (!e.PrelaunchActivated)
                 {
                     var isFirstNavigation = rootFrame.Content == null;
 

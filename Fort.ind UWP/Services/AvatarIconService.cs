@@ -278,16 +278,12 @@ namespace Fort.ind_UWP
                     }
 
                     int alphaIndex = rowStart + (x * 4) + 3;
-                    if (coverage <= 0.0)
-                    {
-                        pixels[alphaIndex] = 0;
-                    }
-                    else
-                    {
-                        // Math.Round, not a cast - a cast truncates, which darkens every feathered
-                        // edge pixel by a level.
-                        pixels[alphaIndex] = (byte)Math.Round(pixels[alphaIndex] * coverage, MidpointRounding.ToEven);
-                    }
+
+                    // Math.Round, not a cast - a cast truncates, which darkens every feathered
+                    // edge pixel by a level.
+                    pixels[alphaIndex] = coverage <= 0.0
+                        ? (byte)0
+                        : (byte)Math.Round(pixels[alphaIndex] * coverage, MidpointRounding.ToEven);
                 }
             }
         }

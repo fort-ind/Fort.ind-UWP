@@ -346,14 +346,9 @@ namespace Fort.ind_UWP
         private void UpdateCountText(int shownCount)
         {
             var total = _allGames.Count;
-            if (shownCount == total)
-            {
-                CountText.Text = total == 1 ? "1 game" : $"{total} games";
-            }
-            else
-            {
-                CountText.Text = $"{shownCount} of {total} games";
-            }
+            CountText.Text = shownCount == total
+                ? (total == 1 ? "1 game" : $"{total} games")
+                : $"{shownCount} of {total} games";
         }
 
         /// <summary>

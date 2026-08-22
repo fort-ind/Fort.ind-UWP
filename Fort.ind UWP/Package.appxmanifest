@@ -10,7 +10,7 @@
   <Identity
     Name="fortind.desktopPreview"
     Publisher="CN=fort.ind"
-    Version="2.1.0.0" />
+    Version="2.2.0.0" />
 
   <mp:PhoneIdentity PhoneProductId="842aa337-86c0-43da-82da-a0aa21c2fc6d" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
