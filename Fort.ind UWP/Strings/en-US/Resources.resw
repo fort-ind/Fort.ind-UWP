@@ -130,10 +130,10 @@
     <value>Profile: {0}</value>
   </data>
   <data name="StartupErrorDialogTitle" xml:space="preserve">
-    <value>Startup Error</value>
+    <value>oh dear..</value>
   </data>
   <data name="StartupErrorDialogBody" xml:space="preserve">
-    <value>The application failed to start properly. Please try restarting.</value>
+    <value>fort.uwp failed to start this could be for a number of reasons sometimes just restarting the app can fix most issues</value>
   </data>
   <data name="NavigationErrorDialogTitle" xml:space="preserve">
     <value>Navigation Error</value>
@@ -163,7 +163,7 @@
     <value>Clear</value>
   </data>
   <data name="ResetExplainDialogTitle" xml:space="preserve">
-    <value>Reset fort.desktop</value>
+    <value>reset the app?</value>
   </data>
   <data name="ResetExplainDialogBody" xml:space="preserve">
     <value>This signs you out and deletes everything the app has saved locally - your cached profile, the sitemap cache, and all preferences (theme, tint color, panel states). It resets the app to a fresh install. This does not affect your fort.social account.</value>
@@ -205,7 +205,7 @@
     <value>Are you sure you want to sign out?</value>
   </data>
   <data name="SignOutDialogConfirm" xml:space="preserve">
-    <value>Sign Out</value>
+    <value>im sure, log me out</value>
   </data>
   <data name="CustomTintDialogTitle" xml:space="preserve">
     <value>Custom background tint</value>
@@ -265,13 +265,13 @@
     <value>Fort.ind</value>
   </data>
   <data name="TileLargeBranding" xml:space="preserve">
-    <value>Fort.ind Desktop</value>
+    <value>fort.desktop</value>
   </data>
   <data name="TileNewsWhatsNewTitle" xml:space="preserve">
     <value>What's new?</value>
   </data>
   <data name="TileNewsWhatsNewBody" xml:space="preserve">
-    <value>2026.7 has been released for web go to fort1nd.com to see whats new</value>
+    <value>2026.8 has been released for web go to fort1nd.com to see whats new</value>
   </data>
   <data name="TileNewsGetStartedTitle" xml:space="preserve">
     <value>Get Started</value>
@@ -649,7 +649,7 @@
     <value>Reset app button</value>
   </data>
   <data name="RetryButton.Content" xml:space="preserve">
-    <value>Try again</value>
+    <value>hmm, try that again</value>
   </data>
   <data name="RetryButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
     <value>Reload the games list</value>
@@ -670,10 +670,10 @@
     <value>skip connecting your account</value>
   </data>
   <data name="SkipButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
-    <value>Continue using the app without signing in</value>
+    <value>use the app without a account</value>
   </data>
   <data name="SkipButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
-    <value>Skip sign in</value>
+    <value>skip login</value>
   </data>
   <data name="ThemeDarkRadio.Content" xml:space="preserve">
     <value>Dark</value>
