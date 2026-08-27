@@ -1,85 +1,19 @@
-using System;
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Windows.Foundation.Metadata;
-using Windows.UI.Xaml;
-using Windows.UI.Xaml.Controls;
-
 namespace Fort.ind_UWP
 {
     /// <summary>
-    /// Centralized app constants to avoid repeated literals and drift.
+    /// Centralized app constants to avoid repeated literals and drift. Constants only - the
+    /// behaviour that used to live here moved out to <see cref="WebLauncher"/> (URL launching)
+    /// and <see cref="DialogService"/> (XamlRoot probing).
+    ///
+    /// Nav tags, category names, LocalSettings keys and timings all belong here rather than
+    /// inline at their use sites. Display text does not: that lives in
+    /// Strings\en-US\Resources.resw.
     /// </summary>
     public sealed class AppConstants
     {
 
         private AppConstants()
         {
-        }
-
-        /// <summary>
-        /// UIElement.XamlRoot was added in Windows 10 1903 (10.0.18362.0). This app's
-        /// TargetPlatformMinVersion is 1809 (10.0.17763.0), where the property doesn't exist -
-        /// reading or setting it throws, which every ContentDialog call site swallows in a
-        /// try/catch, so on 1809 dialogs silently never appear. A single-window UWP app shows
-        /// ContentDialogs fine with XamlRoot left unset, so just skip it when unsupported.
-        /// </summary>
-        private static readonly bool s_xamlRootSupported =
-            ApiInformation.IsPropertyPresent("Windows.UI.Xaml.UIElement", "XamlRoot");
-
-        public static void ApplyXamlRoot(ContentDialog dialog, UIElement owner)
-        {
-            if (s_xamlRootSupported)
-            {
-                dialog.XamlRoot = owner.XamlRoot;
-            }
-        }
-
-        /// <summary>
-        /// Parses a string into a web URI, accepting only http/https.
-        ///
-        /// Every URL the app launches originates outside the code: the bundled sitemap, the
-        /// plain-text URL cache in LocalFolder, or profile JSON returned by the instance. Handing
-        /// any of those straight to Launcher.LaunchUriAsync means one click can invoke *any*
-        /// registered protocol on the machine - "ms-settings:", "file:", "shell:", or another
-        /// installed app's custom scheme - because Uri.TryCreate(..., Absolute) happily accepts
-        /// all of them. A browsable link is the only thing any of these call sites ever intends,
-        /// so anything else is rejected here rather than at each call site.
-        /// Returns null if the value is not a well-formed http/https URL.
-        /// </summary>
-        public static Uri TryCreateWebUri(string value)
-        {
-            if (string.IsNullOrWhiteSpace(value)) return null;
-
-            Uri uri = null;
-            if (!Uri.TryCreate(value, UriKind.Absolute, out uri)) return null;
-
-            if (!string.Equals(uri.Scheme, "http", StringComparison.OrdinalIgnoreCase) &&
-                !string.Equals(uri.Scheme, "https", StringComparison.OrdinalIgnoreCase))
-            {
-                return null;
-            }
-
-            if (string.IsNullOrEmpty(uri.Host)) return null;
-
-            return uri;
-        }
-
-        /// <summary>
-        /// Opens a URL in the user's browser, but only if it is a well-formed http/https URL.
-        /// See <see cref="TryCreateWebUri"/> for why the scheme is checked. Returns False (and
-        /// launches nothing) for anything else.
-        /// </summary>
-        public static async Task<bool> LaunchWebUriAsync(string value)
-        {
-            var uri = TryCreateWebUri(value);
-            if (uri == null)
-            {
-                Debug.WriteLine($"AppConstants: refused to launch non-web URI - {value}");
-                return false;
-            }
-
-            return await Windows.System.Launcher.LaunchUriAsync(uri);
         }
 
         // Search categories
@@ -146,8 +80,10 @@ namespace Fort.ind_UWP
         public const string SitemapCacheAppVersionKey = "SitemapCacheAppVersion";
         public const int SitemapCacheTtlHours = 24;
 
-        // Release channel suffix appended after the numeric version (e.g. "0.5.0 Beta")
-        public const string VersionChannel = " ";
+        // Release channel suffix appended after the numeric version (e.g. "2.2.0 Beta"). Empty
+        // for a plain release - the separating space is added only when there is a channel to
+        // separate, so the About row does not end in trailing whitespace.
+        public const string VersionChannel = "";
 
         /// <summary>
         /// The app version pulled from the package manifest, formatted as "Major.Minor.Build".
@@ -169,15 +105,20 @@ namespace Fort.ind_UWP
 
         private static string ResolveAppVersionDisplay()
         {
+            string numeric;
             try
             {
                 var v = Windows.ApplicationModel.Package.Current.Id.Version;
-                return $"{v.Major}.{v.Minor}.{v.Build} {VersionChannel}";
+                numeric = $"{v.Major}.{v.Minor}.{v.Build}";
             }
             catch
             {
-                return $"2.1.0 {VersionChannel}";
+                // Unpackaged only. Keep the Major.Minor here in step with Package.appxmanifest's
+                // Identity/@Version and AssemblyInfo.cs - all three drift silently otherwise.
+                numeric = "2.2.0";
             }
+
+            return string.IsNullOrEmpty(VersionChannel) ? numeric : $"{numeric} {VersionChannel}";
         }
 
     }

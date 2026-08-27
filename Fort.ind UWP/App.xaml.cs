@@ -149,20 +149,20 @@ namespace Fort.ind_UWP
                 showStartupErrorDialog = true;
             }
 
-            if (showStartupErrorDialog && Window.Current.Content != null)
+            if (showStartupErrorDialog)
             {
+                // DialogService swallows its own failures, but this is an async void: reading
+                // Window.Current here is outside its reach, and an exception escaping this method
+                // takes the process down.
                 try
                 {
-                    // CloseButton, not PrimaryButton: the close button is the one a dialog is
-                    // required to have, and it is what Esc is wired to. An acknowledge-only
-                    // dialog whose single button is the *primary* one cannot be dismissed from
-                    // the keyboard at all.
-                    ContentDialog errorDialog = new ContentDialog();
-                    errorDialog.Title = "Startup Error";
-                    errorDialog.Content = "The application failed to start properly. Please try restarting.";
-                    errorDialog.CloseButtonText = "OK";
-                    AppConstants.ApplyXamlRoot(errorDialog, Window.Current.Content);
-                    await errorDialog.ShowAsync();
+                    if (Window.Current.Content != null)
+                    {
+                        await DialogService.ShowMessageAsync(Window.Current.Content,
+                                                             LocalizedStrings.Get("StartupErrorDialogTitle"),
+                                                             LocalizedStrings.Get("StartupErrorDialogBody"),
+                                                             LocalizedStrings.Get("DialogOk"));
+                    }
                 }
                 catch
                 {
@@ -281,24 +281,20 @@ namespace Fort.ind_UWP
         /// <param name="e">Details about the navigation failure</param>
         private async void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
         {
-            // Log the error instead of crashing the app
-            Debug.WriteLine($"Navigation failed: {e.SourcePageType.FullName} - {(e.Exception != null ? e.Exception.Message : "Unknown error")}");
-
-            // Show user-friendly error dialog
+            // async void: everything is wrapped, because an exception escaping here crashes the app.
             try
             {
-                // See the note in OnLaunched about CloseButton vs PrimaryButton.
-                ContentDialog errorDialog = new ContentDialog();
-                errorDialog.Title = "Navigation Error";
-                errorDialog.Content = "Failed to load that page.";
-                errorDialog.CloseButtonText = "OK";
-                errorDialog.DefaultButton = ContentDialogButton.Close;
-                AppConstants.ApplyXamlRoot(errorDialog, Window.Current.Content);
-                await errorDialog.ShowAsync();
+                // Log the error instead of crashing the app
+                Debug.WriteLine($"Navigation failed: {e.SourcePageType.FullName} - {(e.Exception != null ? e.Exception.Message : "Unknown error")}");
+
+                // Show user-friendly error dialog
+                await DialogService.ShowMessageAsync(Window.Current.Content,
+                                                     LocalizedStrings.Get("NavigationErrorDialogTitle"),
+                                                     LocalizedStrings.Get("NavigationErrorDialogBody"),
+                                                     LocalizedStrings.Get("DialogOk"));
             }
             catch (Exception ex)
             {
-                // If dialog fails, just log it
                 Debug.WriteLine($"Error dialog failed: {ex.Message}");
             }
         }

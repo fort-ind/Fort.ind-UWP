@@ -104,7 +104,7 @@ namespace Fort.ind_UWP
                     return BuildSearchItemsFromUrls(cachedUrls);
                 }
 
-                var file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///sitemap.xml"));
+                var file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/sitemap.xml"));
                 var text = await FileIO.ReadTextAsync(file);
 
                 // Streamed rather than XDocument.Parse: the only thing wanted out of the whole
@@ -193,7 +193,7 @@ namespace Fort.ind_UWP
         /// <param name="urlValue">The absolute URL string.</param>
         private static SearchItem CreateSearchItemFromUrl(string urlValue)
         {
-            var uri = AppConstants.TryCreateWebUri(urlValue);
+            var uri = WebLauncher.TryCreateWebUri(urlValue);
             if (uri == null)
             {
                 return null;

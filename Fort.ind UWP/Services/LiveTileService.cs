@@ -93,7 +93,7 @@ namespace Fort.ind_UWP
 
             TileContent content = new TileContent();
             content.Visual = new TileVisual();
-            content.Visual.DisplayName = "Fort.ind";
+            content.Visual.DisplayName = LocalizedStrings.Get("TileDisplayName");
             content.Visual.Branding = safeBranding;
 
             // Small tile: centered monogram
@@ -140,7 +140,7 @@ namespace Fort.ind_UWP
             largeMessageText.HintAlign = AdaptiveTextAlign.Center;
 
             AdaptiveText largeBrandingText = new AdaptiveText();
-            largeBrandingText.Text = "Fort.ind Desktop";
+            largeBrandingText.Text = LocalizedStrings.Get("TileLargeBranding");
             largeBrandingText.HintStyle = AdaptiveTextStyle.CaptionSubtle;
             largeBrandingText.HintAlign = AdaptiveTextAlign.Center;
 

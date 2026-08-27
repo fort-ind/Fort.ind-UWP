@@ -56,13 +56,12 @@
                     <FontIcon Glyph="&#xE774;" FontSize="32"/>
                 </StackPanel>
 
-                <TextBlock Text="Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do!"
+                <TextBlock x:Uid="MainWelcomeToTheBeta"
                            Style="{StaticResource BodyTextBlockStyle}"
                            TextWrapping="Wrap"
                            Opacity="0.9"/>
 
-                <CheckBox x:Name="WelcomeDontShowCheckBox"
-                          Content="dont show me this again >:("
+                <CheckBox x:Uid="WelcomeDontShowCheckBox" x:Name="WelcomeDontShowCheckBox"
                           Margin="0,4,0,0"/>
             </StackPanel>
         </DataTemplate>
@@ -138,9 +137,8 @@
                  pane runs the full height of the window the app name reads as the pane's own
                  heading, and a 48px compact pane is narrower than the word, so it would spill
                  out over the content and sit on top of whatever the page draws there. -->
-            <TextBlock x:Name="AppTitleText"
+            <TextBlock x:Uid="AppTitleText" x:Name="AppTitleText"
                        Grid.Column="1"
-                       Text="Fort.ind"
                        VerticalAlignment="Center"
                        Margin="12,0,0,0"
                        Style="{StaticResource CaptionTextBlockStyle}"
@@ -217,11 +215,9 @@
             </NavigationView.HeaderTemplate>
 
             <NavigationView.AutoSuggestBox>
-                <AutoSuggestBox x:Name="NavSearchBox"
-                                PlaceholderText="Search for games, pages, and more..."
+                <AutoSuggestBox x:Uid="NavSearchBox" x:Name="NavSearchBox"
                                 QueryIcon="Find"
                                 MaxSuggestionListHeight="400"
-                                AutomationProperties.Name="Search for games, pages and more"
                                 TextChanged="NavSearchBox_TextChanged"
                                 QuerySubmitted="NavSearchBox_QuerySubmitted"
                                 SuggestionChosen="NavSearchBox_SuggestionChosen">
@@ -249,47 +245,32 @@
             </NavigationView.AutoSuggestBox>
 
             <NavigationView.MenuItems>
-                <NavigationViewItem Content="Home" Tag="LatestNews"
-                                     ToolTipService.ToolTip="Home"
-                                     AccessKey="H"
-                                     AutomationProperties.Name="Home"
-                                     AutomationProperties.HelpText="Navigate to home page">
+                <NavigationViewItem x:Uid="MainHome" Tag="LatestNews"
+                                     AccessKey="H">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Home"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Games" Tag="Games"
-                                     ToolTipService.ToolTip="Games"
-                                     AccessKey="G"
-                                     AutomationProperties.Name="Games"
-                                     AutomationProperties.HelpText="Browse games">
+                <NavigationViewItem x:Uid="MainGames" Tag="Games"
+                                     AccessKey="G">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Play"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Beta Programs" Tag="Betas"
-                                     ToolTipService.ToolTip="Beta Programs"
-                                     AccessKey="B"
-                                     AutomationProperties.Name="Beta Programs"
-                                     AutomationProperties.HelpText="Join beta programs">
+                <NavigationViewItem x:Uid="MainBetaPrograms" Tag="Betas"
+                                     AccessKey="B">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="PreviewLink"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem x:Name="ProfileNavItem" Content="Your Profile" Tag="Profile"
-                                     ToolTipService.ToolTip="Your Profile"
-                                     AccessKey="P"
-                                     AutomationProperties.Name="Your Profile"
-                                     AutomationProperties.HelpText="View and edit your profile">
+                <NavigationViewItem x:Uid="ProfileNavItem" x:Name="ProfileNavItem" Tag="Profile"
+                                     AccessKey="P">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="Contact"/>
                     </NavigationViewItem.Icon>
                 </NavigationViewItem>
-                <NavigationViewItem Content="Social" Tag="Social"
-                                     ToolTipService.ToolTip="Social"
-                                     AccessKey="S"
-                                     AutomationProperties.Name="Social"
-                                     AutomationProperties.HelpText="Connect with the community">
+                <NavigationViewItem x:Uid="MainSocial" Tag="Social"
+                                     AccessKey="S">
                     <NavigationViewItem.Icon>
                         <SymbolIcon Symbol="People"/>
                     </NavigationViewItem.Icon>
@@ -313,7 +294,7 @@
                         </StackPanel.RenderTransform>
                         <!-- Latest News Content (default view) -->
                         <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
-                            <TextBlock Text="Check back here for the latest updates and announcements."
+                            <TextBlock x:Uid="MainCheckBackHereFor"
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                        Margin="0,0,0,24"/>
@@ -338,20 +319,20 @@
                                         <StackPanel Orientation="Horizontal" Spacing="6"
                                                     Opacity="0.6" Margin="0,0,0,8">
                                             <FontIcon Glyph="&#xE789;" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Text="Welcome!"
+                                            <TextBlock x:Uid="MainWelcome"
                                                        Style="{StaticResource CaptionTextBlockStyle}"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock Text="welcome to version 2.0 of fort.uwp!"
+                                        <TextBlock x:Uid="MainWelcomeToVersion2"
                                                    Style="{StaticResource SubtitleTextBlockStyle}"
                                                    TextWrapping="Wrap"
                                                    Margin="0,0,0,12"/>
-                                        <TextBlock Text="this update fixes many bugs add new features and we also added syncing accounts with fort.social"
+                                        <TextBlock x:Uid="MainThisUpdateFixesMany"
                                                    Style="{StaticResource BodyTextBlockStyle}"
                                                    TextWrapping="Wrap"
                                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"
                                                    Margin="0,0,0,12"/>
-                                        <TextBlock Text="Just now"
+                                        <TextBlock x:Uid="MainJustNow"
                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"/>
                                     </StackPanel>
@@ -369,20 +350,20 @@
                                         <StackPanel Orientation="Horizontal" Spacing="6"
                                                     Opacity="0.6" Margin="0,0,0,8">
                                             <FontIcon Glyph="&#xE7FC;" FontSize="12" VerticalAlignment="Center"/>
-                                            <TextBlock Text="soon! :3"
+                                            <TextBlock x:Uid="MainSoon3"
                                                        Style="{StaticResource CaptionTextBlockStyle}"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
-                                        <TextBlock Text="soon soon soon-"
+                                        <TextBlock x:Uid="MainSoonSoonSoon"
                                                    Style="{StaticResource SubtitleTextBlockStyle}"
                                                    TextWrapping="Wrap"
                                                    Margin="0,0,0,12"/>
-                                        <TextBlock Text="soon you will be able to manage your fort.ind account, view posts from social and play your games from fort1nd.com on windows! if you want to use the full experience for now go to fort1nd.com"
+                                        <TextBlock x:Uid="MainSoonYouWillBe"
                                                    Style="{StaticResource BodyTextBlockStyle}"
                                                    TextWrapping="Wrap"
                                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"
                                                    Margin="0,0,0,12"/>
-                                        <TextBlock Text="in the future (maybe subject to change)"
+                                        <TextBlock x:Uid="MainInTheFutureMaybe"
                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"/>
                                     </StackPanel>
@@ -394,7 +375,7 @@
 
                         <!-- Betas Content -->
                         <StackPanel x:Name="BetasPanel" Visibility="Collapsed">
-                            <TextBlock Text="Access beta versions and early features (coming soon)"
+                            <TextBlock x:Uid="MainAccessBetaVersionsAnd"
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
@@ -403,14 +384,14 @@
 
                         <!-- Social Content -->
                         <StackPanel x:Name="SocialPanel" Visibility="Collapsed">
-                            <TextBlock Text="Social features coming soon"
+                            <TextBlock x:Uid="MainSocialFeaturesComingSoon"
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
 
                         <!-- Settings Content -->
                         <StackPanel x:Name="SettingsPanel" Visibility="Collapsed">
-                            <TextBlock Text="make fort.desktop work for you :3 change it to how you like"
+                            <TextBlock x:Uid="MainMakeFortDesktopWork"
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                        Margin="0,0,0,24"/>
@@ -427,15 +408,13 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button Style="{StaticResource ButtonRevealStyle}"
+                                        <Button x:Uid="MainAppearance" Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
-                                                Click="AppearanceHeader_Tapped"
-                                                AutomationProperties.Name="Appearance"
-                                                AutomationProperties.HelpText="Change app theme and background color">
+                                                Click="AppearanceHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -448,8 +427,8 @@
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="Appearance" Style="{StaticResource BaseTextBlockStyle}"/>
-                                                    <TextBlock Text="Change app theme and background color"
+                                                    <TextBlock x:Uid="MainAppearance2" Style="{StaticResource BaseTextBlockStyle}"/>
+                                                    <TextBlock x:Uid="MainChangeAppThemeAnd"
                                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 </StackPanel>
@@ -477,16 +456,16 @@
                                                 <StackPanel Spacing="8">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <FontIcon Glyph="&#xE793;" FontSize="14" Opacity="0.7"/>
-                                                        <TextBlock Text="App Theme" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
+                                                        <TextBlock x:Uid="MainAppTheme" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" Spacing="16">
-                                                        <RadioButton x:Name="ThemeSystemRadio" Content="System Default"
+                                                        <RadioButton x:Uid="ThemeSystemRadio" x:Name="ThemeSystemRadio"
                                                                      GroupName="AppTheme" Tag="Default"
                                                                      Checked="ThemeRadio_Checked"/>
-                                                        <RadioButton x:Name="ThemeLightRadio" Content="Light"
+                                                        <RadioButton x:Uid="ThemeLightRadio" x:Name="ThemeLightRadio"
                                                                      GroupName="AppTheme" Tag="Light"
                                                                      Checked="ThemeRadio_Checked"/>
-                                                        <RadioButton x:Name="ThemeDarkRadio" Content="Dark"
+                                                        <RadioButton x:Uid="ThemeDarkRadio" x:Name="ThemeDarkRadio"
                                                                      GroupName="AppTheme" Tag="Dark"
                                                                      Checked="ThemeRadio_Checked"/>
                                                     </StackPanel>
@@ -494,96 +473,72 @@
                                                 <StackPanel Spacing="8">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <FontIcon Glyph="&#xE771;" FontSize="14" Opacity="0.7"/>
-                                                        <TextBlock Text="Background Tint" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
+                                                        <TextBlock x:Uid="MainBackgroundTint" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
                                                     </StackPanel>
                                                     <StackPanel Spacing="8">
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Button x:Name="TintDefaultButton" Tag="Default"
+                                                            <Button x:Uid="TintDefaultButton" x:Name="TintDefaultButton" Tag="Default"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
-                                                                    BorderThickness="2" BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Default"
-                                                                    AutomationProperties.Name="Default background tint">
+                                                                    BorderThickness="2" BorderBrush="Transparent">
                                                                 <FontIcon Glyph="&#xE8D8;" FontSize="14"/>
                                                             </Button>
-                                                            <Button x:Name="TintBlueButton" Tag="#1E3A5F"
+                                                            <Button x:Uid="TintBlueButton" x:Name="TintBlueButton" Tag="#1E3A5F"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1D6FA5" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Navy Blue"
-                                                                    AutomationProperties.Name="Navy Blue background tint"/>
-                                                            <Button x:Name="TintPurpleButton" Tag="#2D1B69"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintPurpleButton" x:Name="TintPurpleButton" Tag="#2D1B69"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#6041B0" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Deep Purple"
-                                                                    AutomationProperties.Name="Deep Purple background tint"/>
-                                                            <Button x:Name="TintGreenButton" Tag="#0F3D2E"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintGreenButton" x:Name="TintGreenButton" Tag="#0F3D2E"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1B7A4E" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Forest Green"
-                                                                    AutomationProperties.Name="Forest Green background tint"/>
-                                                            <Button x:Name="TintRedButton" Tag="#3D1515"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintRedButton" x:Name="TintRedButton" Tag="#3D1515"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B03232" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Deep Red"
-                                                                    AutomationProperties.Name="Deep Red background tint"/>
-                                                            <Button x:Name="TintSlateButton" Tag="#1A1A2E"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintSlateButton" x:Name="TintSlateButton" Tag="#1A1A2E"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#404080" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Dark Slate"
-                                                                    AutomationProperties.Name="Dark Slate background tint"/>
+                                                                    BorderBrush="Transparent"/>
                                                         </StackPanel>
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                                            <Button x:Name="TintTealButton" Tag="#0E3A3A"
+                                                            <Button x:Uid="TintTealButton" x:Name="TintTealButton" Tag="#0E3A3A"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1B8A8A" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Deep Teal"
-                                                                    AutomationProperties.Name="Deep Teal background tint"/>
-                                                            <Button x:Name="TintBronzeButton" Tag="#3D2A0F"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintBronzeButton" x:Name="TintBronzeButton" Tag="#3D2A0F"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B07D1B" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Bronze"
-                                                                    AutomationProperties.Name="Bronze background tint"/>
-                                                            <Button x:Name="TintRoseButton" Tag="#3D1533"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintRoseButton" x:Name="TintRoseButton" Tag="#3D1533"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B03291" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Deep Rose"
-                                                                    AutomationProperties.Name="Deep Rose background tint"/>
-                                                            <Button x:Name="TintOliveButton" Tag="#2E3D0F"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintOliveButton" x:Name="TintOliveButton" Tag="#2E3D0F"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#6E8A1B" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Olive"
-                                                                    AutomationProperties.Name="Olive background tint"/>
-                                                            <Button x:Name="TintGraphiteButton" Tag="#232323"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintGraphiteButton" x:Name="TintGraphiteButton" Tag="#232323"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#5A5A5A" BorderThickness="2"
-                                                                    BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Graphite"
-                                                                    AutomationProperties.Name="Graphite background tint"/>
-                                                            <Button x:Name="TintCustomButton"
+                                                                    BorderBrush="Transparent"/>
+                                                            <Button x:Uid="TintCustomButton" x:Name="TintCustomButton"
                                                                     Click="CustomTintButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
-                                                                    BorderThickness="2" BorderBrush="Transparent"
-                                                                    ToolTipService.ToolTip="Custom color…"
-                                                                    AutomationProperties.Name="Custom background tint">
+                                                                    BorderThickness="2" BorderBrush="Transparent">
                                                                 <FontIcon x:Name="TintCustomIcon" Glyph="&#xE790;" FontSize="14"/>
                                                             </Button>
                                                         </StackPanel>
@@ -598,15 +553,13 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button Style="{StaticResource ButtonRevealStyle}"
+                                        <Button x:Uid="MainDataStorage" Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
-                                                Click="StorageHeader_Tapped"
-                                                AutomationProperties.Name="Data Storage"
-                                                AutomationProperties.HelpText="Manage local storage and view account data">
+                                                Click="StorageHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -619,8 +572,8 @@
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="Data Storage" Style="{StaticResource BaseTextBlockStyle}"/>
-                                                    <TextBlock Text="Manage local storage and view account data"
+                                                    <TextBlock x:Uid="MainDataStorage2" Style="{StaticResource BaseTextBlockStyle}"/>
+                                                    <TextBlock x:Uid="MainManageLocalStorageAnd"
                                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 </StackPanel>
@@ -647,11 +600,10 @@
                                             <StackPanel Spacing="8">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                                     <FontIcon Glyph="&#xE8B7;" FontSize="14" Opacity="0.7"/>
-                                                    <TextBlock Text="Local Cache"
+                                                    <TextBlock x:Uid="MainLocalCache"
                                                                Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
                                                 </StackPanel>
-                                                <TextBlock x:Name="CacheDescriptionText"
-                                                           Text="Not signed in."
+                                                <TextBlock x:Uid="CacheDescriptionText" x:Name="CacheDescriptionText"
                                                            Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
                                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                            Margin="0,0,0,4"/>
@@ -664,17 +616,11 @@
                                                 <StackPanel Orientation="Horizontal" Spacing="8"
                                                             HorizontalAlignment="Left"
                                                             Margin="0,4,0,0">
-                                                    <Button x:Name="ClearLoginInfoButton"
-                                                            Content="Clear login info"
-                                                            Click="ClearLoginInfoButton_Click"
-                                                            AutomationProperties.Name="Clear login info button"
-                                                            AutomationProperties.HelpText="Signs you out and clears the cached fort.social login"/>
-                                                    <Button x:Name="ResetAppButton"
-                                                            Content="Reset app"
+                                                    <Button x:Uid="ClearLoginInfoButton" x:Name="ClearLoginInfoButton"
+                                                            Click="ClearLoginInfoButton_Click"/>
+                                                    <Button x:Uid="ResetAppButton" x:Name="ResetAppButton"
                                                             Click="ResetAppButton_Click"
-                                                            Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"
-                                                            AutomationProperties.Name="Reset app button"
-                                                            AutomationProperties.HelpText="Signs you out and deletes all cached data and saved settings, resetting the app to a fresh install"/>
+                                                            Foreground="{ThemeResource SystemControlErrorTextForegroundBrush}"/>
                                                 </StackPanel>
                                             </StackPanel>
                                         </StackPanel>
@@ -685,15 +631,13 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button Style="{StaticResource ButtonRevealStyle}"
+                                        <Button x:Uid="MainLiveTile" Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
-                                                Click="TileHeader_Tapped"
-                                                AutomationProperties.Name="Live Tile"
-                                                AutomationProperties.HelpText="Refresh or clear your Start menu tile">
+                                                Click="TileHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -706,8 +650,8 @@
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="Live Tile" Style="{StaticResource BaseTextBlockStyle}"/>
-                                                    <TextBlock Text="Refresh or clear your Start menu tile"
+                                                    <TextBlock x:Uid="MainLiveTile2" Style="{StaticResource BaseTextBlockStyle}"/>
+                                                    <TextBlock x:Uid="MainRefreshOrClearYour"
                                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 </StackPanel>
@@ -731,11 +675,9 @@
                                             <Rectangle Height="1" Margin="0,0,0,14"
                                                        Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                        Opacity="0.08"/>
-                                            <ToggleSwitch x:Name="TileBadgeToggle"
-                                                          Header="Notification badge"
-                                                          OnContent="On" OffContent="Off"
+                                            <ToggleSwitch x:Uid="TileBadgeToggle" x:Name="TileBadgeToggle"
                                                           Toggled="TileBadgeToggle_Toggled"/>
-                                            <TextBlock Text="The small counter that appears on the app's tile and taskbar icon when the Live Tile has new content."
+                                            <TextBlock x:Uid="MainTheSmallCounterThat"
                                                        Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap" Margin="0,0,0,14"
                                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                             <StackPanel Orientation="Horizontal" Spacing="12">
@@ -744,7 +686,7 @@
                                                         Style="{StaticResource ButtonRevealStyle}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <FontIcon Glyph="&#xE72C;" FontSize="14"/>
-                                                        <TextBlock Text="Refresh Live Tile"/>
+                                                        <TextBlock x:Uid="MainRefreshLiveTile"/>
                                                     </StackPanel>
                                                 </Button>
                                                 <Button x:Name="ClearTileButton"
@@ -752,7 +694,7 @@
                                                         Style="{StaticResource ButtonRevealStyle}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <FontIcon Glyph="&#xE74D;" FontSize="14"/>
-                                                        <TextBlock Text="Clear Live Tile"/>
+                                                        <TextBlock x:Uid="MainClearLiveTile"/>
                                                     </StackPanel>
                                                 </Button>
                                             </StackPanel>
@@ -764,15 +706,13 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button Style="{StaticResource ButtonRevealStyle}"
+                                        <Button x:Uid="MainWelcomeDialog" Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
-                                                Click="WelcomeHeader_Tapped"
-                                                AutomationProperties.Name="Welcome Dialog"
-                                                AutomationProperties.HelpText="Reset the first-run welcome experience">
+                                                Click="WelcomeHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -785,8 +725,8 @@
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="Welcome Dialog" Style="{StaticResource BaseTextBlockStyle}"/>
-                                                    <TextBlock Text="Reset the first-run welcome experience"
+                                                    <TextBlock x:Uid="MainWelcomeDialog2" Style="{StaticResource BaseTextBlockStyle}"/>
+                                                    <TextBlock x:Uid="MainResetTheFirstRun"
                                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 </StackPanel>
@@ -811,7 +751,7 @@
                                                        Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                        Opacity="0.08"/>
                                             <StackPanel Spacing="10">
-                                                <TextBlock Text="The welcome dialog appears the first time you open the app."
+                                                <TextBlock x:Uid="MainTheWelcomeDialogAppears"
                                                            Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
                                                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 <Button x:Name="ResetWelcomeButton"
@@ -819,7 +759,7 @@
                                                         Style="{StaticResource ButtonRevealStyle}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                                         <FontIcon Glyph="&#xE72C;" FontSize="14"/>
-                                                        <TextBlock Text="Show Welcome Dialog Again"/>
+                                                        <TextBlock x:Uid="MainShowWelcomeDialogAgain"/>
                                                     </StackPanel>
                                                 </Button>
                                             </StackPanel>
@@ -831,15 +771,13 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button Style="{StaticResource ButtonRevealStyle}"
+                                        <Button x:Uid="MainAbout" Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
-                                                Click="AboutHeader_Tapped"
-                                                AutomationProperties.Name="About"
-                                                AutomationProperties.HelpText="Version info, credits, and more">
+                                                Click="AboutHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="Auto"/>
@@ -852,8 +790,8 @@
                                                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                                                    <TextBlock Text="About" Style="{StaticResource BaseTextBlockStyle}"/>
-                                                    <TextBlock Text="Version info, credits, and more"
+                                                    <TextBlock x:Uid="MainAbout2" Style="{StaticResource BaseTextBlockStyle}"/>
+                                                    <TextBlock x:Uid="MainVersionInfoCreditsAnd"
                                                                Style="{StaticResource CaptionTextBlockStyle}"
                                                                Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                 </StackPanel>
@@ -888,9 +826,8 @@
                                                                   VerticalAlignment="Center"/>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center" Spacing="4">
-                                                        <TextBlock Text="Fort.ind" Style="{StaticResource SubtitleTextBlockStyle}"/>
-                                                        <TextBlock x:Name="AboutVersionText"
-                                                                   Text="Version"
+                                                        <TextBlock x:Uid="MainFortInd" Style="{StaticResource SubtitleTextBlockStyle}"/>
+                                                        <TextBlock x:Uid="AboutVersionText" x:Name="AboutVersionText"
                                                                    Style="{StaticResource CaptionTextBlockStyle}"
                                                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
                                                     </StackPanel>
@@ -906,7 +843,7 @@
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE774;" FontSize="12"/>
-                                                            <TextBlock Text="Website" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                                            <TextBlock x:Uid="MainWebsite" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                     <HyperlinkButton x:Name="GitHubLink"
@@ -914,7 +851,7 @@
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE943;" FontSize="12"/>
-                                                            <TextBlock Text="Source Code" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                                            <TextBlock x:Uid="MainSourceCode" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                     <HyperlinkButton x:Name="IssuesLink"
@@ -922,7 +859,7 @@
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE946;" FontSize="12"/>
-                                                            <TextBlock Text="Report a Bug" Style="{StaticResource CaptionTextBlockStyle}"/>
+                                                            <TextBlock x:Uid="MainReportABug" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                 </StackPanel>
@@ -930,7 +867,7 @@
                                                 <!-- Footer -->
                                                 <StackPanel Orientation="Horizontal" Spacing="6" Opacity="0.4">
                                                     <FontIcon Glyph="&#xE734;" FontSize="10" VerticalAlignment="Center"/>
-                                                    <TextBlock Text="made with love by fort.ind"
+                                                    <TextBlock x:Uid="MainMadeWithLoveBy"
                                                                FontSize="11" VerticalAlignment="Center"/>
                                                     <FontIcon Glyph="&#xE734;" FontSize="10" VerticalAlignment="Center"/>
                                                 </StackPanel>

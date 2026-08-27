@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Fort.ind_UWP.GamesPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -189,15 +189,12 @@
                 <ColumnDefinition Width="*" MaxWidth="480"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
-            <AutoSuggestBox x:Name="FilterBox"
+            <AutoSuggestBox x:Uid="FilterBox" x:Name="FilterBox"
                             Grid.Column="0"
                             HorizontalAlignment="Stretch"
                             QueryIcon="Find"
-                            PlaceholderText="search for games :p"
                             IsEnabled="False"
-                            TextChanged="FilterBox_TextChanged"
-                            AutomationProperties.Name="Filter games"
-                            AutomationProperties.HelpText="Type to narrow the list of games by name"/>
+                            TextChanged="FilterBox_TextChanged"/>
         </Grid>
 
         <TextBlock x:Name="CountText"
@@ -214,9 +211,8 @@
              time (see GamesPage.SetState), so they never overlap. -->
         <Grid Grid.Row="2">
 
-            <SemanticZoom x:Name="GamesZoom"
-                          Visibility="Collapsed"
-                          AutomationProperties.Name="Games list">
+            <SemanticZoom x:Uid="GamesZoom" x:Name="GamesZoom"
+                          Visibility="Collapsed">
 
                 <SemanticZoom.ZoomedInView>
                     <!-- ListView, not GridView: text is the focal point and the collection is
@@ -225,15 +221,14 @@
                          Right padding of 16 keeps rows out from under the overlay scroll bar.
                          IsVerticalScrollChainingEnabled=False is required for a ListView
                          hosted in a SemanticZoom. -->
-                    <ListView x:Name="GamesList"
+                    <ListView x:Uid="GamesList" x:Name="GamesList"
                               ItemTemplate="{StaticResource GameItemTemplate}"
                               ItemContainerStyle="{StaticResource GameItemContainerStyle}"
                               SelectionMode="None"
                               IsItemClickEnabled="True"
                               ItemClick="GamesList_ItemClick"
                               Padding="0,0,16,0"
-                              ScrollViewer.IsVerticalScrollChainingEnabled="False"
-                              AutomationProperties.Name="Games">
+                              ScrollViewer.IsVerticalScrollChainingEnabled="False">
                         <ListView.GroupStyle>
                             <GroupStyle HeaderTemplate="{StaticResource GameGroupHeaderTemplate}"
                                         HidesIfEmpty="True"/>
@@ -246,14 +241,13 @@
                          CollectionGroups - that shared source is what auto-syncs the two views.
                          IsHorizontalScrollChainingEnabled=False is required for a GridView
                          hosted in a SemanticZoom. -->
-                    <GridView x:Name="GamesJumpGrid"
+                    <GridView x:Uid="GamesJumpGrid" x:Name="GamesJumpGrid"
                               ItemTemplate="{StaticResource GameJumpItemTemplate}"
                               ItemContainerStyle="{StaticResource GameJumpItemContainerStyle}"
                               SelectionMode="None"
                               IsItemClickEnabled="True"
                               Padding="0,0,16,0"
-                              ScrollViewer.IsHorizontalScrollChainingEnabled="False"
-                              AutomationProperties.Name="Jump to a letter"/>
+                              ScrollViewer.IsHorizontalScrollChainingEnabled="False"/>
                 </SemanticZoom.ZoomedOutView>
 
             </SemanticZoom>
@@ -266,7 +260,7 @@
                               IsActive="True"
                               Width="32" Height="32"
                               HorizontalAlignment="Center"/>
-                <TextBlock Text="Loading games..."
+                <TextBlock x:Uid="GamesLoadingGames"
                            Style="{StaticResource BodyTextBlockStyle}"
                            Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                            HorizontalAlignment="Center"
@@ -279,14 +273,13 @@
                         VerticalAlignment="Center"
                         MaxWidth="360"
                         Spacing="12">
-                <TextBlock Text="&#xE721;"
+                <TextBlock x:Uid="GamesXe721"
                            FontFamily="{StaticResource SymbolThemeFontFamily}"
                            FontSize="32"
                            HorizontalAlignment="Center"
                            Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                            AutomationProperties.AccessibilityView="Raw"/>
-                <TextBlock x:Name="EmptyText"
-                           Text="No games match that filter"
+                <TextBlock x:Uid="EmptyText" x:Name="EmptyText"
                            Style="{StaticResource BodyTextBlockStyle}"
                            Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                            TextWrapping="Wrap"
@@ -300,23 +293,20 @@
                         VerticalAlignment="Center"
                         MaxWidth="360"
                         Spacing="12">
-                <TextBlock Text="&#xE783;"
+                <TextBlock x:Uid="GamesXe783"
                            FontFamily="{StaticResource SymbolThemeFontFamily}"
                            FontSize="32"
                            HorizontalAlignment="Center"
                            Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                            AutomationProperties.AccessibilityView="Raw"/>
-                <TextBlock Text="The games list could not be loaded."
+                <TextBlock x:Uid="GamesTheGamesListCould"
                            Style="{StaticResource BodyTextBlockStyle}"
                            Foreground="{ThemeResource SystemControlPageTextBaseMediumBrush}"
                            TextWrapping="Wrap"
                            TextAlignment="Center"/>
-                <Button x:Name="RetryButton"
-                        Content="Try again"
+                <Button x:Uid="RetryButton" x:Name="RetryButton"
                         HorizontalAlignment="Center"
-                        Click="RetryButton_Click"
-                        AutomationProperties.Name="Try again"
-                        AutomationProperties.HelpText="Reload the games list"/>
+                        Click="RetryButton_Click"/>
             </StackPanel>
 
         </Grid>

@@ -56,7 +56,7 @@ namespace Fort.ind_UWP
             catch (Exception ex)
             {
                 Debug.WriteLine($"SignInButton_Click error: {ex}");
-                ShowError("An error occurred. Please try again.");
+                ShowError(LocalizedStrings.Get("LoginErrorGeneric"));
             }
             finally
             {

@@ -14,8 +14,12 @@
 
   <mp:PhoneIdentity PhoneProductId="842aa337-86c0-43da-82da-a0aa21c2fc6d" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
+  <!-- Display strings are ms-resource: references into Strings\<lang>\Resources.resw, so the
+       shell and the Store show them in the user's language. Requires the <Resources> element
+       below, which is already generating one entry per resw language folder. PublisherDisplayName
+       stays literal: it is a legal entity name, not display copy. -->
   <Properties>
-    <DisplayName>fort.desktop</DisplayName>
+    <DisplayName>ms-resource:AppDisplayName</DisplayName>
     <PublisherDisplayName>fort.ind</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -33,10 +37,10 @@
       Executable="$targetnametoken$.exe"
       EntryPoint="Fort.ind_UWP.App">
       <uap:VisualElements
-        DisplayName="fort.desktop"
+        DisplayName="ms-resource:AppDisplayName"
         Square150x150Logo="Assets\Square150x150Logo.png"
         Square44x44Logo="Assets\Square44x44Logo.png"
-        Description="a version of fort.desktop made for windows 10, using uwp + winui 2.5 :p and works on arm!"
+        Description="ms-resource:AppDescription"
         BackgroundColor="transparent">
 		  <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" Square310x310Logo="Assets\Square310x310Logo.png" ShortName="fort.uwp" Square71x71Logo="Assets\SmallTile.png">
           <uap:ShowNameOnTiles>
@@ -69,7 +73,7 @@
       <Extensions>
         <uap:Extension Category="windows.protocol">
           <uap:Protocol Name="fortind">
-            <uap:DisplayName>Fort.ind</uap:DisplayName>
+            <uap:DisplayName>ms-resource:ProtocolDisplayName</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
       </Extensions>

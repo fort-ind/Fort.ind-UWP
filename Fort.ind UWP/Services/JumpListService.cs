@@ -23,7 +23,7 @@ namespace Fort.ind_UWP
         }
 
         /// <summary>
-        /// Bumped whenever <see cref="s_tasks"/> changes. SaveAsync is cross-process shell work,
+        /// Bumped whenever <see cref="BuildTasks"/> changes. SaveAsync is cross-process shell work,
         /// so it is skipped on every launch that would only rewrite the identical list; the
         /// revision last handed to the shell is recorded in LocalSettings.
         ///
@@ -32,22 +32,38 @@ namespace Fort.ind_UWP
         /// only items in a *custom* group can be removed by the user, so RemovedByUser never
         /// comes into play. Adding a custom group later would mean honouring it.
         /// </summary>
-        private const int TaskRevision = 3;
+        private const int TaskRevision = 4;
 
         /// <summary>
         /// One entry per task, in the order they should appear - the nav pane's own order, with
         /// Settings last where it conventionally sits. Five is still inside Microsoft's taskbar
         /// guidance of surfacing only the genuinely useful destinations, but it is the ceiling:
         /// every extra row makes the rest harder to find.
+        ///
+        /// Built per call rather than held in a static: the labels are resources now, so the
+        /// table is only correct for the language that was current when it was resolved.
         /// </summary>
-        private static readonly JumpTask[] s_tasks =
+        private static JumpTask[] BuildTasks()
         {
-            new JumpTask(AppConstants.NavigationLatestNews, "home", "Open the home page", "Home"),
-            new JumpTask(AppConstants.NavigationGames, "games", "Browse the games catalogue", "Games"),
-            new JumpTask(AppConstants.NavigationSocial, "social", "Open the fort.social feed", "Social"),
-            new JumpTask(AppConstants.NavigationProfile, "your profile", "View your profile", "Profile"),
-            new JumpTask(AppConstants.NavigationSettings, "settings", "Open app settings", "Settings")
-        };
+            return new JumpTask[]
+            {
+                new JumpTask(AppConstants.NavigationLatestNews,
+                             LocalizedStrings.Get("JumpTaskHomeName"),
+                             LocalizedStrings.Get("JumpTaskHomeDescription"), "Home"),
+                new JumpTask(AppConstants.NavigationGames,
+                             LocalizedStrings.Get("JumpTaskGamesName"),
+                             LocalizedStrings.Get("JumpTaskGamesDescription"), "Games"),
+                new JumpTask(AppConstants.NavigationSocial,
+                             LocalizedStrings.Get("JumpTaskSocialName"),
+                             LocalizedStrings.Get("JumpTaskSocialDescription"), "Social"),
+                new JumpTask(AppConstants.NavigationProfile,
+                             LocalizedStrings.Get("JumpTaskProfileName"),
+                             LocalizedStrings.Get("JumpTaskProfileDescription"), "Profile"),
+                new JumpTask(AppConstants.NavigationSettings,
+                             LocalizedStrings.Get("JumpTaskSettingsName"),
+                             LocalizedStrings.Get("JumpTaskSettingsDescription"), "Settings")
+            };
+        }
 
         /// <summary>
         /// Folder holding the task icons, one PNG family per task.
@@ -83,6 +99,29 @@ namespace Fort.ind_UWP
         private const string LogoFolderUri = "ms-appx:///Assets/JumpList/";
 
         /// <summary>
+        /// Identifies the list the shell is currently holding: the task table's revision plus the
+        /// language its labels were resolved in. Either changing means the saved list is stale.
+        /// </summary>
+        private static string CurrentRevisionStamp()
+        {
+            string language;
+            try
+            {
+                var languages = Windows.Globalization.ApplicationLanguages.Languages;
+                language = languages.Count > 0 ? languages[0] : "";
+            }
+            catch (Exception ex)
+            {
+                // An unresolvable language just means the revision number alone decides, which is
+                // the behaviour this had before the labels became resources.
+                Debug.WriteLine($"JumpListService: could not read the current language - {ex.Message}");
+                language = "";
+            }
+
+            return $"{TaskRevision}|{language}";
+        }
+
+        /// <summary>
         /// Writes the task list to the shell if it isn't already current. Safe to call on every
         /// launch; safe to call on a device that has no jump lists.
         /// </summary>
@@ -94,24 +133,31 @@ namespace Fort.ind_UWP
 
                 var settings = ApplicationData.Current.LocalSettings;
 
-                // Convert rather than an (int) cast, for the reason the boolean settings reads
-                // give: the cast throws on anything that isn't a boxed int, and this whole method
-                // swallows exceptions - the jump list would just quietly stop updating.
-                int savedRevision = 0;
+                // The revision now carries the language the labels were resolved in. The shell
+                // keeps the list it was last given, so a user who switches Windows to another
+                // display language would otherwise keep the old language's task names forever -
+                // this is the only signal that the saved list has gone stale.
+                //
+                // Read as a string with Convert, not an (int) cast, for the reason the boolean
+                // settings reads give: the cast throws on anything that isn't the expected boxed
+                // type, and this whole method swallows exceptions - the jump list would just
+                // quietly stop updating.
+                string savedRevision = null;
                 object raw;
                 if (settings.Values.TryGetValue(AppConstants.SettingJumpListRevision, out raw) && raw != null)
                 {
                     try
                     {
-                        savedRevision = Convert.ToInt32(raw);
+                        savedRevision = Convert.ToString(raw);
                     }
                     catch
                     {
-                        savedRevision = 0;
+                        savedRevision = null;
                     }
                 }
 
-                if (savedRevision == TaskRevision) return;
+                var currentRevision = CurrentRevisionStamp();
+                if (string.Equals(savedRevision, currentRevision, StringComparison.Ordinal)) return;
 
                 var jumpList = await JumpList.LoadCurrentAsync();
 
@@ -121,7 +167,7 @@ namespace Fort.ind_UWP
                 jumpList.SystemGroupKind = JumpListSystemGroupKind.None;
 
                 jumpList.Items.Clear();
-                foreach (var task in s_tasks)
+                foreach (var task in BuildTasks())
                 {
                     var item = JumpListItem.CreateWithArguments(
                         AppConstants.JumpArgumentPrefix + task.NavigationTag,
@@ -136,7 +182,7 @@ namespace Fort.ind_UWP
 
                 await jumpList.SaveAsync();
 
-                settings.Values[AppConstants.SettingJumpListRevision] = TaskRevision;
+                settings.Values[AppConstants.SettingJumpListRevision] = currentRevision;
             }
             catch (Exception ex)
             {

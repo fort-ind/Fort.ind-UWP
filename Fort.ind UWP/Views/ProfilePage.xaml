@@ -1,4 +1,4 @@
-<Page
+﻿<Page
     x:Class="Fort.ind_UWP.ProfilePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -36,15 +36,14 @@
                         <FontIcon Glyph="&#xE77B;"
                                   FontSize="48"
                                   HorizontalAlignment="Center"/>
-                        <TextBlock Text="Not signed in"
+                        <TextBlock x:Uid="ProfileNotSignedIn"
                                    Style="{StaticResource SubtitleTextBlockStyle}"
                                    HorizontalAlignment="Center"/>
-                        <TextBlock Text="Sign in with your fort.social account to see your profile here"
+                        <TextBlock x:Uid="ProfileSignInWithYour"
                                    TextWrapping="Wrap"
                                    TextAlignment="Center"
                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                        <Button x:Name="SignInButton"
-                                Content="Sign In"
+                        <Button x:Uid="SignInButton2" x:Name="SignInButton"
                                 HorizontalAlignment="Center"
                                 Click="SignInButton_Click"
                                 Style="{StaticResource AccentButtonStyle}"/>
@@ -83,8 +82,7 @@
                                Stretch="UniformToFill"
                                Visibility="Collapsed"
                                AutomationProperties.AccessibilityView="Raw"/>
-                        <TextBlock x:Name="ProfileInitials"
-                                   Text="?"
+                        <TextBlock x:Uid="ProfileInitials" x:Name="ProfileInitials"
                                    FontSize="32"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"
@@ -94,15 +92,12 @@
 
                     <!-- Profile Info -->
                     <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
-                        <TextBlock x:Name="DisplayNameText"
-                                   Text="Display Name"
+                        <TextBlock x:Uid="DisplayNameText" x:Name="DisplayNameText"
                                    Style="{StaticResource SubtitleTextBlockStyle}"/>
-                        <TextBlock x:Name="UsernameText"
-                                   Text="@username@social.fort1nd.com"
+                        <TextBlock x:Uid="UsernameText" x:Name="UsernameText"
                                    Style="{StaticResource BodyTextBlockStyle}"
                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
-                        <TextBlock x:Name="MemberSinceText"
-                                   Text="Member since..."
+                        <TextBlock x:Uid="MemberSinceText" x:Name="MemberSinceText"
                                    Style="{StaticResource CaptionTextBlockStyle}"
                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumLowBrush}"
                                    Margin="0,4,0,0"/>
@@ -122,41 +117,36 @@
                       CornerRadius="4"
                       Padding="20">
                     <StackPanel>
-                        <TextBlock Text="About"
+                        <TextBlock x:Uid="ProfileAbout"
                                    Style="{StaticResource BaseTextBlockStyle}"
                                    Margin="0,0,0,8"/>
-                        <TextBlock x:Name="BioText"
-                                   Text="No bio yet"
+                        <TextBlock x:Uid="BioText" x:Name="BioText"
                                    TextWrapping="Wrap"
                                    Foreground="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"/>
                     </StackPanel>
                 </Grid>
 
-                <TextBlock Text="Your profile is managed on fort.social. Edit your display name, bio, avatar, or account there."
+                <TextBlock x:Uid="ProfileYourProfileIsManaged"
                            Style="{StaticResource CaptionTextBlockStyle}"
                            TextWrapping="Wrap"
                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
 
                 <!-- Actions -->
                 <StackPanel Orientation="Horizontal" Spacing="12">
-                    <Button x:Name="ManageOnFortSocialButton"
+                    <Button x:Uid="ManageOnFortSocialButton" x:Name="ManageOnFortSocialButton"
                             Click="ManageOnFortSocialButton_Click"
-                            AccessKey="M"
-                            AutomationProperties.Name="Manage on fort.social button"
-                            AutomationProperties.HelpText="Opens your fort.social profile in the browser">
+                            AccessKey="M">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xE774;" FontSize="14"/>
-                            <TextBlock Text="Manage on fort.social"/>
+                            <TextBlock x:Uid="ProfileManageOnFortSocial"/>
                         </StackPanel>
                     </Button>
-                    <Button x:Name="LogoutButton"
+                    <Button x:Uid="LogoutButton" x:Name="LogoutButton"
                             Click="LogoutButton_Click"
-                            AccessKey="O"
-                            AutomationProperties.Name="Sign out button"
-                            AutomationProperties.HelpText="Sign out of your account">
+                            AccessKey="O">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <FontIcon Glyph="&#xF3B1;" FontSize="14"/>
-                            <TextBlock Text="Sign Out"/>
+                            <TextBlock x:Uid="ProfileSignOut"/>
                         </StackPanel>
                     </Button>
                 </StackPanel>

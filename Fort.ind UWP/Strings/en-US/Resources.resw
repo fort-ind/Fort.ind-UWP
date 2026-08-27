@@ -1,0 +1,783 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="DialogOk" xml:space="preserve">
+    <value>OK</value>
+  </data>
+  <data name="DialogCancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="AboutVersionFormat" xml:space="preserve">
+    <value>Version {0}</value>
+  </data>
+  <data name="SearchProfileResultFormat" xml:space="preserve">
+    <value>Profile: {0}</value>
+  </data>
+  <data name="StartupErrorDialogTitle" xml:space="preserve">
+    <value>Startup Error</value>
+  </data>
+  <data name="StartupErrorDialogBody" xml:space="preserve">
+    <value>The application failed to start properly. Please try restarting.</value>
+  </data>
+  <data name="NavigationErrorDialogTitle" xml:space="preserve">
+    <value>Navigation Error</value>
+  </data>
+  <data name="NavigationErrorDialogBody" xml:space="preserve">
+    <value>Failed to load that page.</value>
+  </data>
+  <data name="StorageLocationFormat" xml:space="preserve">
+    <value>Location: {0}</value>
+  </data>
+  <data name="StorageCacheSignedIn" xml:space="preserve">
+    <value>You are logged in using fort.social. We cached your login details so we can quickly log you in :p</value>
+  </data>
+  <data name="StorageCacheSignedOut" xml:space="preserve">
+    <value>Not signed in... why dont you go do that?</value>
+  </data>
+  <data name="StorageSignedInAsFormat" xml:space="preserve">
+    <value>Signed in as @{0}@{1}</value>
+  </data>
+  <data name="ClearLoginDialogTitle" xml:space="preserve">
+    <value>remove your account</value>
+  </data>
+  <data name="ClearLoginDialogBody" xml:space="preserve">
+    <value>this will remove the login data for your fort.social account, beware! this does not deauthorize your account from fort.social go to your profile &gt; service integration and unlink your account from there if you dont want to use this account in fort.desktop</value>
+  </data>
+  <data name="ClearLoginDialogConfirm" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="ResetExplainDialogTitle" xml:space="preserve">
+    <value>Reset fort.desktop</value>
+  </data>
+  <data name="ResetExplainDialogBody" xml:space="preserve">
+    <value>This signs you out and deletes everything the app has saved locally - your cached profile, the sitemap cache, and all preferences (theme, tint color, panel states). It resets the app to a fresh install. This does not affect your fort.social account.</value>
+  </data>
+  <data name="ResetExplainDialogConfirm" xml:space="preserve">
+    <value>Continue</value>
+  </data>
+  <data name="ResetConfirmDialogTitle" xml:space="preserve">
+    <value>Are you absolutely sure?</value>
+  </data>
+  <data name="ResetConfirmDialogBody" xml:space="preserve">
+    <value>This is permanent - everything fort.desktop has saved will be deleted and cannot be recovered.</value>
+  </data>
+  <data name="ResetConfirmDialogConfirm" xml:space="preserve">
+    <value>Yes, Reset Everything</value>
+  </data>
+  <data name="ResetDoneDialogTitle" xml:space="preserve">
+    <value>Reset complete</value>
+  </data>
+  <data name="ResetDoneDialogBody" xml:space="preserve">
+    <value>fort.desktop has been reset to a fresh install. Restart the app now for everything to take full effect.</value>
+  </data>
+  <data name="ResetDoneDialogRestart" xml:space="preserve">
+    <value>Restart Now</value>
+  </data>
+  <data name="ResetDoneDialogLater" xml:space="preserve">
+    <value>Later</value>
+  </data>
+  <data name="WelcomeDialogTitle" xml:space="preserve">
+    <value>Hi :)</value>
+  </data>
+  <data name="WelcomeDialogDismiss" xml:space="preserve">
+    <value>got it</value>
+  </data>
+  <data name="SignOutDialogTitle" xml:space="preserve">
+    <value>Sign Out</value>
+  </data>
+  <data name="SignOutDialogBody" xml:space="preserve">
+    <value>Are you sure you want to sign out?</value>
+  </data>
+  <data name="SignOutDialogConfirm" xml:space="preserve">
+    <value>Sign Out</value>
+  </data>
+  <data name="CustomTintDialogTitle" xml:space="preserve">
+    <value>Custom background tint</value>
+  </data>
+  <data name="CustomTintDialogApply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="TintSwatchSelectedSuffixFormat" xml:space="preserve">
+    <value>{0} (selected)</value>
+  </data>
+  <data name="TintCustomSwatchWithColorFormat" xml:space="preserve">
+    <value>{0} {1}</value>
+  </data>
+  <data name="HeaderHome" xml:space="preserve">
+    <value>Welcome to Fort.ind</value>
+  </data>
+  <data name="HeaderGames" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="HeaderBetas" xml:space="preserve">
+    <value>Beta Programs</value>
+  </data>
+  <data name="HeaderProfile" xml:space="preserve">
+    <value>Your Profile</value>
+  </data>
+  <data name="HeaderSocial" xml:space="preserve">
+    <value>Social</value>
+  </data>
+  <data name="HeaderSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="ProfileHandleFormat" xml:space="preserve">
+    <value>@{0}@{1}</value>
+  </data>
+  <data name="ProfileMemberSinceFormat" xml:space="preserve">
+    <value>Member since {0}</value>
+  </data>
+  <data name="ProfileLastSignedInFormat" xml:space="preserve">
+    <value>Last signed in: {0}</value>
+  </data>
+  <data name="ProfileNoBio" xml:space="preserve">
+    <value>No bio set</value>
+  </data>
+  <data name="GamesCountOne" xml:space="preserve">
+    <value>1 game</value>
+  </data>
+  <data name="GamesCountAllFormat" xml:space="preserve">
+    <value>{0} games</value>
+  </data>
+  <data name="GamesCountFilteredFormat" xml:space="preserve">
+    <value>{0} of {1} games</value>
+  </data>
+  <data name="LoginErrorGeneric" xml:space="preserve">
+    <value>ack! something went wrong, try it again</value>
+  </data>
+  <data name="TileDisplayName" xml:space="preserve">
+    <value>Fort.ind</value>
+  </data>
+  <data name="TileLargeBranding" xml:space="preserve">
+    <value>Fort.ind Desktop</value>
+  </data>
+  <data name="TileNewsWhatsNewTitle" xml:space="preserve">
+    <value>What's new?</value>
+  </data>
+  <data name="TileNewsWhatsNewBody" xml:space="preserve">
+    <value>2026.7 has been released for web go to fort1nd.com to see whats new</value>
+  </data>
+  <data name="TileNewsGetStartedTitle" xml:space="preserve">
+    <value>Get Started</value>
+  </data>
+  <data name="TileNewsGetStartedBody" xml:space="preserve">
+    <value>Hello! fort.uwp is now ready to use. :3</value>
+  </data>
+  <data name="JumpTaskHomeName" xml:space="preserve">
+    <value>home</value>
+  </data>
+  <data name="JumpTaskHomeDescription" xml:space="preserve">
+    <value>Open the home page</value>
+  </data>
+  <data name="JumpTaskGamesName" xml:space="preserve">
+    <value>games</value>
+  </data>
+  <data name="JumpTaskGamesDescription" xml:space="preserve">
+    <value>Browse the games</value>
+  </data>
+  <data name="JumpTaskSocialName" xml:space="preserve">
+    <value>social</value>
+  </data>
+  <data name="JumpTaskSocialDescription" xml:space="preserve">
+    <value>Open the fort.social feed</value>
+  </data>
+  <data name="JumpTaskProfileName" xml:space="preserve">
+    <value>your profile</value>
+  </data>
+  <data name="JumpTaskProfileDescription" xml:space="preserve">
+    <value>View your profile</value>
+  </data>
+  <data name="JumpTaskSettingsName" xml:space="preserve">
+    <value>settings</value>
+  </data>
+  <data name="JumpTaskSettingsDescription" xml:space="preserve">
+    <value>Open app settings</value>
+  </data>
+  <data name="AppDisplayName" xml:space="preserve">
+    <value>fort.desktop</value>
+  </data>
+  <data name="AppDescription" xml:space="preserve">
+    <value>a version of fort.desktop made for windows 10, using uwp + winui 2.5 :p and works on arm!</value>
+  </data>
+  <data name="ProtocolDisplayName" xml:space="preserve">
+    <value>Fort.ind</value>
+  </data>
+  <data name="AboutVersionText.Text" xml:space="preserve">
+    <value>Version</value>
+  </data>
+  <data name="AppTitleText.Text" xml:space="preserve">
+    <value>Fort.ind</value>
+  </data>
+  <data name="BioText.Text" xml:space="preserve">
+    <value>No bio yet</value>
+  </data>
+  <data name="CacheDescriptionText.Text" xml:space="preserve">
+    <value>Not signed in.</value>
+  </data>
+  <data name="CancelSignInButton.Content" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="CancelSignInButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Cancel sign-in</value>
+  </data>
+  <data name="ClearLoginInfoButton.Content" xml:space="preserve">
+    <value>Clear login info</value>
+  </data>
+  <data name="ClearLoginInfoButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Signs you out and clears the cached fort.social login</value>
+  </data>
+  <data name="ClearLoginInfoButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Clear login info button</value>
+  </data>
+  <data name="DisplayNameText.Text" xml:space="preserve">
+    <value>Display Name</value>
+  </data>
+  <data name="EmptyText.Text" xml:space="preserve">
+    <value>No games match that filter</value>
+  </data>
+  <data name="FilterBox.PlaceholderText" xml:space="preserve">
+    <value>search for games :p</value>
+  </data>
+  <data name="FilterBox.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Type to narrow the list of games by name</value>
+  </data>
+  <data name="FilterBox.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Filter games</value>
+  </data>
+  <data name="GamesJumpGrid.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Jump to a letter</value>
+  </data>
+  <data name="GamesList.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="GamesLoadingGames.Text" xml:space="preserve">
+    <value>Loading games...</value>
+  </data>
+  <data name="GamesTheGamesListCould.Text" xml:space="preserve">
+    <value>aw man :( the games failed to load try relaunching the apps again and if they dont work reinstall/check for a new bulid otherwise open a github issue</value>
+  </data>
+  <data name="GamesXe721.Text" xml:space="preserve">
+    <value>&amp;#xE721;</value>
+  </data>
+  <data name="GamesXe783.Text" xml:space="preserve">
+    <value>&amp;#xE783;</value>
+  </data>
+  <data name="GamesZoom.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Games list</value>
+  </data>
+  <data name="LoginFortDesktop.Text" xml:space="preserve">
+    <value>fort.desktop</value>
+  </data>
+  <data name="LoginSignInWithFort.Text" xml:space="preserve">
+    <value>Sign in with fort.social</value>
+  </data>
+  <data name="LoginSignInWithYour.Text" xml:space="preserve">
+    <value>Sign in with your fort.social account</value>
+  </data>
+  <data name="LoginWaitingForFortSocial.Text" xml:space="preserve">
+    <value>Waiting for fort.social in your browser...</value>
+  </data>
+  <data name="LoginWaitingForSignIn.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Waiting for sign-in</value>
+  </data>
+  <data name="LoginYouLlBeTaken.Text" xml:space="preserve">
+    <value>You'll be taken to fort.social to login to your account you will be taken back here after signing in!</value>
+  </data>
+  <data name="LogoutButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Sign out of your account</value>
+  </data>
+  <data name="LogoutButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Sign out button</value>
+  </data>
+  <data name="MainAbout.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Version info, credits, and more</value>
+  </data>
+  <data name="MainAbout.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="MainAbout2.Text" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="MainAccessBetaVersionsAnd.Text" xml:space="preserve">
+    <value>Access beta versions and early features (coming soon)</value>
+  </data>
+  <data name="MainAppTheme.Text" xml:space="preserve">
+    <value>App Theme</value>
+  </data>
+  <data name="MainAppearance.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Change app theme and background color</value>
+  </data>
+  <data name="MainAppearance.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="MainAppearance2.Text" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="MainBackgroundTint.Text" xml:space="preserve">
+    <value>Background Tint</value>
+  </data>
+  <data name="MainBetaPrograms.Content" xml:space="preserve">
+    <value>Beta Programs</value>
+  </data>
+  <data name="MainBetaPrograms.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Join beta programs</value>
+  </data>
+  <data name="MainBetaPrograms.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Beta Programs</value>
+  </data>
+  <data name="MainBetaPrograms.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Beta Programs</value>
+  </data>
+  <data name="MainChangeAppThemeAnd.Text" xml:space="preserve">
+    <value>Change app theme and background color</value>
+  </data>
+  <data name="MainCheckBackHereFor.Text" xml:space="preserve">
+    <value>Check back here for the latest updates and announcements.</value>
+  </data>
+  <data name="MainClearLiveTile.Text" xml:space="preserve">
+    <value>Clear Live Tile</value>
+  </data>
+  <data name="MainDataStorage.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Manage local storage and view account data</value>
+  </data>
+  <data name="MainDataStorage.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Data Storage</value>
+  </data>
+  <data name="MainDataStorage2.Text" xml:space="preserve">
+    <value>Data Storage</value>
+  </data>
+  <data name="MainFortInd.Text" xml:space="preserve">
+    <value>Fort.ind</value>
+  </data>
+  <data name="MainGames.Content" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="MainGames.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Browse games</value>
+  </data>
+  <data name="MainGames.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="MainGames.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="MainHome.Content" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="MainHome.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Navigate to home page</value>
+  </data>
+  <data name="MainHome.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="MainHome.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="MainInTheFutureMaybe.Text" xml:space="preserve">
+    <value>in the future (maybe subject to change)</value>
+  </data>
+  <data name="MainJustNow.Text" xml:space="preserve">
+    <value>Just now</value>
+  </data>
+  <data name="MainLiveTile.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>refresh the tile or clear it</value>
+  </data>
+  <data name="MainLiveTile.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Live Tile</value>
+  </data>
+  <data name="MainLiveTile2.Text" xml:space="preserve">
+    <value>Live Tile</value>
+  </data>
+  <data name="MainLocalCache.Text" xml:space="preserve">
+    <value>local cache</value>
+  </data>
+  <data name="MainMadeWithLoveBy.Text" xml:space="preserve">
+    <value>made with love by fort.ind</value>
+  </data>
+  <data name="MainMakeFortDesktopWork.Text" xml:space="preserve">
+    <value>make fort.desktop work for you :3 change it to how you like</value>
+  </data>
+  <data name="MainManageLocalStorageAnd.Text" xml:space="preserve">
+    <value>Manage local storage and view account data</value>
+  </data>
+  <data name="MainRefreshLiveTile.Text" xml:space="preserve">
+    <value>Refresh Live Tile</value>
+  </data>
+  <data name="MainRefreshOrClearYour.Text" xml:space="preserve">
+    <value>Refresh or clear your Start menu tile</value>
+  </data>
+  <data name="MainReportABug.Text" xml:space="preserve">
+    <value>Report a Bug</value>
+  </data>
+  <data name="MainResetTheFirstRun.Text" xml:space="preserve">
+    <value>Reset the first-run welcome experience</value>
+  </data>
+  <data name="MainShowWelcomeDialogAgain.Text" xml:space="preserve">
+    <value>Show Welcome Dialog again</value>
+  </data>
+  <data name="MainSocial.Content" xml:space="preserve">
+    <value>Social</value>
+  </data>
+  <data name="MainSocial.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>connect with users on fort.social</value>
+  </data>
+  <data name="MainSocial.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Social</value>
+  </data>
+  <data name="MainSocial.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Social</value>
+  </data>
+  <data name="MainSocialFeaturesComingSoon.Text" xml:space="preserve">
+    <value>Social features coming soon</value>
+  </data>
+  <data name="MainSoon3.Text" xml:space="preserve">
+    <value>soon! :3</value>
+  </data>
+  <data name="MainSoonSoonSoon.Text" xml:space="preserve">
+    <value>soon soon soon-</value>
+  </data>
+  <data name="MainSoonYouWillBe.Text" xml:space="preserve">
+    <value>soon you will be able to manage your fort.ind account, view posts from social and play your games from fort1nd.com on windows! if you want to use the full experience for now go to fort1nd.com</value>
+  </data>
+  <data name="MainSourceCode.Text" xml:space="preserve">
+    <value>Source Code</value>
+  </data>
+  <data name="MainTheSmallCounterThat.Text" xml:space="preserve">
+    <value>The small counter that appears on the app's tile and taskbar icon when the Live Tile has new content.</value>
+  </data>
+  <data name="MainTheWelcomeDialogAppears.Text" xml:space="preserve">
+    <value>The welcome dialog appears the first time you open the app.</value>
+  </data>
+  <data name="MainThisUpdateFixesMany.Text" xml:space="preserve">
+    <value>this update fixes many bugs add new features and we also added syncing accounts with fort.social</value>
+  </data>
+  <data name="MainVersionInfoCreditsAnd.Text" xml:space="preserve">
+    <value>Version info, credits, and more</value>
+  </data>
+  <data name="MainWebsite.Text" xml:space="preserve">
+    <value>Website</value>
+  </data>
+  <data name="MainWelcome.Text" xml:space="preserve">
+    <value>Welcome!</value>
+  </data>
+  <data name="MainWelcomeDialog.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Reset the first-run welcome experience</value>
+  </data>
+  <data name="MainWelcomeDialog.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Welcome Dialog</value>
+  </data>
+  <data name="MainWelcomeDialog2.Text" xml:space="preserve">
+    <value>Welcome Dialog</value>
+  </data>
+  <data name="MainWelcomeToTheBeta.Text" xml:space="preserve">
+    <value>Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do!</value>
+  </data>
+  <data name="MainWelcomeToVersion2.Text" xml:space="preserve">
+    <value>welcome to version 2.0 of fort.uwp!</value>
+  </data>
+  <data name="ManageOnFortSocialButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Opens your fort.social profile in the browser</value>
+  </data>
+  <data name="ManageOnFortSocialButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Manage on fort.social button</value>
+  </data>
+  <data name="MemberSinceText.Text" xml:space="preserve">
+    <value>Member since...</value>
+  </data>
+  <data name="NavSearchBox.PlaceholderText" xml:space="preserve">
+    <value>Search for games, pages, and more...</value>
+  </data>
+  <data name="NavSearchBox.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Search for games, pages and more</value>
+  </data>
+  <data name="ProfileAbout.Text" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="ProfileInitials.Text" xml:space="preserve">
+    <value>?</value>
+  </data>
+  <data name="ProfileManageOnFortSocial.Text" xml:space="preserve">
+    <value>Manage on fort.social</value>
+  </data>
+  <data name="ProfileNavItem.Content" xml:space="preserve">
+    <value>Your Profile</value>
+  </data>
+  <data name="ProfileNavItem.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>View and edit your profile</value>
+  </data>
+  <data name="ProfileNavItem.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Your Profile</value>
+  </data>
+  <data name="ProfileNavItem.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Your Profile</value>
+  </data>
+  <data name="ProfileNotSignedIn.Text" xml:space="preserve">
+    <value>Not signed in</value>
+  </data>
+  <data name="ProfileSignInWithYour.Text" xml:space="preserve">
+    <value>Sign in with your fort.social account to see your profile here</value>
+  </data>
+  <data name="ProfileSignOut.Text" xml:space="preserve">
+    <value>Sign Out</value>
+  </data>
+  <data name="ProfileYourProfileIsManaged.Text" xml:space="preserve">
+    <value>Your profile is managed on fort.social. Edit your display name, bio, avatar, or account there.</value>
+  </data>
+  <data name="ResetAppButton.Content" xml:space="preserve">
+    <value>Reset app</value>
+  </data>
+  <data name="ResetAppButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Signs you out and deletes all cached data and saved settings, resetting the app to a fresh install</value>
+  </data>
+  <data name="ResetAppButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Reset app button</value>
+  </data>
+  <data name="RetryButton.Content" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="RetryButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Reload the games list</value>
+  </data>
+  <data name="RetryButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Try again</value>
+  </data>
+  <data name="SignInButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Opens fort.social in your browser to approve sign-in</value>
+  </data>
+  <data name="SignInButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Sign in with fort.social</value>
+  </data>
+  <data name="SignInButton2.Content" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
+  <data name="SkipButton.Content" xml:space="preserve">
+    <value>skip connecting your account</value>
+  </data>
+  <data name="SkipButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
+    <value>Continue using the app without signing in</value>
+  </data>
+  <data name="SkipButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Skip sign in</value>
+  </data>
+  <data name="ThemeDarkRadio.Content" xml:space="preserve">
+    <value>Dark</value>
+  </data>
+  <data name="ThemeLightRadio.Content" xml:space="preserve">
+    <value>Light</value>
+  </data>
+  <data name="ThemeSystemRadio.Content" xml:space="preserve">
+    <value>System Default</value>
+  </data>
+  <data name="SkipHintTip.Title" xml:space="preserve">
+    <value>dont have an account?</value>
+  </data>
+  <data name="SkipHintTip.Subtitle" xml:space="preserve">
+    <value>dont have a account? or if you dont wanna login thats perfectly fine! but in the future you might want to connect your account.</value>
+  </data>
+  <data name="SkipHintTip.CloseButtonContent" xml:space="preserve">
+    <value>alrighty :)</value>
+  </data>
+  <data name="TileBadgeToggle.Header" xml:space="preserve">
+    <value>Notification badge</value>
+  </data>
+  <data name="TileBadgeToggle.OnContent" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="TileBadgeToggle.OffContent" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="TintBlueButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Navy Blue background tint</value>
+  </data>
+  <data name="TintBlueButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Navy Blue</value>
+  </data>
+  <data name="TintBronzeButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Bronze background tint</value>
+  </data>
+  <data name="TintBronzeButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Bronze</value>
+  </data>
+  <data name="TintCustomButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Custom background tint</value>
+  </data>
+  <data name="TintCustomButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Custom color…</value>
+  </data>
+  <data name="TintDefaultButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Default background tint</value>
+  </data>
+  <data name="TintDefaultButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Default</value>
+  </data>
+  <data name="TintGraphiteButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Graphite background tint</value>
+  </data>
+  <data name="TintGraphiteButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Graphite</value>
+  </data>
+  <data name="TintGreenButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Forest Green background tint</value>
+  </data>
+  <data name="TintGreenButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Forest Green</value>
+  </data>
+  <data name="TintOliveButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Olive background tint</value>
+  </data>
+  <data name="TintOliveButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Olive</value>
+  </data>
+  <data name="TintPurpleButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Deep Purple background tint</value>
+  </data>
+  <data name="TintPurpleButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Deep Purple</value>
+  </data>
+  <data name="TintRedButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Deep Red background tint</value>
+  </data>
+  <data name="TintRedButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Deep Red</value>
+  </data>
+  <data name="TintRoseButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Deep Rose background tint</value>
+  </data>
+  <data name="TintRoseButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Deep Rose</value>
+  </data>
+  <data name="TintSlateButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Dark Slate background tint</value>
+  </data>
+  <data name="TintSlateButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Dark Slate</value>
+  </data>
+  <data name="TintTealButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Deep Teal background tint</value>
+  </data>
+  <data name="TintTealButton.[using:Windows.UI.Xaml.Controls]ToolTipService.ToolTip" xml:space="preserve">
+    <value>Deep Teal</value>
+  </data>
+  <data name="UsernameText.Text" xml:space="preserve">
+    <value>@username@social.fort1nd.com</value>
+  </data>
+  <data name="WelcomeDontShowCheckBox.Content" xml:space="preserve">
+    <value>dont show me this again &gt;:(</value>
+  </data>
+</root>

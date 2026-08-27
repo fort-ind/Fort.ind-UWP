@@ -15,17 +15,6 @@ namespace Fort.ind_UWP
     public sealed partial class ProfilePage : Page
     {
 
-        // Guard to prevent multiple ContentDialogs from opening simultaneously.
-        //
-        // Static, and therefore never disposed, on purpose. As an instance field this leaked a
-        // SemaphoreSlim on every visit to the profile: this page sets no NavigationCacheMode, so
-        // the Frame builds a fresh ProfilePage each time the user clicks the nav item, and
-        // nothing disposed the old one's semaphore. Disposing it in Unloaded is not an option
-        // either - UWP can raise Unloaded and then Loaded again on the same instance, which would
-        // leave WaitAsync throwing ObjectDisposedException. Process lifetime is the honest scope
-        // for a guard whose whole job is "is a dialog open in this app right now".
-        private static readonly SemaphoreSlim _dialogSemaphore = new SemaphoreSlim(1, 1);
-
         // Tracks whether the AuthStateChanged handler is attached, so repeated Loaded/Unloaded
         // cycles (which UWP can fire more than once) don't attach it more than once, and so
         // the handler is reliably reattached after an Unloaded/Loaded pair instead of leaving
@@ -113,11 +102,11 @@ namespace Fort.ind_UWP
 
             // Update profile header
             DisplayNameText.Text = string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username : user.DisplayName;
-            UsernameText.Text = $"@{user.Username}@{host}";
+            UsernameText.Text = LocalizedStrings.Format("ProfileHandleFormat", user.Username, host);
 
             if (user.CreatedDate > DateTime.MinValue)
             {
-                MemberSinceText.Text = $"Member since {user.CreatedDate:MMMM yyyy}";
+                MemberSinceText.Text = LocalizedStrings.Format("ProfileMemberSinceFormat", FormatMemberSince(user.CreatedDate));
                 MemberSinceText.Visibility = Visibility.Visible;
             }
             else
@@ -127,7 +116,7 @@ namespace Fort.ind_UWP
 
             if (user.LastLoginDate > DateTime.MinValue)
             {
-                LastLoginText.Text = $"Last signed in: {FormatLastLogin(user.LastLoginDate)}";
+                LastLoginText.Text = LocalizedStrings.Format("ProfileLastSignedInFormat", FormatLastLogin(user.LastLoginDate));
                 LastLoginText.Visibility = Visibility.Visible;
             }
             else
@@ -140,7 +129,7 @@ namespace Fort.ind_UWP
             ProfileInitials.Text = GetInitials(name);
 
             // Update bio
-            BioText.Text = string.IsNullOrWhiteSpace(user.Bio) ? "No bio set" : user.Bio;
+            BioText.Text = string.IsNullOrWhiteSpace(user.Bio) ? LocalizedStrings.Get("ProfileNoBio") : user.Bio;
 
             // Fade in the avatar - only when it's actually new/changed, not on every RefreshUI.
             if (UpdateAvatarUI(user.AvatarUrl))
@@ -181,7 +170,7 @@ namespace Fort.ind_UWP
                     host = MisskeyAuthService.InstanceHost;
                 }
 
-                await AppConstants.LaunchWebUriAsync($"https://{host}/@{Uri.EscapeDataString(user.Username)}");
+                await WebLauncher.LaunchAsync($"https://{host}/@{Uri.EscapeDataString(user.Username)}");
             }
             catch (Exception ex)
             {
@@ -191,37 +180,24 @@ namespace Fort.ind_UWP
 
         private async void LogoutButton_Click(object sender, RoutedEventArgs e)
         {
-            // Use semaphore to prevent concurrent dialog opening
-            if (!await _dialogSemaphore.WaitAsync(0))
-            {
-                return; // Another dialog is already open
-            }
+            var confirmed = await DialogService.ShowConfirmAsync(
+                this,
+                LocalizedStrings.Get("SignOutDialogTitle"),
+                LocalizedStrings.Get("SignOutDialogBody"),
+                LocalizedStrings.Get("SignOutDialogConfirm"),
+                LocalizedStrings.Get("DialogCancel"),
+                ContentDialogButton.Close);
+
+            if (!confirmed) return;
 
             try
             {
-                ContentDialog dialog = new ContentDialog();
-                dialog.Title = "Sign Out";
-                dialog.Content = "Are you sure you want to sign out?";
-                dialog.PrimaryButtonText = "Sign Out";
-                dialog.CloseButtonText = "Cancel";
-                dialog.DefaultButton = ContentDialogButton.Close;
-                AppConstants.ApplyXamlRoot(dialog, this);
-
-                var result = await dialog.ShowAsync();
-
-                if (result == ContentDialogResult.Primary)
-                {
-                    await ProfileService.LogoutAsync();
-                    RefreshUI();
-                }
+                await ProfileService.LogoutAsync();
+                RefreshUI();
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"ProfilePage: Logout dialog failed – {ex.Message}");
-            }
-            finally
-            {
-                _dialogSemaphore.Release();
+                Debug.WriteLine($"ProfilePage: Logout failed – {ex.Message}");
             }
         }
 
@@ -239,6 +215,27 @@ namespace Fort.ind_UWP
         /// wrong-looking but never misleading - unlike a US-shaped date shown to someone who
         /// reads day-first, where 03/06 silently means the wrong day.
         /// </summary>
+        /// <summary>
+        /// Formats a join date as month and year. Same reasoning as <see cref="FormatLastLogin"/>:
+        /// the previous "MMMM yyyy" custom pattern pinned month-before-year, which is wrong in
+        /// the many locales that write the year first. "month year" is an abstract format
+        /// template, so DateTimeFormatter resolves both the names and the order from the user's
+        /// region settings.
+        /// </summary>
+        private static string FormatMemberSince(DateTime value)
+        {
+            try
+            {
+                var formatter = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("month year");
+                return formatter.Format(new DateTimeOffset(value));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"ProfilePage: Member-since formatting failed - {ex.Message}");
+                return value.ToString("yyyy-MM", System.Globalization.CultureInfo.InvariantCulture);
+            }
+        }
+
         private static string FormatLastLogin(DateTime value)
         {
             try
@@ -306,7 +303,7 @@ namespace Fort.ind_UWP
 
                 // Only http/https avatars are fetched - the URL comes from the instance's JSON via
                 // the on-disk profile cache, and BitmapImage will happily resolve other schemes.
-                var avatarUri = AppConstants.TryCreateWebUri(avatarUrl);
+                var avatarUri = WebLauncher.TryCreateWebUri(avatarUrl);
                 if (avatarUri == null)
                 {
                     ProfileImage.Source = null;

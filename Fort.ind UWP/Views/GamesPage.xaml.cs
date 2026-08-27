@@ -346,9 +346,21 @@ namespace Fort.ind_UWP
         private void UpdateCountText(int shownCount)
         {
             var total = _allGames.Count;
-            CountText.Text = shownCount == total
-                ? (total == 1 ? "1 game" : $"{total} games")
-                : $"{shownCount} of {total} games";
+
+            // Singular is a separate resource rather than a formatted "1 game(s)": a translator
+            // needs to be able to change the whole sentence, not just the number in it.
+            if (shownCount != total)
+            {
+                CountText.Text = LocalizedStrings.Format("GamesCountFilteredFormat", shownCount, total);
+            }
+            else if (total == 1)
+            {
+                CountText.Text = LocalizedStrings.Get("GamesCountOne");
+            }
+            else
+            {
+                CountText.Text = LocalizedStrings.Format("GamesCountAllFormat", total);
+            }
         }
 
         /// <summary>
@@ -373,8 +385,8 @@ namespace Fort.ind_UWP
                 var item = e.ClickedItem as SearchItem;
                 if (item == null || string.IsNullOrEmpty(item.Url)) return;
 
-                // Only http/https is launched - see AppConstants.TryCreateWebUri.
-                await AppConstants.LaunchWebUriAsync(item.Url);
+                // Only http/https is launched - see WebLauncher.TryCreateWebUri.
+                await WebLauncher.LaunchAsync(item.Url);
             }
             catch (Exception ex)
             {

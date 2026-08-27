@@ -106,7 +106,7 @@ namespace Fort.ind_UWP
         /// </summary>
         public static async Task<Uri> GetCircularAvatarUriAsync(string avatarUrl)
         {
-            var sourceUri = AppConstants.TryCreateWebUri(avatarUrl);
+            var sourceUri = WebLauncher.TryCreateWebUri(avatarUrl);
             if (sourceUri == null)
             {
                 return null;
