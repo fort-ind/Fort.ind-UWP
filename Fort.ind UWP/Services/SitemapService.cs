@@ -8,28 +8,13 @@ using Windows.Storage;
 
 namespace Fort.ind_UWP
 {
-    /// <summary>
-    /// Parses the bundled sitemap.xml and produces SearchItem entries for every URL
-    /// </summary>
     public class SitemapService
     {
-
-        // The sitemap ships inside the app package and the URL cache is already revalidated on a
-        // 24h TTL, so re-reading and re-parsing it for every caller is pure waste. Reference swap
-        // only, exactly like MainPage._allSearchItems: readers never observe a half-built list.
         private static IReadOnlyList<SearchItem> s_allItems;
         private static IReadOnlyList<SearchItem> s_gameItems;
 
-        // Serialises the first parse so two callers racing at startup - MainPage's constructor
-        // calls LoadSitemapItems, and GamesPage loads as soon as it is navigated to - cannot both
-        // hit the file system and both parse the XML.
         private static readonly SemaphoreSlim s_loadGate = new SemaphoreSlim(1, 1);
 
-        /// <summary>
-        /// Reads sitemap.xml from the app package and returns SearchItem objects allowing for the
-        /// latest URLs to be searchable. Parsed at most once per process; an empty result (missing
-        /// file, malformed XML) is deliberately NOT memoized so a later caller retries.
-        /// </summary>
         public static async Task<IReadOnlyList<SearchItem>> LoadSearchItemsAsync()
         {
             var cached = s_allItems;
@@ -38,7 +23,6 @@ namespace Fort.ind_UWP
             await s_loadGate.WaitAsync();
             try
             {
-                // Re-check: a racing caller may have finished while we waited on the gate.
                 if (s_allItems != null) return s_allItems;
 
                 var parsed = await ParseSitemapAsync();
@@ -55,19 +39,11 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// The game subset of the sitemap, in sitemap order. Memoized separately so the Games page
-        /// does not re-filter every item each time it is shown.
-        /// </summary>
         public static async Task<IReadOnlyList<SearchItem>> LoadGameItemsAsync()
         {
             var cachedGames = s_gameItems;
             if (cachedGames != null) return cachedGames;
 
-            // Deliberately NOT inside s_loadGate: LoadSearchItemsAsync takes that gate and
-            // SemaphoreSlim is not reentrant, so taking it here would deadlock silently. Two
-            // callers racing through here just each build an equivalent list from the same
-            // memoized source and one of the two identical results wins - harmless.
             var all = await LoadSearchItemsAsync();
 
             List<SearchItem> games = new List<SearchItem>();
@@ -88,10 +64,6 @@ namespace Fort.ind_UWP
             return result;
         }
 
-        /// <summary>
-        /// Parses the packaged sitemap (or the URL cache written from it) into SearchItems.
-        /// Callers go through LoadSearchItemsAsync, which memoizes this.
-        /// </summary>
         private static async Task<List<SearchItem>> ParseSitemapAsync()
         {
             List<SearchItem> items = new List<SearchItem>();
@@ -107,13 +79,10 @@ namespace Fort.ind_UWP
                 var file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/sitemap.xml"));
                 var text = await FileIO.ReadTextAsync(file);
 
-                // Streamed rather than XDocument.Parse: the only thing wanted out of the whole
-                // document is each <loc> value, so building a DOM for it just to throw it away is
-                // a peak-memory spike on the startup path for no benefit.
                 var urlsToCache = ReadLocValues(text);
                 if (urlsToCache == null)
                 {
-                    return items; // Malformed XML - return empty so a later caller retries.
+                    return items;
                 }
 
                 items = BuildSearchItemsFromUrls(urlsToCache);
@@ -131,17 +100,10 @@ namespace Fort.ind_UWP
             return items;
         }
 
-        /// <summary>
-        /// Pulls every &lt;loc&gt; value out of a sitemap document without materialising a DOM.
-        /// Returns null (not an empty list) if the XML is malformed, so the caller can tell
-        /// "broken document" apart from "document with no URLs" and avoid memoizing the failure.
-        /// </summary>
         private static List<string> ReadLocValues(string documentText)
         {
             List<string> urls = new List<string>();
 
-            // DTD processing off and no resolver: the sitemap is bundled, but this also parses
-            // nothing that could reach out to an external entity if it ever stopped being.
             System.Xml.XmlReaderSettings settings = new System.Xml.XmlReaderSettings()
             {
                 DtdProcessing = System.Xml.DtdProcessing.Prohibit,
@@ -181,16 +143,6 @@ namespace Fort.ind_UWP
             return urls;
         }
 
-        /// <summary>
-        /// Creates a SearchItem instance from a URL string, or returns null if the URL
-        /// is invalid or should be skipped (e.g. utility pages like 404).
-        ///
-        /// Only http/https URLs are accepted. Items built here are eventually handed to
-        /// Launcher.LaunchUriAsync, and this is the choke point every URL passes through -
-        /// including ones read back from the plain-text cache file in LocalFolder, which is not
-        /// the app package and so is not trusted input.
-        /// </summary>
-        /// <param name="urlValue">The absolute URL string.</param>
         private static SearchItem CreateSearchItemFromUrl(string urlValue)
         {
             var uri = WebLauncher.TryCreateWebUri(urlValue);
@@ -205,7 +157,6 @@ namespace Fort.ind_UWP
                 return new SearchItem("Home", AppConstants.CategoryFortWebsite, null, urlValue);
             }
 
-            // Skip utility pages
             if (path == "404")
             {
                 return null;
@@ -218,8 +169,6 @@ namespace Fort.ind_UWP
 
         private static List<SearchItem> BuildSearchItemsFromUrls(IEnumerable<string> urls)
         {
-            // Nulls are the URLs CreateSearchItemFromUrl deliberately rejects (the 404 page), so
-            // they are filtered out rather than carried through as empty search results.
             return urls
                 .Select(CreateSearchItemFromUrl)
                 .Where(item => item != null)
@@ -236,9 +185,6 @@ namespace Fort.ind_UWP
                     return null;
                 }
 
-                // Ignore a cache written by a different app version - a bundled sitemap.xml can
-                // change between releases (new pages/games), and honoring a still-fresh TTL from
-                // before the update would hide anything new until the cache naturally expires.
                 var cachedVersion = settings.Values[AppConstants.SitemapCacheAppVersionKey]?.ToString();
                 if (cachedVersion != AppConstants.AppVersionDisplay)
                 {
@@ -271,10 +217,6 @@ namespace Fort.ind_UWP
                     return null;
                 }
 
-                // TryGetItemAsync, not GetFileAsync: a missing cache is the expected state on
-                // first run and after a reset, and every early return above already treats
-                // "no usable cache" as a normal outcome. GetFileAsync would make that one case
-                // cost a FileNotFoundException on the startup path.
                 var cacheFile = await ApplicationData.Current.LocalFolder.TryGetItemAsync(AppConstants.SitemapCacheFileName) as StorageFile;
                 if (cacheFile == null)
                 {
@@ -361,12 +303,6 @@ namespace Fort.ind_UWP
             return AppConstants.CategoryFortWebsite;
         }
 
-        /// <summary>
-        /// Slug tokens that are acronyms rather than words - plain title-casing turns them into
-        /// "Cs" and "Fnaf", which reads wrong. Deliberately conservative: only tokens that are
-        /// never an ordinary English word, so a regenerated sitemap cannot trip it. Note "us"
-        /// (as in "amoung-us") is intentionally absent.
-        /// </summary>
         private static readonly HashSet<string> s_upperCaseTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "cs", "css", "dbz", "fnaf", "gba", "gbc", "gta", "hd", "html", "mlb", "mlg",
@@ -374,23 +310,11 @@ namespace Fort.ind_UWP
             "ufo", "wwe"
         };
 
-        /// <summary>
-        /// Tokens that are the tail of a domain-style name - "diep-io" is diep.io, not "Diep Io".
-        /// Glued onto the preceding token with a dot and left lowercase.
-        /// </summary>
         private static readonly HashSet<string> s_domainSuffixTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "com", "gg", "io", "lol", "net", "org"
         };
 
-        /// <summary>
-        /// Turns the last path segment into a display name: "games/html/rynis-game" -> "Rynis Game".
-        /// Beyond plain title-casing, two generic rules clean up the shapes that show up in game
-        /// slugs - domain suffixes are re-glued ("diep-io" -> "Diep.io") and runs of numeric tokens
-        /// are treated as a version rather than separate words ("minecraft-1-8-8-fixed" ->
-        /// "Minecraft 1.8.8 Fixed"). Both are rules rather than a lookup table, so a regenerated or
-        /// extended sitemap gets the same treatment with nothing to maintain.
-        /// </summary>
         private static string GetTitle(string path)
         {
             var trimmed = path.TrimEnd('/');
@@ -407,7 +331,6 @@ namespace Fort.ind_UWP
             {
                 var token = tokens[i];
 
-                // A domain suffix never starts a name, so index 0 is always an ordinary word.
                 if (i > 0 && s_domainSuffixTokens.Contains(token))
                 {
                     sb.Append('.');
@@ -415,8 +338,6 @@ namespace Fort.ind_UWP
                     continue;
                 }
 
-                // Two numbers in a row are a version ("1", "6" -> "1.6"), not two words. A number
-                // after a word still gets a space, so "2048 Cupcakes" and "FNAF 2" are unaffected.
                 if (i > 0 && IsAllDigits(token) && IsAllDigits(tokens[i - 1]))
                 {
                     sb.Append('.');
@@ -431,10 +352,6 @@ namespace Fort.ind_UWP
             return sb.ToString();
         }
 
-        /// <summary>
-        /// Upper-cases a known acronym, otherwise title-cases the token. Invariant casing
-        /// throughout - these are URL slugs, not user text.
-        /// </summary>
         private static string FormatToken(string token)
         {
             if (s_upperCaseTokens.Contains(token)) return token.ToUpperInvariant();
@@ -457,6 +374,5 @@ namespace Fort.ind_UWP
             }
             return true;
         }
-
     }
 }

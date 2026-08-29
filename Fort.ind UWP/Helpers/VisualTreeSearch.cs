@@ -3,18 +3,8 @@ using Windows.UI.Xaml.Media;
 
 namespace Fort.ind_UWP
 {
-    /// <summary>
-    /// Walks an applied control template. Named <c>VisualTreeSearch</c> rather than
-    /// <c>VisualTreeHelper</c> so it does not shadow <see cref="VisualTreeHelper"/>, which it
-    /// is built on.
-    /// </summary>
     public static class VisualTreeSearch
     {
-
-        /// <summary>
-        /// Depth-first search for a named element inside a control's applied template. Template
-        /// parts are not page fields, so they cannot be reached by x:Name from code-behind.
-        /// </summary>
         public static FrameworkElement FindDescendantByName(DependencyObject root, string name)
         {
             if (root == null) return null;
@@ -33,6 +23,5 @@ namespace Fort.ind_UWP
 
             return null;
         }
-
     }
 }

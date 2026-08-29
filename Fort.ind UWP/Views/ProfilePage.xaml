@@ -17,15 +17,10 @@
                              EasingFunction="{StaticResource FadeEase}"/>
         </Storyboard>
         <CubicEase x:Key="FadeEase" EasingMode="EaseOut"/>
-        <!-- Card surfaces come from App.xaml's ThemeDictionaries (CardBackgroundBrush /
-             CardBorderBrush). A page-level copy would be theme-blind - see the note in
-             MainPage.xaml. -->
     </Page.Resources>
 
     <ScrollViewer HorizontalContentAlignment="Center">
         <StackPanel Padding="24" MaxWidth="600" HorizontalAlignment="Center">
-
-            <!-- Not Logged In State -->
             <StackPanel x:Name="NotLoggedInPanel" Visibility="Collapsed">
                 <Grid Background="{ThemeResource CardBackgroundBrush}"
                       BorderBrush="{ThemeResource CardBorderBrush}"
@@ -51,10 +46,7 @@
                 </Grid>
             </StackPanel>
 
-            <!-- Logged In State -->
             <StackPanel x:Name="LoggedInPanel" Spacing="16">
-
-                <!-- Profile Header -->
                 <Grid Background="{ThemeResource CardBackgroundBrush}"
                       BorderBrush="{ThemeResource CardBorderBrush}"
                       BorderThickness="1"
@@ -65,13 +57,6 @@
                         <ColumnDefinition Width="*"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- Profile Picture.
-                         The avatar carries no information the screen reader cannot already get:
-                         DisplayNameText and UsernameText sit immediately to its right and say
-                         exactly who this is. So the whole thing is Raw - announcing an unnamed
-                         image, or reading the initials out as the letters "RS", would only add
-                         noise before the name itself. Same treatment GamesPage gives its
-                         decorative glyphs. -->
                     <Grid x:Name="AvatarGrid"
                           Width="80" Height="80"
                           CornerRadius="40"
@@ -90,7 +75,6 @@
                                    AutomationProperties.AccessibilityView="Raw"/>
                     </Grid>
 
-                    <!-- Profile Info -->
                     <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                         <TextBlock x:Uid="DisplayNameText" x:Name="DisplayNameText"
                                    Style="{StaticResource SubtitleTextBlockStyle}"/>
@@ -110,7 +94,6 @@
                     </StackPanel>
                 </Grid>
 
-                <!-- Bio Section -->
                 <Grid Background="{ThemeResource CardBackgroundBrush}"
                       BorderBrush="{ThemeResource CardBorderBrush}"
                       BorderThickness="1"
@@ -131,7 +114,6 @@
                            TextWrapping="Wrap"
                            Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"/>
 
-                <!-- Actions -->
                 <StackPanel Orientation="Horizontal" Spacing="12">
                     <Button x:Uid="ManageOnFortSocialButton" x:Name="ManageOnFortSocialButton"
                             Click="ManageOnFortSocialButton_Click"

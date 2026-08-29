@@ -9,20 +9,11 @@ using Windows.Storage;
 
 namespace Fort.ind_UWP
 {
-    /// <summary>
-    /// Caches the signed-in fort.social profile locally so the UI has something to show
-    /// immediately at startup, before (or without) a network round-trip.
-    /// Uses Windows.Storage.ApplicationData for UWP-safe storage.
-    /// </summary>
     public class LocalStorageService
     {
-
         private static readonly StorageFolder LocalFolder = ApplicationData.Current.LocalFolder;
         private const string PROFILE_FILE = "misskey_profile.json";
 
-        /// <summary>
-        /// Initializes storage service
-        /// </summary>
         public static Task InitializeAsync()
         {
             return Task.CompletedTask;
@@ -30,9 +21,6 @@ namespace Fort.ind_UWP
 
         #region Profile Cache
 
-        /// <summary>
-        /// Caches the signed-in user's profile as a local JSON file.
-        /// </summary>
         public static async Task<bool> SaveProfileAsync(UserProfile profile, CancellationToken cancellationToken = default(CancellationToken))
         {
             if (profile == null || string.IsNullOrWhiteSpace(profile.UserId))
@@ -62,19 +50,12 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Loads the cached profile, or null if none is cached.
-        /// </summary>
         public static async Task<UserProfile> LoadProfileAsync(CancellationToken cancellationToken = default(CancellationToken))
         {
             try
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // TryGetItemAsync, not GetFileAsync: "no profile cached yet" is the ordinary
-                // state on a fresh install and after a sign-out, not an error. GetFileAsync
-                // signals that by throwing FileNotFoundException, which means the normal path
-                // costs an exception and shows up in the debugger on every launch.
                 var file = await LocalFolder.TryGetItemAsync(PROFILE_FILE) as StorageFile;
                 if (file == null) return null;
 
@@ -93,14 +74,10 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Clears the cached profile (called on sign-out).
-        /// </summary>
         public static async Task ClearProfileAsync()
         {
             try
             {
-                // Nothing to clear is success, not failure - see the note in LoadProfileAsync.
                 var file = await LocalFolder.TryGetItemAsync(PROFILE_FILE) as StorageFile;
                 if (file == null) return;
 
@@ -108,8 +85,6 @@ namespace Fort.ind_UWP
             }
             catch (Exception ex)
             {
-                // A file that exists but cannot be deleted (locked, ACL) still must not take down
-                // sign-out, which is the only caller.
                 Debug.WriteLine($"Error clearing profile: {ex.Message}");
             }
         }
@@ -118,9 +93,6 @@ namespace Fort.ind_UWP
 
         #region Settings
 
-        /// <summary>
-        /// Gets the data storage location path
-        /// </summary>
         public static string DataPath
         {
             get
@@ -129,14 +101,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Deletes every file/folder this app has written to its local storage folder (cached
-        /// profile, sitemap cache, anything added later) and clears every LocalSettings value
-        /// (theme, tint color, welcome-dialog flag, settings panel expand states, sitemap cache
-        /// timestamp, etc). Does NOT touch the PasswordVault-stored auth token - callers that
-        /// want a full reset must also call MisskeyAuthService.ClearToken().
-        /// Used by the "Reset app" button, which wipes everything back to a fresh install.
-        /// </summary>
         public static async Task ResetAllAppDataAsync()
         {
             try
@@ -173,7 +137,6 @@ namespace Fort.ind_UWP
 
         #region JSON Serialization
 
-        // Cache serializers to avoid repeated reflection on each call
         private static readonly ConcurrentDictionary<Type, DataContractJsonSerializer> s_serializerCache =
             new ConcurrentDictionary<Type, DataContractJsonSerializer>();
 
@@ -207,6 +170,5 @@ namespace Fort.ind_UWP
         }
 
         #endregion
-
     }
 }

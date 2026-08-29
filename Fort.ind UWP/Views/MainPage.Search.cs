@@ -9,20 +9,8 @@ using Windows.UI.Xaml.Input;
 
 namespace Fort.ind_UWP
 {
-    /// <summary>
-    /// The nav pane search box: its accelerators, the typing debounce, and what happens when a
-    /// suggestion is chosen. The matching itself lives in <see cref="SearchCatalog"/>.
-    /// </summary>
     public sealed partial class MainPage : Page
     {
-
-        // ── Search bar handlers ──
-
-        /// <summary>
-        /// Ctrl+F - the standard Find accelerator - moves focus to the nav pane's search box.
-        /// Declared in MainPage.xaml; see the comment there for why this is an accelerator rather
-        /// than a CoreWindow key handler.
-        /// </summary>
         private void FocusSearchAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             try
@@ -36,11 +24,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Escape clears the search box, but only when it actually has text - leaving the event
-        /// unhandled otherwise so Escape keeps its normal meaning everywhere else on the page
-        /// (closing the nav pane's flyout in Minimal mode, for instance).
-        /// </summary>
         private void ClearSearchAccelerator_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
         {
             try
@@ -86,9 +69,6 @@ namespace Fort.ind_UWP
                     return;
                 }
 
-                // Capture volatile references on the UI thread before going off-thread. The
-                // profile row is resolved here too, not inside the Task.Run: it needs the
-                // resource loader, which is view-affine and throws off the UI thread.
                 var snapshot = _allSearchItems;
                 var profileResult = SearchCatalog.BuildProfileResultTitle(ProfileService.CurrentUser);
 
@@ -101,7 +81,6 @@ namespace Fort.ind_UWP
             }
             catch (OperationCanceledException)
             {
-                // Expected while typing quickly.
             }
             catch (Exception ex)
             {
@@ -123,7 +102,6 @@ namespace Fort.ind_UWP
                 }
                 else
                 {
-                    // User pressed Enter without picking a suggestion – navigate to first match
                     var query = args.QueryText.Trim();
                     if (!string.IsNullOrEmpty(query))
                     {
@@ -152,7 +130,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        // Fixed: removed unnecessary async keyword (no await in this method)
         private void NavSearchBox_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
         {
             var item = args.SelectedItem as SearchItem;
@@ -164,7 +141,6 @@ namespace Fort.ind_UWP
 
         private async Task NavigateToSearchItem(SearchItem item)
         {
-            // Null check for item
             if (item == null)
             {
                 Debug.WriteLine("MainPage: NavigateToSearchItem called with null item");
@@ -173,7 +149,6 @@ namespace Fort.ind_UWP
 
             if (!string.IsNullOrEmpty(item.Url))
             {
-                // Only http/https is launched - see WebLauncher.TryCreateWebUri.
                 await WebLauncher.LaunchAsync(item.Url);
             }
             else if (!string.IsNullOrEmpty(item.NavigationTag))
@@ -181,6 +156,5 @@ namespace Fort.ind_UWP
                 ShowContent(item.NavigationTag);
             }
         }
-
     }
 }

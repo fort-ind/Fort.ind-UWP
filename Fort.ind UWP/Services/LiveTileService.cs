@@ -8,23 +8,14 @@ using Microsoft.Toolkit.Uwp.Notifications;
 
 namespace Fort.ind_UWP
 {
-    /// <summary>
-    /// Service for managing Live Tile updates with news and notifications
-    /// </summary>
     public class LiveTileService
     {
-
-        /// <summary>
-        /// Updates the Live Tile with the latest news
-        /// </summary>
         public static void UpdateTileWithNews(string title, string message, string branding = "name", TileAnimation animationType = TileAnimation.FadeIn)
         {
             try
             {
-                // Create the tile notification content
                 var tileXml = CreateTileXml(title, message, branding, animationType);
 
-                // Create and send the notification
                 TileNotification tileNotification = new TileNotification(tileXml);
                 TileUpdateManager.CreateTileUpdaterForApplication().Update(tileNotification);
             }
@@ -34,23 +25,17 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Updates the Live Tile with multiple news items that cycle
-        /// </summary>
         public static void UpdateTileWithMultipleNews(List<NewsItem> newsItems)
         {
             if (newsItems == null || newsItems.Count == 0) return;
 
             try
             {
-                // Enable notification queue to show multiple tiles
                 var tileUpdater = TileUpdateManager.CreateTileUpdaterForApplication();
                 tileUpdater.EnableNotificationQueue(true);
 
-                // Clear existing notifications
                 tileUpdater.Clear();
 
-                // Animation types to cycle through
                 TileAnimation[] animations = {
                     TileAnimation.FadeIn,
                     TileAnimation.SlideUp,
@@ -59,7 +44,6 @@ namespace Fort.ind_UWP
                     TileAnimation.SlideRight
                 };
 
-                // Add each news item (max 5 in queue)
                 for (int i = 0; i <= Math.Min(newsItems.Count - 1, 4); i++)
                 {
                     var item = newsItems[i];
@@ -78,11 +62,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Builds the adaptive tile content for all four tile sizes with the requested animation
-        /// style, using the Notifications library's typed object model instead of hand-written XML
-        /// strings - removes the need to hand-escape every field into a raw XML string.
-        /// </summary>
         private static XmlDocument CreateTileXml(string title, string message, string branding, TileAnimation animation = TileAnimation.FadeIn)
         {
             var titleStyle = GetTitleTextStyle(animation);
@@ -96,7 +75,6 @@ namespace Fort.ind_UWP
             content.Visual.DisplayName = LocalizedStrings.Get("TileDisplayName");
             content.Visual.Branding = safeBranding;
 
-            // Small tile: centered monogram
             AdaptiveText smallText = new AdaptiveText();
             smallText.Text = smallTileText;
             smallText.HintStyle = AdaptiveTextStyle.Caption;
@@ -109,15 +87,12 @@ namespace Fort.ind_UWP
             content.Visual.TileSmall = new TileBinding();
             content.Visual.TileSmall.Content = smallContent;
 
-            // Medium and wide tiles: title + wrapped message in a group/subgroup, differing only in
-            // whether the title itself wraps and how many message lines are allowed
             content.Visual.TileMedium = new TileBinding();
             content.Visual.TileMedium.Content = BuildTitleMessageGroup(safeTitle, titleStyle, true, safeMessage, AdaptiveTextStyle.CaptionSubtle, 3);
 
             content.Visual.TileWide = new TileBinding();
             content.Visual.TileWide.Content = BuildTitleMessageGroup(safeTitle, titleStyle, false, safeMessage, AdaptiveTextStyle.Body, 2);
 
-            // Large tile: centered title in a group, message and static branding line below it
             TileBindingContentAdaptive largeContent = new TileBindingContentAdaptive();
             largeContent.TextStacking = TileTextStacking.Center;
 
@@ -154,11 +129,6 @@ namespace Fort.ind_UWP
             return content.GetXml();
         }
 
-        /// <summary>
-        /// Builds a group/subgroup containing a styled title line and a wrapped message line -
-        /// shared by the medium and wide tile bindings, which only differ in title wrap and
-        /// message max-line settings.
-        /// </summary>
         private static TileBindingContentAdaptive BuildTitleMessageGroup(string title, AdaptiveTextStyle titleStyle, bool wrapTitle, string message, AdaptiveTextStyle messageStyle, int messageMaxLines)
         {
             AdaptiveText titleText = new AdaptiveText();
@@ -184,9 +154,6 @@ namespace Fort.ind_UWP
             return result;
         }
 
-        /// <summary>
-        /// Maps the tile's requested animation to the AdaptiveText style used for the title line.
-        /// </summary>
         private static AdaptiveTextStyle GetTitleTextStyle(TileAnimation animation)
         {
             switch (animation)
@@ -206,10 +173,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Maps the branding string (always "name" from current call sites, but kept as a
-        /// parameter for compatibility) to the TileBranding enum the Notifications library expects.
-        /// </summary>
         private static TileBranding ParseBranding(string branding)
         {
             switch ((branding ?? "").Trim().ToLowerInvariant())
@@ -225,12 +188,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Strips characters that aren't legal in XML 1.0 (the Notifications library still
-        /// serializes to XML under the hood) while passing valid surrogate pairs (e.g. emoji)
-        /// through unchanged. Entity escaping (&amp;, &lt;, etc.) is handled by the library itself,
-        /// so this only needs to guard against characters that would make the XML invalid outright.
-        /// </summary>
         private static string SanitizeText(string text)
         {
             if (string.IsNullOrEmpty(text)) return "";
@@ -262,13 +219,6 @@ namespace Fort.ind_UWP
             return sanitized.ToString();
         }
 
-        /// <summary>
-        /// Whether the app may put a badge on its tile and taskbar icon. Backed by LocalSettings so
-        /// the choice survives a restart, and enforced here rather than at each call site so no
-        /// caller can bypass it. Absent (or unreadable) means enabled, which is how the app behaved
-        /// before this setting existed. ClearBadge deliberately ignores this - clearing is always
-        /// allowed.
-        /// </summary>
         public static bool BadgeEnabled
         {
             get
@@ -296,15 +246,10 @@ namespace Fort.ind_UWP
                     Debug.WriteLine($"LiveTileService: BadgeEnabled write failed – {ex.GetType().Name}: {ex.Message}");
                 }
 
-                // Switching it off takes effect on the tile now, rather than leaving the badge
-                // already on screen sitting there until something else happens to clear it.
                 if (!value) ClearBadge();
             }
         }
 
-        /// <summary>
-        /// Updates the badge on the tile (shows a number or glyph)
-        /// </summary>
         public static void UpdateBadge(int count)
         {
             try
@@ -331,9 +276,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Updates the badge with a glyph (icon)
-        /// </summary>
         public static void UpdateBadgeGlyph(string glyph)
         {
             if (string.IsNullOrWhiteSpace(glyph)) return;
@@ -349,8 +291,6 @@ namespace Fort.ind_UWP
                     return;
                 }
 
-                // Available glyphs: none, activity, alarm, alert, attention, available, away, busy,
-                // error, newMessage, paused, playing, unavailable
                 var badgeXml = $"<badge value=\"{normalizedGlyph}\"/>";
                 XmlDocument badgeDoc = new XmlDocument();
                 badgeDoc.LoadXml(badgeXml);
@@ -364,10 +304,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Shows a Windows toast notification with a title and message.
-        /// Returns False (and writes to Debug output) if notifications are blocked or an error occurs.
-        /// </summary>
         public static bool SendToast(string title, string message)
         {
             try
@@ -396,9 +332,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Clears the Live Tile back to default
-        /// </summary>
         public static void ClearTile()
         {
             try
@@ -411,9 +344,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Clears the badge
-        /// </summary>
         public static void ClearBadge()
         {
             try
@@ -458,12 +388,8 @@ namespace Fort.ind_UWP
                     return false;
             }
         }
-
     }
 
-    /// <summary>
-    /// Tile animation types
-    /// </summary>
     public enum TileAnimation
     {
         FadeIn,
@@ -473,9 +399,6 @@ namespace Fort.ind_UWP
         SlideRight
     }
 
-    /// <summary>
-    /// Represents a news item for the Live Tile
-    /// </summary>
     public class NewsItem
     {
         public string Title { get; set; }

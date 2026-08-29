@@ -10,15 +10,12 @@
     Background="Transparent"
     Loaded="LoginPage_Loaded">
 
-    <!-- Surfaces come from App.xaml's ThemeDictionaries so they repaint on a theme change -
-         see the note in MainPage.xaml. -->
     <Grid Background="{ThemeResource AppSurfaceAcrylicBrush}">
         <Grid.RowDefinitions>
             <RowDefinition Height="32"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <!-- Title Bar -->
         <Grid x:Name="AppTitleBar"
               Grid.Row="0"
               Background="Transparent"
@@ -30,7 +27,6 @@
                        Opacity="0.8"/>
         </Grid>
 
-        <!-- Main Content -->
         <Grid Grid.Row="1" HorizontalAlignment="Center" VerticalAlignment="Center">
             <Grid Background="{ThemeResource CardBackgroundBrush}"
                   BorderBrush="{ThemeResource CardBorderBrush}"
@@ -41,7 +37,6 @@
                   MaxWidth="420">
 
                 <StackPanel Spacing="16">
-                    <!-- Logo/Title -->
                     <StackPanel HorizontalAlignment="Center" Margin="0,0,0,16">
                         <FontIcon Glyph="&#xE72E;"
                                   FontSize="48"
@@ -81,7 +76,6 @@
                         </StackPanel>
                     </Button>
 
-                    <!-- Skip for now option -->
                     <HyperlinkButton x:Uid="SkipButton" x:Name="SkipButton"
                                      HorizontalAlignment="Center"
                                      Click="SkipButton_Click"/>
@@ -93,7 +87,6 @@
             </Grid>
         </Grid>
 
-        <!-- Loading overlay -->
         <Grid x:Name="LoadingOverlay"
               Grid.RowSpan="2"
               Background="{ThemeResource SystemControlPageBackgroundMediumAltMediumBrush}"

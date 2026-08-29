@@ -8,23 +8,10 @@ using Windows.UI.Xaml.Media.Imaging;
 
 namespace Fort.ind_UWP
 {
-    /// <summary>
-    /// Profile viewing page. Read-only: the fort.social account is the source of truth,
-    /// so editing happens on the instance, not here.
-    /// </summary>
     public sealed partial class ProfilePage : Page
     {
-
-        // Tracks whether the AuthStateChanged handler is attached, so repeated Loaded/Unloaded
-        // cycles (which UWP can fire more than once) don't attach it more than once, and so
-        // the handler is reliably reattached after an Unloaded/Loaded pair instead of leaving
-        // this page permanently deaf to sign-in/out.
         private bool _authHandlerAttached = false;
 
-        // The avatar URL currently shown, so a second RefreshUI for the same profile (e.g. the
-        // background refresh in ProfileService.TryRestoreSessionAsync firing shortly after the
-        // cached profile is first shown) doesn't re-download/re-decode an unchanged avatar image
-        // or replay its fade-in animation.
         private string _lastAvatarUrl = null;
 
         public ProfilePage()
@@ -62,7 +49,6 @@ namespace Fort.ind_UWP
             }
             catch (Exception ex)
             {
-                // Critical: Catch exceptions in async void to prevent app crash
                 Debug.WriteLine($"ProfilePage: Auth state change handler failed - {ex.Message}");
             }
         }
@@ -77,9 +63,6 @@ namespace Fort.ind_UWP
             RefreshUI();
         }
 
-        /// <summary>
-        /// Refresh the UI based on login state
-        /// </summary>
         public void RefreshUI()
         {
             if (ProfileService.CurrentUser != null)
@@ -100,7 +83,6 @@ namespace Fort.ind_UWP
             var user = ProfileService.CurrentUser;
             var host = string.IsNullOrWhiteSpace(user.Host) ? MisskeyAuthService.InstanceHost : user.Host;
 
-            // Update profile header
             DisplayNameText.Text = string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username : user.DisplayName;
             UsernameText.Text = LocalizedStrings.Format("ProfileHandleFormat", user.Username, host);
 
@@ -124,14 +106,11 @@ namespace Fort.ind_UWP
                 LastLoginText.Visibility = Visibility.Collapsed;
             }
 
-            // Set initials (up to two letters: first letter of each word)
             var name = string.IsNullOrWhiteSpace(user.DisplayName) ? user.Username : user.DisplayName;
             ProfileInitials.Text = GetInitials(name);
 
-            // Update bio
             BioText.Text = string.IsNullOrWhiteSpace(user.Bio) ? LocalizedStrings.Get("ProfileNoBio") : user.Bio;
 
-            // Fade in the avatar - only when it's actually new/changed, not on every RefreshUI.
             if (UpdateAvatarUI(user.AvatarUrl))
             {
                 var sb = this.Resources["AvatarFadeIn"] as Storyboard;
@@ -143,8 +122,6 @@ namespace Fort.ind_UWP
         {
             NotLoggedInPanel.Visibility = Visibility.Visible;
             LoggedInPanel.Visibility = Visibility.Collapsed;
-            // So the avatar reloads and fades in again on the next sign-in, even if it's the same
-            // account/URL as before this sign-out.
             _lastAvatarUrl = null;
         }
 
@@ -160,10 +137,6 @@ namespace Fort.ind_UWP
 
             try
             {
-                // Host and username come from the instance's JSON and are cached to disk, so they
-                // are treated as untrusted when they are spliced into a URL. An unchecked host
-                // ("evil.com/x") or username ("a/../..") would silently point this link somewhere
-                // other than the user's profile.
                 var host = string.IsNullOrWhiteSpace(user.Host) ? MisskeyAuthService.InstanceHost : user.Host;
                 if (Uri.CheckHostName(host) == UriHostNameType.Unknown)
                 {
@@ -201,27 +174,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Formats a sign-in timestamp the way the user's own Windows region settings would.
-        ///
-        /// The previous "MMM d, yyyy h:mm tt" custom pattern baked in US conventions - month
-        /// before day, and a 12-hour clock with AM/PM - for every user regardless of locale.
-        /// DateTimeFormatter is the WinRT globalization API: given the abstract shapes
-        /// ("shortdate", "shorttime") it resolves ordering, separators and 12- vs 24-hour from
-        /// Settings > Time &amp; Language, so a German user gets 03.06.2026 14:05 without this
-        /// method knowing anything about German.
-        ///
-        /// Falls back to the invariant round-trip form if the formatter is unavailable, which is
-        /// wrong-looking but never misleading - unlike a US-shaped date shown to someone who
-        /// reads day-first, where 03/06 silently means the wrong day.
-        /// </summary>
-        /// <summary>
-        /// Formats a join date as month and year. Same reasoning as <see cref="FormatLastLogin"/>:
-        /// the previous "MMMM yyyy" custom pattern pinned month-before-year, which is wrong in
-        /// the many locales that write the year first. "month year" is an abstract format
-        /// template, so DateTimeFormatter resolves both the names and the order from the user's
-        /// region settings.
-        /// </summary>
         private static string FormatMemberSince(DateTime value)
         {
             try
@@ -243,8 +195,6 @@ namespace Fort.ind_UWP
                 var dateFormatter = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("shortdate");
                 var timeFormatter = new Windows.Globalization.DateTimeFormatting.DateTimeFormatter("shorttime");
 
-                // DateTimeFormatter takes a DateTimeOffset; these timestamps are stored as local
-                // DateTimes, so let the conversion pick up the machine's current offset.
                 DateTimeOffset offset = new DateTimeOffset(value);
 
                 return $"{dateFormatter.Format(offset)} {timeFormatter.Format(offset)}";
@@ -263,10 +213,6 @@ namespace Fort.ind_UWP
                 return "?";
             }
 
-            // ToUpperInvariant, not ToUpper: ToUpper follows the *current* culture, so a user on a
-            // Turkish system would see a dotted "İ" for a name starting with "i". These are
-            // display initials for a fort.social handle, not culture-specific text. GamesPage's
-            // GroupKeyFor already uses the invariant form for the same reason.
             var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length >= 2 && parts[1].Length > 0)
             {
@@ -276,13 +222,6 @@ namespace Fort.ind_UWP
             return parts[0].Substring(0, 1).ToUpperInvariant();
         }
 
-        /// <summary>
-        /// Applies the avatar image (or falls back to initials). Returns False without doing any
-        /// work if avatarUrl is the same one already applied - RefreshUI can run more than once
-        /// for the same profile (e.g. the background refresh in
-        /// ProfileService.TryRestoreSessionAsync), and without this check each call would
-        /// re-download/re-decode an unchanged image and the caller would replay its fade-in.
-        /// </summary>
         private bool UpdateAvatarUI(string avatarUrl)
         {
             if (string.Equals(avatarUrl, _lastAvatarUrl, StringComparison.Ordinal))
@@ -301,8 +240,6 @@ namespace Fort.ind_UWP
                     return true;
                 }
 
-                // Only http/https avatars are fetched - the URL comes from the instance's JSON via
-                // the on-disk profile cache, and BitmapImage will happily resolve other schemes.
                 var avatarUri = WebLauncher.TryCreateWebUri(avatarUrl);
                 if (avatarUri == null)
                 {
@@ -312,12 +249,6 @@ namespace Fort.ind_UWP
                     return true;
                 }
 
-                // Decode at the displayed 80x80 size, not the source resolution - avatars served
-                // at 512px+ would otherwise sit in memory fully decoded (several MB each) despite
-                // being drawn into an 80px circle. DecodePixelType.Logical means these are view
-                // pixels, which XAML already scales by the display's rasterization scale, so the
-                // high-DPI case is handled without asking for 2x here on top of it.
-                // Must be set before UriSource or the decode already happened at full size.
                 BitmapImage bitmap = new BitmapImage();
                 bitmap.DecodePixelType = DecodePixelType.Logical;
                 bitmap.DecodePixelWidth = 80;
@@ -337,6 +268,5 @@ namespace Fort.ind_UWP
                 return true;
             }
         }
-
     }
 }

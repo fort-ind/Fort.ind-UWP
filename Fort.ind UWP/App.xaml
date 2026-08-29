@@ -9,76 +9,13 @@
         <muxc:XamlControlsResources>
             <muxc:XamlControlsResources.MergedDictionaries>
                 <ResourceDictionary>
-
-                    <!-- Square corners: WinUI 2.2+ rounds controls by default. Keep the W10 look. -->
                     <CornerRadius x:Key="ControlCornerRadius">0</CornerRadius>
                     <CornerRadius x:Key="OverlayCornerRadius">0</CornerRadius>
 
-                    <!-- The pane toggle button draws a 1px rectangle around itself that this
-                         design never wants. PaneToggleButtonStyle takes BorderThickness from this
-                         key (default 1) and hands it to a Border named RevealBorder spanning BOTH
-                         of the button's columns - the glyph cell and the pane-title cell beside
-                         it - so the rectangle is always wider than the glyph it surrounds. It
-                         expects a RevealBorderBrush, invisible until the pointer is near; every
-                         other Reveal brush in this pane is redefined below, but the toggle
-                         button's is not, so it painted flat.
-
-                         Here at application scope rather than on the NavigationView instance
-                         purely because that is where it was observed to take effect. The pane's
-                         *sizing* resources stay on the control in MainPage.xaml, where they have
-                         always been. -->
                     <Thickness x:Key="NavigationViewToggleBorderThickness">0</Thickness>
 
-                    <!-- Reveal is intentionally NOT applied globally -->
-
-                    <!-- ...but the nav pane is a commanding surface, so it has to keep the Reveal
-                         it gets from the OS. The system NavigationViewItemPresenter template already
-                         does the wiring (RevealBrush.State on hover/press, a RevealBorder element);
-                         it just paints with whatever brush sits behind these keys. WinUI 2's own
-                         NavigationView uses the SAME key names - its resources.pri defines
-                         NavigationViewItemBackgroundPointerOver, though the Generic.xaml shipped in
-                         the package is only a partial copy and does not show it - and
-                         XamlControlsResources merges app-wide, so whichever of WinUI or the OS
-                         supplies a flat brush, the pane loses the border glow ListView/GridView
-                         still get. Defining the keys here settles it: this dictionary is merged
-                         last, so it wins over both.
-
-                         The resting (unsuffixed) and Selected keys matter as much as the hover
-                         ones - they are what makes items NEAR the cursor light up, which is most of
-                         what Reveal looks like. They also need no RevealBrush.State: the border
-                         light is ambient, so these keep working even if a future OS template drops
-                         the State wiring.
-
-                         Values are copied from the OS defaults rather than aliased with
-                         StaticResource: an alias resolves once at load, and this app switches theme
-                         at runtime. Reveal border brushes are genuinely Transparent - the glow comes
-                         from the border light, not the colour.
-
-                         The item foregrounds (high-contrast when idle, accent when selected) live in
-                         here too rather than as loose entries: sitting outside the theme
-                         dictionaries they also applied in High Contrast, painting accent text on the
-                         HC highlight background. HC gets the OS pairing instead - ButtonText at
-                         rest, HighlightText once the row is filled with the highlight colour. -->
                     <ResourceDictionary.ThemeDictionaries>
-
                         <ResourceDictionary x:Key="Default">
-
-                            <!-- ── Surfaces ──
-                                 These have to live in the theme dictionaries, not as loose
-                                 entries: a brush declared once outside ThemeDictionaries keeps the
-                                 instance it was built with, and the {ThemeResource} on its
-                                 TintColor is only resolved when that dictionary is loaded. Switching
-                                 theme at runtime then leaves the acrylic painted for the theme the
-                                 app started in - which is what made Light mode come up with dark
-                                 chrome. Entries in here are swapped wholesale by the framework, so
-                                 every reference must be {ThemeResource}, never {StaticResource}.
-
-                                 Elevation reads "lighter than the surface behind it" in dark and
-                                 "brighter, with a hairline edge" in light; the values below are
-                                 per-theme rather than one shared SystemChrome* key precisely
-                                 because a single key cannot say both. -->
-
-                            <!-- Window/page background. HostBackdrop: samples the desktop. -->
                             <AcrylicBrush x:Key="AppSurfaceAcrylicBrush"
                                           BackgroundSource="HostBackdrop"
                                           TintColor="{ThemeResource SystemChromeMediumLowColor}"
@@ -91,10 +28,6 @@
                                           TintOpacity="0.9"
                                           FallbackColor="{ThemeResource SystemChromeMediumColor}"/>
 
-                            <!-- Cards sit on top of the window, so Backdrop (in-app content), not
-                                 HostBackdrop - a HostBackdrop card over a HostBackdrop window
-                                 samples the same desktop and differs only by tint, which is why
-                                 the news cards used to melt into the page. -->
                             <AcrylicBrush x:Key="CardBackgroundBrush"
                                           BackgroundSource="Backdrop"
                                           TintColor="{ThemeResource SystemChromeMediumHighColor}"
@@ -103,7 +36,6 @@
 
                             <SolidColorBrush x:Key="CardBorderBrush" Color="#14FFFFFF"/>
 
-                            <!-- ── Nav pane Reveal (see the note above ThemeDictionaries) ── -->
                             <RevealBackgroundBrush x:Key="NavigationViewItemBackground" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
                             <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelected" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
                             <RevealBorderBrush x:Key="NavigationViewItemBorderBrush" TargetTheme="Dark" Color="Transparent" FallbackColor="Transparent"/>
@@ -124,22 +56,6 @@
                         </ResourceDictionary>
 
                         <ResourceDictionary x:Key="Light">
-
-                            <!-- ── Surfaces (see the Default dictionary for why these live here) ──
-
-                                 Light theme deliberately does NOT mirror the dark values through
-                                 the same SystemChrome* keys. SystemChromeMediumHighColor - the
-                                 dark card tint - is #E6E6E6 in light, i.e. DARKER than the
-                                 #F2F2F2 window behind it, so reusing it inverted the elevation and
-                                 turned every card into a sunken grey block.
-
-                                 Light instead follows the OS's own recipe for window acrylic
-                                 (SystemControlAcrylicWindowBrush: white tint at 0.8) and raises
-                                 cards by making them plain white with a hairline edge. Cards are
-                                 solid rather than acrylic here on purpose: a near-white acrylic
-                                 over a near-white window has nothing left to sample, so it only
-                                 added noise and let the wallpaper muddy the card. -->
-
                             <AcrylicBrush x:Key="AppSurfaceAcrylicBrush"
                                           BackgroundSource="HostBackdrop"
                                           TintColor="{ThemeResource SystemChromeWhiteColor}"
@@ -154,11 +70,8 @@
 
                             <SolidColorBrush x:Key="CardBackgroundBrush" Color="{ThemeResource SystemChromeWhiteColor}"/>
 
-                            <!-- Stronger than the dark theme's 8% white: a white card on a
-                                 near-white window is carried entirely by this edge. -->
                             <SolidColorBrush x:Key="CardBorderBrush" Color="#22000000"/>
 
-                            <!-- ── Nav pane Reveal (see the note above ThemeDictionaries) ── -->
                             <RevealBackgroundBrush x:Key="NavigationViewItemBackground" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
                             <RevealBackgroundBrush x:Key="NavigationViewItemBackgroundSelected" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
                             <RevealBorderBrush x:Key="NavigationViewItemBorderBrush" TargetTheme="Light" Color="Transparent" FallbackColor="Transparent"/>
@@ -178,19 +91,12 @@
                             <SolidColorBrush x:Key="NavigationViewItemForegroundSelectedPointerOver" Color="{ThemeResource SystemAccentColor}"/>
                         </ResourceDictionary>
 
-                        <!-- High contrast has no Reveal at all: solid system colours, same as the OS does. -->
                         <ResourceDictionary x:Key="HighContrast">
-
-                            <!-- No acrylic in High Contrast - the framework would fall back to
-                                 FallbackColor, which is a fixed colour and would ignore the user's
-                                 scheme. Solid system colours instead, same as the OS does. Without
-                                 these the lookup falls through to the Default (dark) dictionary. -->
                             <SolidColorBrush x:Key="AppSurfaceAcrylicBrush" Color="{ThemeResource SystemColorWindowColor}"/>
                             <SolidColorBrush x:Key="NavigationViewExpandedPaneBackground" Color="{ThemeResource SystemColorWindowColor}"/>
                             <SolidColorBrush x:Key="CardBackgroundBrush" Color="{ThemeResource SystemColorWindowColor}"/>
                             <SolidColorBrush x:Key="CardBorderBrush" Color="{ThemeResource SystemColorWindowTextColor}"/>
 
-                            <!-- ── Nav pane (see the note above ThemeDictionaries) ── -->
                             <SolidColorBrush x:Key="NavigationViewItemBackgroundPointerOver" Color="{ThemeResource SystemColorHighlightColor}"/>
                             <SolidColorBrush x:Key="NavigationViewItemBackgroundSelectedPointerOver" Color="{ThemeResource SystemColorHighlightColor}"/>
                             <SolidColorBrush x:Key="NavigationViewItemBackgroundPressed" Color="{ThemeResource SystemColorHighlightColor}"/>

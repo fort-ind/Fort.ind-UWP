@@ -8,43 +8,14 @@
     mc:Ignorable="d"
     Background="Transparent">
 
-    <!-- Accelerators are declared here rather than hooked off CoreWindow.KeyDown.
-         The old handler sat on the window, so it fired for every keystroke reaching the app
-         regardless of what had focus - including while a ContentDialog was up, where Ctrl+F
-         would pull focus out of the modal dialog and into the nav search box behind it.
-         KeyboardAccelerator routes from the focused element up its own ancestor chain instead,
-         and a dialog's content lives in the popup root rather than under this page, so the two
-         no longer overlap. It also drops the manual Control key-state polling and the
-         attach/detach bookkeeping the window handler needed to avoid leaking. -->
     <Page.KeyboardAccelerators>
         <KeyboardAccelerator Modifiers="Control" Key="F" Invoked="FocusSearchAccelerator_Invoked"/>
         <KeyboardAccelerator Key="Escape" Invoked="ClearSearchAccelerator_Invoked"/>
     </Page.KeyboardAccelerators>
 
     <Page.Resources>
-        <!-- The "page refresh" transition, hand-rolled for the inline content host.
-             ContentFrame gets this animation for free (a Frame applies NavigationThemeTransition
-             on navigation, and its default is page refresh), but the inline panels are switched
-             by Visibility inside a single StackPanel, and no theme transition fires for that.
-             The result was one nav gesture with two different motions depending on which item
-             the user clicked. Slide-up + fade-in is what page refresh is defined as, so this
-             reproduces it: 24px is between the 40px the settings list uses for a whole section
-             and the 20px its nested rows use.
-
-             Both properties animate off the UI thread (Opacity and a RenderTransform are
-             independent animations), so no EnableDependentAnimation is needed. -->
         <CubicEase x:Key="PanelEnterEase" EasingMode="EaseOut"/>
 
-        <!-- First-run welcome dialog *content*, as a template rather than a live ContentDialog.
-             It used to be assembled element by element in code-behind, where it set FontSize and
-             Opacity numerically and sat outside the type ramp the rest of the app follows.
-
-             Declaring a whole ContentDialog in the page tree fixed that but cost the open
-             animation: a dialog instance that has already been loaded and shown once does not
-             replay its entrance transition on the next ShowAsync, and this dialog is deliberately
-             re-showable from Settings. Keeping the markup as a DataTemplate and stamping a fresh
-             copy per show gets both - ramp styles and localisable markup, and a dialog that is
-             genuinely new every time, which is what the animation keys off. -->
         <DataTemplate x:Key="WelcomeDialogContentTemplate">
             <StackPanel Spacing="12">
                 <StackPanel Orientation="Horizontal"
@@ -80,48 +51,7 @@
         </Storyboard>
     </Page.Resources>
 
-    <!-- The surface brushes this page paints with (AppSurfaceAcrylicBrush, the nav pane, cards)
-         are defined per-theme in App.xaml's ThemeDictionaries. They are deliberately NOT
-         redeclared here: a page-level copy shadows the themed one for this page's whole subtree,
-         and being outside a theme dictionary it would never repaint on a theme change.
-
-         RootGrid's background is owned by MainPage.ApplyTintColor, which paints either the themed
-         surface acrylic or the user's tint. The value below only covers the moment before the
-         constructor's first ApplyTintColor call (and design time). -->
-    <!-- Deliberately a single cell, not a title-bar row above a content row. The nav pane has to
-         reach the top of the window for its acrylic to run behind the app name (the Groove Music
-         layout); a row of its own would leave a band of RootGrid's background across the top and
-         cut the pane off 32px down.
-
-         So NavView fills the whole grid and AppTitleBar floats over it. The pane's controls are
-         kept clear of the drag region by the NavigationView itself: whenever the app extends into
-         the title bar (SetupTitleBar) *and* the control sits at y=0 in the window, it pushes
-         TemplateSettings.TopPadding = CoreTitleBar.Height into the three padding parts of its
-         template - TogglePaneTopPadding, ContentPaneTopPadding and ContentTopPadding - so the
-         hamburger, the pane content and the header all start below the bar. That auto-padding is
-         the documented behaviour for a custom SetTitleBar element and is on by default; the
-         property that turns it off (IsTitleBarAutoPaddingEnabled) is WinUI-2-only and does not
-         exist on this control anyway. It is also why nothing here reserves the 32px by hand -
-         doing so would double it. -->
     <Grid x:Name="RootGrid" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-
-        <!-- Custom Title Bar Area.
-             Background="Transparent" is load-bearing, not cosmetic: a Grid with no background
-             does not hit test, and Window.SetTitleBar would hand the system a region nothing
-             can actually be dragged by.
-
-             The two padding columns are sized from SystemOverlayLeftInset/RightInset rather than
-             a fixed Margin, so the background still paints *under* the caption buttons (which
-             this app makes transparent) while no content is ever placed beneath them. Which side
-             the buttons land on is not fixed - it flips in RTL - so both ends are reserved and
-             the handler assigns whichever the system reports.
-
-             VerticalAlignment and Canvas.ZIndex are what a row used to do: with both children
-             sharing one cell the bar would otherwise stretch over the whole window, and it is
-             declared before NavView so it would sit underneath it. The Height here is only the
-             value for the frame before the first ApplyTitleBarLayoutMetrics call - the system owns
-             the real one (taller in tablet mode, and it changes with some accessibility settings),
-             so it is never pinned to 32 anywhere that matters. -->
         <Grid x:Name="AppTitleBar"
               Height="32"
               VerticalAlignment="Top"
@@ -133,10 +63,6 @@
                 <ColumnDefinition x:Name="TitleBarRightInset" Width="0"/>
             </Grid.ColumnDefinitions>
 
-            <!-- Shown only while the pane is open - see UpdateAppTitleVisibility. Now that the
-                 pane runs the full height of the window the app name reads as the pane's own
-                 heading, and a 48px compact pane is narrower than the word, so it would spill
-                 out over the content and sit on top of whatever the page draws there. -->
             <TextBlock x:Uid="AppTitleText" x:Name="AppTitleText"
                        Grid.Column="1"
                        VerticalAlignment="Center"
@@ -144,9 +70,6 @@
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"/>
 
-            <!-- Loading Indicator for Sitemap. In the middle column, so it cannot end up
-                 underneath the caption buttons the way a right-aligned child of the whole
-                 title bar did. -->
             <ProgressRing x:Name="LoadingIndicator"
                           Grid.Column="1"
                           IsActive="False"
@@ -159,21 +82,6 @@
                           Foreground="{ThemeResource SystemControlHighlightAccentBrush}"/>
         </Grid>
 
-        <!-- Main Content -->
-        <!-- IsBackButtonVisible is Collapsed, as it always has been. Showing the pane's back
-             button was tried and reverted: it sits in the same stack as the toggle button and
-             is sized by yet another independent resource, and getting it to line up turned into
-             a long chase for no real gain - it would have been enabled on exactly one screen
-             (LoginPage returning to ProfilePage), which already offers "skip" and "cancel".
-
-             Back navigation itself is still wired up and still works there: MainPage handles
-             SystemNavigationManager.BackRequested, so Alt+Left, the mouse back button and the
-             tablet-mode shell button all reach the content Frame. Only the pane button is gone.
-
-             Note this is the *platform* NavigationView (no muxc: prefix), not WinUI 2's. The two
-             share an article but not an API surface: IsTitleBarAutoPaddingEnabled, for instance,
-             exists only on the WinUI control, so the title-bar padding it describes is not
-             something this control does or can be told not to do. -->
         <NavigationView x:Name="NavView"
                          PaneDisplayMode="Auto"
                          CompactPaneLength="48"
@@ -189,23 +97,13 @@
                          Background="Transparent">
 
             <NavigationView.Resources>
-                <!-- Every pane glyph must centre on 24px (half of the 48px compact pane).
-                     The toggle button is sized by its own resource, not CompactPaneLength,
-                     so it has to be widened to 48 as well or the hamburger sits 4px left. -->
                 <x:Double x:Key="NavigationViewCompactPaneLength">48</x:Double>
                 <x:Double x:Key="PaneToggleButtonWidth">48</x:Double>
                 <Thickness x:Key="NavigationViewItemIconBoxMargin">16,12,16,12</Thickness>
             </NavigationView.Resources>
 
-            <!-- Page titles live here rather than in the content, so the floating pane
-                 toggle button cannot overlap them in Minimal mode. The header host
-                 already carries a 12px left margin (48px in Minimal, to clear the
-                 toggle button), so 12 more lands the text on the content's 24px
-                 padding, and leaves a 12px gap after the toggle button in Minimal. -->
             <NavigationView.HeaderTemplate>
                 <DataTemplate>
-                    <!-- Top, not Center: the header box starts 5px below the toggle
-                         button's, so centring here drops the title below the button. -->
                     <TextBlock Text="{Binding}"
                                Style="{StaticResource TitleTextBlockStyle}"
                                VerticalAlignment="Top"
@@ -222,10 +120,6 @@
                                 QuerySubmitted="NavSearchBox_QuerySubmitted"
                                 SuggestionChosen="NavSearchBox_SuggestionChosen">
                     <AutoSuggestBox.ItemTemplate>
-                        <!-- x:Bind against x:DataType rather than {Binding}: compiled at build
-                             time instead of reflected per realised row, and OneTime by default
-                             inside a DataTemplate, which suits SearchItems that never change
-                             after the sitemap is parsed. -->
                         <DataTemplate x:DataType="local:SearchItem">
                             <StackPanel Orientation="Horizontal" Spacing="10" Padding="0,4">
                                 <FontIcon Glyph="{x:Bind Icon}"
@@ -277,29 +171,20 @@
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
-            <!-- Content Area -->
             <Grid Background="Transparent">
-                <!-- Frame for page navigation. -->
                 <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
 
                 <ScrollViewer x:Name="ContentScrollViewer">
-                    <!-- Padding is set from NavView_DisplayModeChanged: 12px in Minimal, 24px otherwise.
-                         The RenderTransform is the target of PanelEnterStoryboard (see Page.Resources):
-                         a Frame animates its own page changes, but the inline panels only flip
-                         Visibility, so without this the same nav gesture animates for Games/Profile
-                         and snaps for everything else. -->
                     <StackPanel x:Name="ContentPanel" RenderTransformOrigin="0.5,0.5">
                         <StackPanel.RenderTransform>
                             <TranslateTransform x:Name="ContentPanelTransform"/>
                         </StackPanel.RenderTransform>
-                        <!-- Latest News Content (default view) -->
                         <StackPanel x:Name="LatestNewsPanel" Visibility="Visible">
                             <TextBlock x:Uid="MainCheckBackHereFor"
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                        Margin="0,0,0,24"/>
 
-                            <!-- News Cards Grid -->
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"/>
@@ -307,7 +192,6 @@
                                     <ColumnDefinition Width="*"/>
                                 </Grid.ColumnDefinitions>
 
-                                <!-- News Card 1 -->
                                 <Grid Grid.Column="0"
                                       Background="{ThemeResource CardBackgroundBrush}"
                                       BorderBrush="{ThemeResource CardBorderBrush}"
@@ -338,7 +222,6 @@
                                     </StackPanel>
                                 </Grid>
 
-                                <!-- News Card 2 -->
                                 <Grid Grid.Column="2"
                                       Background="{ThemeResource CardBackgroundBrush}"
                                       BorderBrush="{ThemeResource CardBorderBrush}"
@@ -371,25 +254,18 @@
                             </Grid>
                         </StackPanel>
 
-                        <!-- Games Content is now handled by GamesPage via Frame -->
-
-                        <!-- Betas Content -->
                         <StackPanel x:Name="BetasPanel" Visibility="Collapsed">
                             <TextBlock x:Uid="MainAccessBetaVersionsAnd"
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
 
-                        <!-- Profile Content is now handled by ProfilePage via Frame -->
-
-                        <!-- Social Content -->
                         <StackPanel x:Name="SocialPanel" Visibility="Collapsed">
                             <TextBlock x:Uid="MainSocialFeaturesComingSoon"
                                        Style="{StaticResource BodyTextBlockStyle}"
                                        TextWrapping="Wrap"/>
                         </StackPanel>
 
-                        <!-- Settings Content -->
                         <StackPanel x:Name="SettingsPanel" Visibility="Collapsed">
                             <TextBlock x:Uid="MainMakeFortDesktopWork"
                                        Style="{StaticResource BodyTextBlockStyle}"
@@ -404,7 +280,6 @@
                                     </TransitionCollection>
                                 </StackPanel.ChildrenTransitions>
 
-                                <!-- ═══ Appearance ═══ -->
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
@@ -549,7 +424,6 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- ═══ Data Storage ═══ -->
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
@@ -627,7 +501,6 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- ═══ Live Tile ═══ -->
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
@@ -702,7 +575,6 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- ═══ Welcome Dialog ═══ -->
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
@@ -767,7 +639,6 @@
                                     </StackPanel>
                                 </Border>
 
-                                <!-- ═══ About ═══ -->
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
@@ -816,8 +687,6 @@
                                                        Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                        Opacity="0.08"/>
                                             <StackPanel Spacing="12">
-
-                                                <!-- App identity -->
                                                 <StackPanel Orientation="Horizontal" Spacing="14" VerticalAlignment="Center">
                                                     <Border Width="44" Height="44" CornerRadius="2"
                                                             Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
@@ -837,7 +706,6 @@
                                                            Fill="{ThemeResource SystemControlForegroundBaseHighBrush}"
                                                            Opacity="0.08"/>
 
-                                                <!-- Links row -->
                                                 <StackPanel Orientation="Horizontal" Spacing="4">
                                                     <HyperlinkButton NavigateUri="https://fort1nd.com"
                                                                      Padding="8,4" Margin="0">
@@ -864,7 +732,6 @@
                                                     </HyperlinkButton>
                                                 </StackPanel>
 
-                                                <!-- Footer -->
                                                 <StackPanel Orientation="Horizontal" Spacing="6" Opacity="0.4">
                                                     <FontIcon Glyph="&#xE734;" FontSize="10" VerticalAlignment="Center"/>
                                                     <TextBlock x:Uid="MainMadeWithLoveBy"

@@ -11,15 +11,8 @@ using Windows.UI.Xaml.Media;
 
 namespace Fort.ind_UWP
 {
-    /// <summary>
-    /// Appearance settings: theme, the acrylic tint and its swatches. The colour arithmetic
-    /// itself lives in <see cref="ColorHelper"/>.
-    /// </summary>
     public sealed partial class MainPage : Page
     {
-
-        // ── Appearance settings ──
-
         private void LoadAppearanceSettings()
         {
             _loadingSettings = true;
@@ -27,7 +20,6 @@ namespace Fort.ind_UWP
             {
                 var localSettings = ApplicationData.Current.LocalSettings;
 
-                // Restore theme selection
                 string theme = AppConstants.ThemeDefault;
                 if (localSettings.Values.ContainsKey(AppConstants.SettingAppTheme))
                 {
@@ -41,33 +33,25 @@ namespace Fort.ind_UWP
                 }
                 ApplyTheme(theme);
 
-                // Restore tint color selection
                 string tintTag = AppConstants.ThemeDefault;
                 if (localSettings.Values.ContainsKey(AppConstants.SettingAppTintColor))
                 {
                     tintTag = localSettings.Values[AppConstants.SettingAppTintColor].ToString();
                 }
-                // Reset the custom swatch to its palette glyph first - this runs again after an app
-                // reset, and a stale color chip would imply a custom tint that no longer exists.
                 TintCustomButton.ClearValue(Control.BackgroundProperty);
                 TintCustomIcon.Visibility = Visibility.Visible;
 
                 ApplyTintColor(tintTag);
                 UpdateTintSelection(tintTag);
 
-                // Keep the last custom pick visible on its swatch even while a preset is active.
-                // The glyph still being visible means UpdateTintSelection didn't paint a chip.
                 var rememberedCustom = localSettings.Values[AppConstants.SettingAppCustomTintColor] as string;
                 if (TintCustomIcon.Visibility == Visibility.Visible && !string.IsNullOrEmpty(rememberedCustom))
                 {
                     ShowCustomSwatchColor(rememberedCustom);
                 }
 
-                // Restore the tile badge toggle. Inside the _loadingSettings guard so assigning IsOn
-                // here doesn't bounce straight back through Toggled and rewrite the setting.
                 TileBadgeToggle.IsOn = LiveTileService.BadgeEnabled;
 
-                // Restore settings panel states
                 RestoreSettingsPanelStates();
             }
             finally
@@ -91,27 +75,15 @@ namespace Fort.ind_UWP
                 ApplicationData.Current.LocalSettings.Values[AppConstants.SettingAppTheme] = theme;
             }
             UpdateTitleBarColors();
-            // Repaint the window for the new theme. This runs for the untinted case too, not just
-            // for a saved tint: the background is a brush this page builds, so nothing else will
-            // swap it from the dark recipe to the light one. Skipped while settings are loading
-            // only because LoadAppearanceSettings applies the saved tint immediately after.
             if (!_loadingSettings)
             {
                 var savedTint = ApplicationData.Current.LocalSettings.Values[AppConstants.SettingAppTintColor]?.ToString();
                 if (string.IsNullOrEmpty(savedTint)) savedTint = AppConstants.ThemeDefault;
                 ApplyTintColor(savedTint);
-                // Refresh the swatch chips and the selected swatch's highlight border so they
-                // match the new theme (white outline in dark mode, black outline in light mode).
                 UpdateTintSelection(savedTint);
             }
         }
 
-        /// <summary>
-        /// Repaints the parts of the window this page owns when the *system* theme changes under an
-        /// app left on "System default". The window acrylic and the title bar buttons are painted
-        /// from code rather than by a theme resource, so without this they keep the colours of the
-        /// theme the app started in - light chrome with a dark window and white caption buttons.
-        /// </summary>
         private void OnActualThemeChanged(FrameworkElement sender, object args)
         {
             try
@@ -128,22 +100,8 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// The one window-background acrylic brush, reused for the life of the page. A HostBackdrop
-        /// AcrylicBrush is backed by a composition effect that samples the desktop, so building a
-        /// fresh one per call was by far the most expensive thing the appearance code did - the
-        /// colour picker's live preview calls this on every ColorChanged, i.e. continuously while
-        /// the user drags. TintColor is a dependency property, so repainting is just a set.
-        /// </summary>
         private AcrylicBrush _surfaceBrush;
 
-        // The untinted window acrylic, per theme. These mirror AppSurfaceAcrylicBrush in App.xaml's
-        // ThemeDictionaries; RootGrid's background has to be painted from code because a custom
-        // tint cannot be expressed as a theme resource, and the untinted case then has to go the
-        // same way rather than through a lookup - a ResourceDictionary indexer does not search
-        // ThemeDictionaries, so it would fetch the wrong theme's brush (or nothing at all).
-        // Values match the OS's own window acrylic: white at 0.8 in light, SystemChromeMediumLow
-        // in dark. Keep the two in step.
         private static readonly Color s_surfaceTintDark = Color.FromArgb(255, 0x2B, 0x2B, 0x2B);
         private static readonly Color s_surfaceTintLight = Colors.White;
         private static readonly Color s_surfaceFallbackLight = Color.FromArgb(255, 0xF2, 0xF2, 0xF2);
@@ -152,7 +110,6 @@ namespace Fort.ind_UWP
         {
             try
             {
-                // Determine effective theme to choose the right tint shade
                 var isDark = IsEffectiveThemeDark();
 
                 Color tint;
@@ -169,10 +126,6 @@ namespace Fort.ind_UWP
                 {
                     tint = isDark ? ColorHelper.HexToColor(colorTag) : ColorHelper.ForLightTheme(colorTag);
                     fallback = tint;
-                    // Light tints used to sit at 0.6, which let 40% of the desktop through a pale
-                    // pastel - enough to drag the whole window grey-brown over a dark wallpaper.
-                    // A dark tint absorbs that bleed; a pastel has nothing to absorb it with, so
-                    // light holds more of its own colour.
                     tintOpacity = isDark ? 0.8 : 0.85;
                 }
 
@@ -203,10 +156,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Whether the app is currently rendering dark - the root Frame's explicit theme if it has
-        /// one, otherwise the system's. Three call sites needed this identically.
-        /// </summary>
         private static bool IsEffectiveThemeDark()
         {
             var rootFrame = Window.Current.Content as Frame;
@@ -216,15 +165,6 @@ namespace Fort.ind_UWP
                    : effTheme == ElementTheme.Dark;
         }
 
-        // Base accessible names for the tint swatches, keyed by control – selection state is
-        // appended below since the selected swatch is otherwise only shown via border color,
-        // which a screen reader cannot see.
-        /// <summary>
-        /// Each swatch's accessible name exactly as authored - which is to say, whatever its
-        /// x:Uid pulled out of Resources.resw. Captured on first use rather than restated in a
-        /// table here, so the names have one source; the selected swatch's name is rewritten with
-        /// a "(selected)" suffix, and re-reading it later would compound the suffix.
-        /// </summary>
         private Dictionary<Button, string> _swatchBaseNames;
 
         private string BaseSwatchName(Button btn)
@@ -244,12 +184,6 @@ namespace Fort.ind_UWP
             return name;
         }
 
-        /// <summary>
-        /// Every preset swatch, in display order. The custom swatch is deliberately excluded -
-        /// it has no fixed Tag, so it is matched by elimination rather than by lookup.
-        /// Built once: the named fields never change, and this is walked on every tint click and
-        /// every theme change.
-        /// </summary>
         private Button[] _tintPresetSwatches;
 
         private Button[] TintPresetSwatches
@@ -266,25 +200,12 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Shared brushes for the unselected swatch outline, rather than twelve fresh
-        /// SolidColorBrushes every time the selection or theme changes. Brushes are immutable as
-        /// far as this code is concerned, so sharing one instance is safe.
-        /// Transparent in dark - the chips are vivid enough on their own - but light theme's chips
-        /// are pastels on a near-white window and dissolve into it without an edge.
-        /// </summary>
         private static readonly SolidColorBrush s_restBrushDark = new SolidColorBrush(Colors.Transparent);
         private static readonly SolidColorBrush s_restBrushLight = new SolidColorBrush(Color.FromArgb(0x22, 0, 0, 0));
 
-        /// <summary>Selection outline for the active swatch - white on dark, black on light.</summary>
         private static readonly SolidColorBrush s_selectedBrushDark = new SolidColorBrush(Colors.White);
         private static readonly SolidColorBrush s_selectedBrushLight = new SolidColorBrush(Colors.Black);
 
-        // Chip colours per theme, keyed by button. The dark ones are the Background values set in
-        // XAML and are captured on first use rather than restated here as a second table; the light
-        // ones are the pastels the window actually takes in light theme (ColorHelper's preset
-        // table), because a
-        // chip painted navy that turns the window pale blue is just a wrong label.
         private Dictionary<Button, Brush> _swatchChipsDark;
         private Dictionary<Button, Brush> _swatchChipsLight;
 
@@ -297,8 +218,6 @@ namespace Fort.ind_UWP
                 foreach (var btn in TintPresetSwatches)
                 {
                     var tag = btn.Tag?.ToString() ?? "";
-                    // Skips the Default swatch, which has no chip - it carries a glyph on the
-                    // ordinary button chrome, and that is already theme-aware.
                     var lightHex = ColorHelper.TryGetLightPreset(tag);
                     if (lightHex == null) continue;
                     _swatchChipsDark[btn] = btn.Background;
@@ -330,8 +249,6 @@ namespace Fort.ind_UWP
                 if (string.Equals(tag, selectedTag, StringComparison.OrdinalIgnoreCase)) sel = btn;
             }
 
-            // Anything that isn't Default and isn't one of the presets is a custom color, so the
-            // custom swatch both takes the selection border and previews the color itself.
             TintCustomButton.BorderBrush = restBrush;
             Windows.UI.Xaml.Automation.AutomationProperties.SetName(TintCustomButton, BaseSwatchName(TintCustomButton));
             if (sel == null)
@@ -345,9 +262,6 @@ namespace Fort.ind_UWP
             }
             else if (TintCustomIcon.Visibility == Visibility.Collapsed)
             {
-                // A preset is active, but the custom swatch is still previewing the last custom
-                // pick (its palette glyph is hidden). Repaint that from the stored value so it
-                // follows the theme too, instead of keeping the shade it was painted in.
                 var remembered = ApplicationData.Current.LocalSettings.Values[AppConstants.SettingAppCustomTintColor] as string;
                 if (!string.IsNullOrEmpty(remembered))
                 {
@@ -364,12 +278,6 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Paints the custom swatch with the given color and hides its palette glyph, so the
-        /// button reads as a color chip once the user has actually chosen one. In light theme it
-        /// shows the lightened shade the window will actually take, the same way the preset chips
-        /// do - <paramref name="hex"/> is always the stored (dark) value.
-        /// </summary>
         private void ShowCustomSwatchColor(string hex)
         {
             try
@@ -412,29 +320,17 @@ namespace Fort.ind_UWP
             }
         }
 
-        /// <summary>
-        /// Opens a color picker so the user can choose a tint that isn't one of the presets. The
-        /// pick is applied live while the dialog is open so the choice can be judged against the
-        /// real window, and reverted to whatever was active before if the dialog is cancelled.
-        /// </summary>
         private async void CustomTintButton_Click(object sender, RoutedEventArgs e)
         {
             var localSettings = ApplicationData.Current.LocalSettings;
             string previousTag = localSettings.Values[AppConstants.SettingAppTintColor]?.ToString()
                                  ?? AppConstants.ThemeDefault;
 
-            // The catch stays inside the gated body rather than relying on DialogService's own
-            // logging: this handler has repair work to do on failure - the live preview may
-            // already have repainted the window, and it has to go back.
             await DialogService.RunExclusiveAsync(async () =>
             {
                 try
                 {
-                    // Seed with the active tint if it's already a custom one, otherwise the last
-                    // color the user picked here, otherwise a neutral starting point.
                     string seed = previousTag;
-                    // A preset is exactly a tag ColorHelper has a light-theme shade for; Default
-                    // is the one tag that is neither a preset nor a custom colour.
                     if (seed == AppConstants.ThemeDefault || ColorHelper.TryGetLightPreset(seed) != null)
                     {
                         seed = localSettings.Values[AppConstants.SettingAppCustomTintColor]?.ToString() ?? "#1E3A5F";
@@ -458,7 +354,6 @@ namespace Fort.ind_UWP
                     };
                     DialogService.ApplyXamlRoot(dialog, this);
 
-                    // Live preview: repaint the window as the user drags around the picker.
                     TypedEventHandler<ColorPicker, ColorChangedEventArgs> previewHandler =
                         (s, args) => ApplyTintColorPreview(ColorHelper.ColorToHex(args.NewColor));
                     picker.ColorChanged += previewHandler;
@@ -488,10 +383,6 @@ namespace Fort.ind_UWP
             });
         }
 
-        /// <summary>
-        /// Repaints the window with a tint without persisting it - used while the color picker is
-        /// open so an abandoned dialog leaves no trace in LocalSettings.
-        /// </summary>
         private void ApplyTintColorPreview(string hex)
         {
             var wasLoading = _loadingSettings;
@@ -505,6 +396,5 @@ namespace Fort.ind_UWP
                 _loadingSettings = wasLoading;
             }
         }
-
     }
 }
