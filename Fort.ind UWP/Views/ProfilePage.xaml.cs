@@ -14,6 +14,8 @@ namespace Fort.ind_UWP
 
         private string _lastAvatarUrl = null;
 
+        private bool _avatarApplied = false;
+
         public ProfilePage()
         {
             this.InitializeComponent();
@@ -113,8 +115,35 @@ namespace Fort.ind_UWP
 
             if (UpdateAvatarUI(user.AvatarUrl))
             {
-                var sb = this.Resources["AvatarFadeIn"] as Storyboard;
-                sb?.Begin();
+                PlayAvatarFadeIn();
+            }
+
+            // Belt and braces on top of PlayAvatarFadeIn's own fallback: AvatarGrid starts at
+            // Opacity 0 in markup and the storyboard is the only thing that raises it, so any
+            // path that skips the animation must still leave the avatar visible.
+            AvatarGrid.Opacity = 1;
+        }
+
+        private void PlayAvatarFadeIn()
+        {
+            try
+            {
+                var storyboard = this.Resources["AvatarFadeIn"] as Storyboard;
+                if (storyboard == null)
+                {
+                    AvatarGrid.Opacity = 1;
+                    return;
+                }
+
+                storyboard.Stop();
+                storyboard.Begin();
+            }
+            catch (Exception ex)
+            {
+                // A missing or broken animation must never take out the profile card - this runs
+                // from Loaded, where an escaping exception is unhandled.
+                Debug.WriteLine($"ProfilePage: avatar fade-in failed - {ex.Message}");
+                AvatarGrid.Opacity = 1;
             }
         }
 
@@ -123,6 +152,7 @@ namespace Fort.ind_UWP
             NotLoggedInPanel.Visibility = Visibility.Visible;
             LoggedInPanel.Visibility = Visibility.Collapsed;
             _lastAvatarUrl = null;
+            _avatarApplied = false;
         }
 
         private void SignInButton_Click(object sender, RoutedEventArgs e)
@@ -214,21 +244,34 @@ namespace Fort.ind_UWP
             }
 
             var parts = name.Trim().Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length >= 2 && parts[1].Length > 0)
+            if (parts.Length == 0)
             {
-                return (parts[0].Substring(0, 1) + parts[1].Substring(0, 1)).ToUpperInvariant();
+                return "?";
             }
 
-            return parts[0].Substring(0, 1).ToUpperInvariant();
+            // TextHelper rather than Substring(0, 1): a display name beginning with an emoji is a
+            // surrogate pair, and taking one char off it renders as a replacement box.
+            if (parts.Length >= 2 && parts[1].Length > 0)
+            {
+                return (TextHelper.FirstTextElements(parts[0], 1) +
+                        TextHelper.FirstTextElements(parts[1], 1)).ToUpperInvariant();
+            }
+
+            return TextHelper.FirstTextElements(parts[0], 1).ToUpperInvariant();
         }
 
         private bool UpdateAvatarUI(string avatarUrl)
         {
-            if (string.Equals(avatarUrl, _lastAvatarUrl, StringComparison.Ordinal))
+            // _avatarApplied, not just the URL comparison: _lastAvatarUrl starts null, so an
+            // account with no avatar made the very first call look like "already applied" and
+            // return false. ShowLoggedInState then skipped the fade-in and AvatarGrid stayed at
+            // Opacity 0 - a fully transparent circle with the initials invisible inside it.
+            if (_avatarApplied && string.Equals(avatarUrl, _lastAvatarUrl, StringComparison.Ordinal))
             {
                 return false;
             }
             _lastAvatarUrl = avatarUrl;
+            _avatarApplied = true;
 
             try
             {

@@ -30,6 +30,20 @@ namespace Fort.ind_UWP
             }
         }
 
+        /// <summary>
+        /// True once the resource loader can actually be opened - i.e. on the UI thread.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="Get"/> degrades to returning the key off the UI thread rather than throwing,
+        /// which is right for a one-off lookup and wrong for anything that memoizes the result:
+        /// caching a key would leave that text reading as a resource name for the rest of the
+        /// process. Callers that cache check this first.
+        /// </remarks>
+        public static bool IsAvailable
+        {
+            get { return Loader != null; }
+        }
+
         public static string Get(string key)
         {
             var loader = Loader;

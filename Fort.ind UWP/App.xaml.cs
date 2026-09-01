@@ -1,5 +1,6 @@
 using System;
 using System.Diagnostics;
+using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.UI.Xaml;
@@ -172,10 +173,39 @@ namespace Fort.ind_UWP
                 }
 
                 Window.Current.Activate();
+
+                if (signInResult != null && !signInResult.Success)
+                {
+                    // A null result is the warm path handing control back to the SignInAsync still
+                    // being awaited on LoginPage, which reports its own errors. A non-null failure
+                    // has nobody waiting on it - it is the cold-start path, where the app was
+                    // terminated while the user was in the browser - so without this the window
+                    // just opens signed out and never says why.
+                    await ShowSignInFailedAsync(signInResult.ErrorMessage);
+                }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"OnActivated failed: {ex.Message}");
+            }
+        }
+
+        private static async Task ShowSignInFailedAsync(string reason)
+        {
+            try
+            {
+                var body = string.IsNullOrWhiteSpace(reason)
+                           ? LocalizedStrings.Get("SignInFailedDialogBody")
+                           : LocalizedStrings.Format("SignInFailedDialogBodyFormat", reason);
+
+                await DialogService.ShowMessageAsync(Window.Current.Content,
+                                                     LocalizedStrings.Get("SignInFailedDialogTitle"),
+                                                     body,
+                                                     LocalizedStrings.Get("DialogOk"));
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"App: could not report the sign-in failure - {ex.Message}");
             }
         }
 
@@ -199,6 +229,24 @@ namespace Fort.ind_UWP
         private void OnSuspending(object sender, SuspendingEventArgs e)
         {
             SuspendingDeferral deferral = e.SuspendingOperation.GetDeferral();
+
+            try
+            {
+                // The badge marks tile content the user has not come back to yet, so it goes on
+                // the way out and MainPage's NavView_Loaded clears it on the way in. Setting it at
+                // launch instead raced that clear and lost: the tile push is deferred to
+                // CoreDispatcherPriority.Low, so it ran last and relit the badge every time.
+                //
+                // Safe to do under the suspend deadline in a way that saved state would not be:
+                // this is one synchronous, self-guarding, best-effort call, and losing it costs
+                // nothing but a missing badge. Nothing that must survive termination lives here -
+                // that is all still written eagerly at the moment it changes.
+                LiveTileService.UpdateBadgeGlyph(LiveTileService.NewContentBadgeGlyph);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"App: suspend badge update failed - {ex.Message}");
+            }
 
             deferral.Complete();
         }

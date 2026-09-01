@@ -10,6 +10,10 @@ namespace Fort.ind_UWP
 {
     public class LiveTileService
     {
+        private const string DefaultMonogram = "FI";
+
+        public const string NewContentBadgeGlyph = "newMessage";
+
         public static void UpdateTileWithNews(string title, string message, string branding = "name", TileAnimation animationType = TileAnimation.FadeIn)
         {
             try
@@ -68,7 +72,7 @@ namespace Fort.ind_UWP
             var safeBranding = ParseBranding(branding);
             var safeTitle = SanitizeText(title);
             var safeMessage = SanitizeText(message);
-            var smallTileText = SanitizeText(GetTileMonogram(title, branding));
+            var smallTileText = SanitizeText(GetTileMonogram(title));
 
             TileContent content = new TileContent();
             content.Visual = new TileVisual();
@@ -356,14 +360,27 @@ namespace Fort.ind_UWP
             }
         }
 
-        private static string GetTileMonogram(string primaryText, string fallbackText)
+        /// <summary>
+        /// Initials for the small tile, which has room for about two characters.
+        /// </summary>
+        /// <remarks>
+        /// The fallback is the app's own initialism, like PublisherDisplayName in the manifest, so
+        /// it stays literal rather than moving to the resw - a resource lookup here can run off the
+        /// UI thread, where LocalizedStrings degrades to returning the key, and a 20-character key
+        /// is a far worse monogram than two wrong letters. The caller used to pass the *branding*
+        /// argument as the fallback text, so an empty title rendered the small tile as "NA", the
+        /// first two letters of "name".
+        /// </remarks>
+        private static string GetTileMonogram(string primaryText)
         {
-            var source = string.IsNullOrWhiteSpace(primaryText) ? fallbackText : primaryText;
-            if (string.IsNullOrWhiteSpace(source)) return "FI";
+            if (string.IsNullOrWhiteSpace(primaryText)) return DefaultMonogram;
 
-            var trimmed = source.Trim();
-            if (trimmed.Length <= 2) return trimmed.ToUpperInvariant();
-            return trimmed.Substring(0, 2).ToUpperInvariant();
+            var trimmed = primaryText.Trim();
+
+            // Whole text elements, not chars: a title starting with an emoji is a surrogate pair
+            // and Substring(0, 2) would hand the tile half of one.
+            var monogram = TextHelper.FirstTextElements(trimmed, 2).ToUpperInvariant();
+            return string.IsNullOrEmpty(monogram) ? DefaultMonogram : monogram;
         }
 
         private static bool IsSupportedBadgeGlyph(string glyph)

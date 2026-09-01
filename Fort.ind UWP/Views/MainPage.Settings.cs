@@ -189,8 +189,6 @@ namespace Fort.ind_UWP
         {
             try
             {
-                var localSettings = ApplicationData.Current.LocalSettings;
-
                 RestorePanelState(AppConstants.SettingSettingsAppearanceExpanded, AppearanceContent, AppearanceChevronRotation);
                 RestorePanelState(AppConstants.SettingSettingsStorageExpanded, StorageContent, StorageChevronRotation);
                 RestorePanelState(AppConstants.SettingSettingsTileExpanded, TileContent, TileChevronRotation);
@@ -208,19 +206,26 @@ namespace Fort.ind_UWP
             try
             {
                 var localSettings = ApplicationData.Current.LocalSettings;
+
+                // An absent key means "never set, or just wiped by a reset", and it has to apply
+                // the collapsed default rather than return. Returning left the section in whatever
+                // state it already had, so a reset - which clears LocalSettings wholesale - said it
+                // had restored defaults while every section stayed exactly as the user left it.
+                var isExpanded = false;
                 if (localSettings.Values.ContainsKey(settingKey))
                 {
-                    var isExpanded = Convert.ToBoolean(localSettings.Values[settingKey]);
-                    if (isExpanded)
-                    {
-                        content.Visibility = Visibility.Visible;
-                        chevronTransform.Angle = 90;
-                    }
-                    else
-                    {
-                        content.Visibility = Visibility.Collapsed;
-                        chevronTransform.Angle = 0;
-                    }
+                    isExpanded = Convert.ToBoolean(localSettings.Values[settingKey]);
+                }
+
+                if (isExpanded)
+                {
+                    content.Visibility = Visibility.Visible;
+                    chevronTransform.Angle = 90;
+                }
+                else
+                {
+                    content.Visibility = Visibility.Collapsed;
+                    chevronTransform.Angle = 0;
                 }
             }
             catch (Exception ex)

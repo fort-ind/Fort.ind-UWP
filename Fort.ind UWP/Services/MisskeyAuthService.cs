@@ -269,9 +269,21 @@ namespace Fort.ind_UWP
             }
         }
 
-        public static async Task<UserProfile> FetchCurrentUserAsync(string token)
+        /// <summary>
+        /// Fetches the signed-in account, distinguishing "this token is dead" from "could not ask".
+        /// </summary>
+        /// <remarks>
+        /// The distinction is the whole point of the return type. Collapsing both into a null
+        /// profile - as this used to - forced every caller to guess, and they guessed opposite ways:
+        /// the restore path signed the user out on a flaky network, while the background refresh
+        /// ignored a genuinely revoked token forever and left the app looking signed in against
+        /// credentials that could never work again. Only 401/403 are treated as fatal, so anything
+        /// the instance answers that is not clearly an auth rejection fails safe towards keeping
+        /// the session.
+        /// </remarks>
+        public static async Task<MisskeyUserFetchResult> FetchCurrentUserAsync(string token)
         {
-            if (string.IsNullOrWhiteSpace(token)) return null;
+            if (string.IsNullOrWhiteSpace(token)) return MisskeyUserFetchResult.Rejected();
 
             try
             {
@@ -283,17 +295,31 @@ namespace Fort.ind_UWP
                 {
                     using (var response = await s_client.Value.PostAsync(uri, content))
                     {
-                        if (!response.IsSuccessStatusCode) return null;
+                        if (!response.IsSuccessStatusCode)
+                        {
+                            var status = (int)response.StatusCode;
+                            if (status == 401 || status == 403)
+                            {
+                                Debug.WriteLine($"MisskeyAuthService: /api/i rejected the token ({status})");
+                                return MisskeyUserFetchResult.Rejected();
+                            }
+
+                            Debug.WriteLine($"MisskeyAuthService: /api/i unavailable ({status})");
+                            return MisskeyUserFetchResult.Unavailable();
+                        }
 
                         var body = await response.Content.ReadAsStringAsync();
-                        return ParseUser(JsonObject.Parse(body));
+                        var profile = ParseUser(JsonObject.Parse(body));
+                        return profile != null
+                               ? MisskeyUserFetchResult.Succeeded(profile)
+                               : MisskeyUserFetchResult.Unavailable();
                     }
                 }
             }
             catch (Exception ex)
             {
                 Debug.WriteLine($"MisskeyAuthService: /api/i failed - {ex.Message}");
-                return null;
+                return MisskeyUserFetchResult.Unavailable();
             }
         }
 
@@ -404,6 +430,40 @@ namespace Fort.ind_UWP
         public static MisskeyAuthResult Succeeded(string token, UserProfile profile)
         {
             return new MisskeyAuthResult { Success = true, Token = token, Profile = profile };
+        }
+    }
+
+    /// <summary>
+    /// Outcome of re-reading the signed-in account from the instance.
+    /// </summary>
+    public class MisskeyUserFetchResult
+    {
+        /// <summary>The account, or null if it could not be read.</summary>
+        public UserProfile Profile { get; set; }
+
+        /// <summary>
+        /// True only when the instance actively refused the token, meaning it will never work
+        /// again. A network failure leaves this false so the session survives it.
+        /// </summary>
+        public bool TokenRejected { get; set; }
+
+        private MisskeyUserFetchResult()
+        {
+        }
+
+        public static MisskeyUserFetchResult Succeeded(UserProfile profile)
+        {
+            return new MisskeyUserFetchResult { Profile = profile };
+        }
+
+        public static MisskeyUserFetchResult Rejected()
+        {
+            return new MisskeyUserFetchResult { TokenRejected = true };
+        }
+
+        public static MisskeyUserFetchResult Unavailable()
+        {
+            return new MisskeyUserFetchResult();
         }
     }
 }

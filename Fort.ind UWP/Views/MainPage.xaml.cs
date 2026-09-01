@@ -12,7 +12,7 @@ namespace Fort.ind_UWP
 {
     public sealed partial class MainPage : Page
     {
-        private IReadOnlyList<SearchItem> _allSearchItems = SearchCatalog.StaticItems;
+        private IReadOnlyList<SearchItem> _allSearchItems = SearchCatalog.GetStaticItems();
 
         private bool _loadingSettings = false;
 
@@ -85,8 +85,9 @@ namespace Fort.ind_UWP
                 SetSitemapLoadingIndicator(true);
 
                 var sitemapItems = await SitemapService.LoadSearchItemsAsync();
-                List<SearchItem> combined = new List<SearchItem>(SearchCatalog.StaticItems.Length + sitemapItems.Count);
-                combined.AddRange(SearchCatalog.StaticItems);
+                var staticItems = SearchCatalog.GetStaticItems();
+                List<SearchItem> combined = new List<SearchItem>(staticItems.Length + sitemapItems.Count);
+                combined.AddRange(staticItems);
                 combined.AddRange(sitemapItems);
                 _allSearchItems = combined;
             }
@@ -103,7 +104,7 @@ namespace Fort.ind_UWP
         private void SetSitemapLoadingIndicator(bool active)
         {
             if (LoadingIndicator == null) return;
-            LoadingIndicator.IsActive = active;
+            LoadingIndicator.IsIndeterminate = active;
             LoadingIndicator.Visibility = active ? Visibility.Visible : Visibility.Collapsed;
         }
 

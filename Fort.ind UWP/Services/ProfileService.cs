@@ -53,6 +53,12 @@ namespace Fort.ind_UWP
             LiveTileService.ClearTile();
             LiveTileService.ClearBadge();
             await LocalStorageService.ResetAllAppDataAsync();
+
+            // The wipe deletes the cached avatar PNG, but AvatarIconService remembers its URI in a
+            // static that outlives the reset - so signing back in with the same avatar handed the
+            // nav item an ms-appdata URI pointing at a file that no longer exists.
+            AvatarIconService.InvalidateCache();
+
             AuthStateChanged?.Invoke(null, false);
         }
 
@@ -70,14 +76,21 @@ namespace Fort.ind_UWP
                 if (cached == null)
                 {
                     var fetched = await MisskeyAuthService.FetchCurrentUserAsync(token);
-                    if (fetched == null)
+                    if (fetched.Profile == null)
                     {
-                        await LogoutAsync();
+                        // Only discard the token when the instance actually refused it. This used
+                        // to sign the user out on any null, so launching with no network and no
+                        // cached profile threw away a perfectly good token and made them sign in
+                        // again; now the session simply stays unrestored until the next launch.
+                        if (fetched.TokenRejected)
+                        {
+                            await LogoutAsync();
+                        }
                         return false;
                     }
 
-                    CurrentUser = fetched;
-                    await LocalStorageService.SaveProfileAsync(fetched);
+                    CurrentUser = fetched.Profile;
+                    await LocalStorageService.SaveProfileAsync(fetched.Profile);
                     AuthStateChanged?.Invoke(null, true);
                     return true;
                 }
@@ -101,15 +114,29 @@ namespace Fort.ind_UWP
             try
             {
                 var fetched = await MisskeyAuthService.FetchCurrentUserAsync(token);
-                if (fetched == null) return;
 
+                // Check the token is still the live one before acting on anything: the user may
+                // have signed out, or signed in as someone else, while this was in flight.
                 if (!string.Equals(await MisskeyAuthService.TryGetTokenAsync(), token, StringComparison.Ordinal))
                 {
                     return;
                 }
 
-                CurrentUser = fetched;
-                await LocalStorageService.SaveProfileAsync(fetched);
+                if (fetched.TokenRejected)
+                {
+                    // The instance says this token is gone - revoked from fort.social's settings,
+                    // or the account was deleted. The cached profile would otherwise keep the app
+                    // looking signed in indefinitely against credentials that can never work, with
+                    // every request silently failing behind a perfectly normal-looking UI.
+                    Debug.WriteLine("ProfileService: stored token was rejected; signing out");
+                    await LogoutAsync();
+                    return;
+                }
+
+                if (fetched.Profile == null) return;
+
+                CurrentUser = fetched.Profile;
+                await LocalStorageService.SaveProfileAsync(fetched.Profile);
                 AuthStateChanged?.Invoke(null, true);
             }
             catch (Exception ex)

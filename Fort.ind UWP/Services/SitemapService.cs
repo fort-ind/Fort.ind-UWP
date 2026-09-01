@@ -49,8 +49,11 @@ namespace Fort.ind_UWP
             List<SearchItem> games = new List<SearchItem>();
             foreach (var item in all)
             {
-                if (item.Category != null &&
-                    item.Category.StartsWith(AppConstants.CategoryGames, StringComparison.Ordinal))
+                // CategoryKey, not Category: Category is the localized display name now, and
+                // matching a translated string against an English constant would empty this list
+                // in every other language.
+                if (item.CategoryKey != null &&
+                    item.CategoryKey.StartsWith(AppConstants.CategoryGames, StringComparison.Ordinal))
                 {
                     games.Add(item);
                 }
@@ -154,7 +157,8 @@ namespace Fort.ind_UWP
             var path = uri.AbsolutePath.Trim('/');
             if (string.IsNullOrEmpty(path))
             {
-                return new SearchItem("Home", AppConstants.CategoryFortWebsite, null, urlValue);
+                return new SearchItem(LocalizedStrings.Get("SearchItemHome"),
+                                      AppConstants.CategoryFortWebsite, null, urlValue);
             }
 
             if (path == "404")
@@ -286,20 +290,29 @@ namespace Fort.ind_UWP
             }
         }
 
+        /// <summary>
+        /// Maps a sitemap path to an AppConstants category KEY - never to display text.
+        /// </summary>
+        /// <remarks>
+        /// These used to be inline English literals ("Games — HTML") that went straight into
+        /// SearchItem.Category and out to the group headers and search results untranslated.
+        /// StringComparison.Ordinal throughout: these are URL paths, and the culture-sensitive
+        /// StartsWith overload has no business deciding whether one begins with "games/".
+        /// </remarks>
         private static string GetCategory(string path)
         {
-            if (path.StartsWith("games/html/")) return "Games — HTML";
-            if (path.StartsWith("games/flash/")) return "Games — Flash";
-            if (path.StartsWith("games/codepen/")) return "Games — CodePen";
-            if (path.StartsWith("games/retroclassic-mostly-emulated/")) return "Games — Retro";
-            if (path.StartsWith("games/minecraft/")) return "Games — Minecraft";
-            if (path.StartsWith("games/")) return "Games";
-            if (path.StartsWith("social/")) return "Social";
-            if (path.StartsWith("emulators/")) return "Emulators";
-            if (path.StartsWith("apps/appstone/")) return "Apps — AppStone";
-            if (path.StartsWith("apps/")) return "Apps";
-            if (path.StartsWith("extras/")) return "Extras";
-            if (path.StartsWith("labs-betas/")) return "Labs & Betas";
+            if (path.StartsWith("games/html/", StringComparison.Ordinal)) return AppConstants.CategoryGamesHtml;
+            if (path.StartsWith("games/flash/", StringComparison.Ordinal)) return AppConstants.CategoryGamesFlash;
+            if (path.StartsWith("games/codepen/", StringComparison.Ordinal)) return AppConstants.CategoryGamesCodePen;
+            if (path.StartsWith("games/retroclassic-mostly-emulated/", StringComparison.Ordinal)) return AppConstants.CategoryGamesRetro;
+            if (path.StartsWith("games/minecraft/", StringComparison.Ordinal)) return AppConstants.CategoryGamesMinecraft;
+            if (path.StartsWith("games/", StringComparison.Ordinal)) return AppConstants.CategoryGames;
+            if (path.StartsWith("social/", StringComparison.Ordinal)) return AppConstants.CategorySocial;
+            if (path.StartsWith("emulators/", StringComparison.Ordinal)) return AppConstants.CategoryEmulators;
+            if (path.StartsWith("apps/appstone/", StringComparison.Ordinal)) return AppConstants.CategoryAppsAppStone;
+            if (path.StartsWith("apps/", StringComparison.Ordinal)) return AppConstants.CategoryApps;
+            if (path.StartsWith("extras/", StringComparison.Ordinal)) return AppConstants.CategoryExtras;
+            if (path.StartsWith("labs-betas/", StringComparison.Ordinal)) return AppConstants.CategoryLabsAndBetas;
             return AppConstants.CategoryFortWebsite;
         }
 

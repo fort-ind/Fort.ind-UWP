@@ -70,7 +70,10 @@ namespace Fort.ind_UWP
                 }
 
                 var snapshot = _allSearchItems;
-                var profileResult = SearchCatalog.BuildProfileResultTitle(ProfileService.CurrentUser);
+
+                // Built here, on the UI thread, and passed into the Task.Run below: it needs the
+                // resource loader, which is unavailable off the UI thread.
+                var profileResult = SearchCatalog.BuildProfileResultItem(ProfileService.CurrentUser);
 
                 var results = await Task.Run(() => SearchCatalog.BuildSuggestions(query, snapshot, profileResult), cancellationToken);
 
@@ -110,8 +113,8 @@ namespace Fort.ind_UWP
                         SearchItem match = null;
                         foreach (var i in items)
                         {
-                            if (i.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                                i.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0)
+                            if ((i.Title != null && i.Title.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                                (i.Category != null && i.Category.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0))
                             {
                                 match = i;
                                 break;

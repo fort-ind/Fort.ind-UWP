@@ -87,7 +87,11 @@ namespace Fort.ind_UWP
 
                 LiveTileService.UpdateTileWithMultipleNews(newsItems);
 
-                LiveTileService.UpdateBadgeGlyph("newMessage");
+                // No badge here. This runs at CoreDispatcherPriority.Low, i.e. after the layout
+                // pass that raises NavView_Loaded and its ClearBadge - so setting the badge on this
+                // path cleared it and immediately lit it again on every single launch, and the
+                // "you have opened the app, badge dismissed" behaviour never actually happened.
+                // The badge is now set on the way out, in App.OnSuspending.
             }
             catch (Exception ex)
             {

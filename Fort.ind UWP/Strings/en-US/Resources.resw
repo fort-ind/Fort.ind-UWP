@@ -220,7 +220,7 @@
     <value>{0} {1}</value>
   </data>
   <data name="HeaderHome" xml:space="preserve">
-    <value>Welcome to Fort.ind</value>
+    <value>hey there! :)</value>
   </data>
   <data name="HeaderGames" xml:space="preserve">
     <value>Games</value>
@@ -258,8 +258,136 @@
   <data name="GamesCountFilteredFormat" xml:space="preserve">
     <value>{0} of {1} games</value>
   </data>
+  <data name="CategoryMenu" xml:space="preserve">
+    <value>Menu</value>
+  </data>
+  <data name="CategorySettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="CategoryProfile" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="CategoryGames" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="CategoryGamesHtml" xml:space="preserve">
+    <value>Games — HTML</value>
+  </data>
+  <data name="CategoryGamesFlash" xml:space="preserve">
+    <value>Games — Flash</value>
+  </data>
+  <data name="CategoryGamesCodePen" xml:space="preserve">
+    <value>Games — CodePen</value>
+  </data>
+  <data name="CategoryGamesRetro" xml:space="preserve">
+    <value>Games — Retro</value>
+  </data>
+  <data name="CategoryGamesMinecraft" xml:space="preserve">
+    <value>Games — Minecraft</value>
+  </data>
+  <data name="CategorySocial" xml:space="preserve">
+    <value>Social</value>
+  </data>
+  <data name="CategoryEmulators" xml:space="preserve">
+    <value>Emulators</value>
+  </data>
+  <data name="CategoryApps" xml:space="preserve">
+    <value>Apps</value>
+  </data>
+  <data name="CategoryAppsAppStone" xml:space="preserve">
+    <value>Apps — AppStone</value>
+  </data>
+  <data name="CategoryExtras" xml:space="preserve">
+    <value>Extras</value>
+  </data>
+  <data name="CategoryLabsAndBetas" xml:space="preserve">
+    <value>Labs &amp; Betas</value>
+  </data>
+  <data name="CategoryFortWebsite" xml:space="preserve">
+    <value>fort1nd.com</value>
+  </data>
+  <data name="SearchItemHome" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="SearchItemLatestNews" xml:space="preserve">
+    <value>Latest News</value>
+  </data>
+  <data name="SearchItemGames" xml:space="preserve">
+    <value>Games</value>
+  </data>
+  <data name="SearchItemBetaPrograms" xml:space="preserve">
+    <value>Beta Programs</value>
+  </data>
+  <data name="SearchItemYourProfile" xml:space="preserve">
+    <value>Your Profile</value>
+  </data>
+  <data name="SearchItemSocial" xml:space="preserve">
+    <value>Social</value>
+  </data>
+  <data name="SearchItemSettings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SearchItemDataStorage" xml:space="preserve">
+    <value>Data Storage</value>
+  </data>
+  <data name="SearchItemLocalJsonStorage" xml:space="preserve">
+    <value>Local JSON Storage</value>
+  </data>
+  <data name="SearchItemLiveTile" xml:space="preserve">
+    <value>Live Tile</value>
+  </data>
+  <data name="SearchItemRefreshLiveTile" xml:space="preserve">
+    <value>Refresh Live Tile</value>
+  </data>
+  <data name="SearchItemClearLiveTile" xml:space="preserve">
+    <value>Clear Live Tile</value>
+  </data>
+  <data name="SearchItemWelcomeDialog" xml:space="preserve">
+    <value>Welcome Dialog</value>
+  </data>
+  <data name="SearchItemShowWelcomeDialogAgain" xml:space="preserve">
+    <value>Show Welcome Dialog Again</value>
+  </data>
+  <data name="SearchItemAppearance" xml:space="preserve">
+    <value>Appearance</value>
+  </data>
+  <data name="SearchItemTheme" xml:space="preserve">
+    <value>Theme</value>
+  </data>
+  <data name="SearchItemDarkMode" xml:space="preserve">
+    <value>Dark Mode</value>
+  </data>
+  <data name="SearchItemLightMode" xml:space="preserve">
+    <value>Light Mode</value>
+  </data>
+  <data name="SearchItemBackgroundColor" xml:space="preserve">
+    <value>Background Color</value>
+  </data>
+  <data name="SearchItemBackgroundTint" xml:space="preserve">
+    <value>Background Tint</value>
+  </data>
+  <data name="SearchItemCustomBackgroundTint" xml:space="preserve">
+    <value>Custom Background Tint</value>
+  </data>
+  <data name="SearchItemAccount" xml:space="preserve">
+    <value>Account</value>
+  </data>
+  <data name="SearchItemSignIn" xml:space="preserve">
+    <value>Sign In</value>
+  </data>
   <data name="LoginErrorGeneric" xml:space="preserve">
     <value>ack! something went wrong, try it again</value>
+  </data>
+  <data name="SignInFailedDialogTitle" xml:space="preserve">
+    <value>couldn't finish signing you in</value>
+  </data>
+  <data name="SignInFailedDialogBody" xml:space="preserve">
+    <value>fort.desktop couldn't finish signing you in. Open your profile and try again.</value>
+  </data>
+  <data name="SignInFailedDialogBodyFormat" xml:space="preserve">
+    <value>fort.desktop couldn't finish signing you in: {0}
+
+Open your profile and try again.</value>
   </data>
   <data name="TileDisplayName" xml:space="preserve">
     <value>Fort.ind</value>
@@ -448,7 +576,7 @@
     <value>Change app theme and background color</value>
   </data>
   <data name="MainCheckBackHereFor.Text" xml:space="preserve">
-    <value>Check back here for the latest updates and announcements.</value>
+    <value>check back here for what's new and view your favorite games! (soon)</value>
   </data>
   <data name="MainClearLiveTile.Text" xml:space="preserve">
     <value>Clear Live Tile</value>
@@ -565,7 +693,7 @@
     <value>The welcome dialog appears the first time you open the app.</value>
   </data>
   <data name="MainThisUpdateFixesMany.Text" xml:space="preserve">
-    <value>this update fixes many bugs add new features and we also added syncing accounts with fort.social</value>
+    <value>your on version 2.2! we have smoothed some edges and made launch a million times faster! check the release notes to learn more</value>
   </data>
   <data name="MainVersionInfoCreditsAnd.Text" xml:space="preserve">
     <value>Version info, credits, and more</value>
@@ -574,7 +702,7 @@
     <value>Website</value>
   </data>
   <data name="MainWelcome.Text" xml:space="preserve">
-    <value>Welcome!</value>
+    <value>hello!!</value>
   </data>
   <data name="MainWelcomeDialog.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
     <value>Reset the first-run welcome experience</value>
@@ -589,7 +717,7 @@
     <value>Welcome to the beta version of fort.desktop, there's still a lot missing right now and some things may be broken. we hope you enjoy the beta as much as we do!</value>
   </data>
   <data name="MainWelcomeToVersion2.Text" xml:space="preserve">
-    <value>welcome to version 2.0 of fort.uwp!</value>
+    <value>another update!!! yaay :D</value>
   </data>
   <data name="ManageOnFortSocialButton.[using:Windows.UI.Xaml.Automation]AutomationProperties.HelpText" xml:space="preserve">
     <value>Opens your fort.social profile in the browser</value>
@@ -665,6 +793,9 @@
   </data>
   <data name="SignInButton2.Content" xml:space="preserve">
     <value>Sign In</value>
+  </data>
+  <data name="SitemapLoadingBar.[using:Windows.UI.Xaml.Automation]AutomationProperties.Name" xml:space="preserve">
+    <value>Loading site content</value>
   </data>
   <data name="SkipButton.Content" xml:space="preserve">
     <value>skip connecting your account</value>

@@ -69,17 +69,6 @@
                        Margin="12,0,0,0"
                        Style="{StaticResource CaptionTextBlockStyle}"
                        Foreground="{ThemeResource SystemControlForegroundBaseMediumHighBrush}"/>
-
-            <ProgressRing x:Name="LoadingIndicator"
-                          Grid.Column="1"
-                          IsActive="False"
-                          Visibility="Collapsed"
-                          Width="16"
-                          Height="16"
-                          HorizontalAlignment="Right"
-                          VerticalAlignment="Center"
-                          Margin="0,0,12,0"
-                          Foreground="{ThemeResource SystemControlHighlightAccentBrush}"/>
         </Grid>
 
         <NavigationView x:Name="NavView"
@@ -173,6 +162,19 @@
 
             <Grid Background="Transparent">
                 <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
+
+                <!-- An indeterminate ProgressBar, not a ProgressRing. The sitemap loads in the
+                     background and the user can navigate, search and click throughout; chunk_027
+                     ("When to use each control") reserves the ring for modal waits - "the user is
+                     blocked until the ProgressRing disappears" - and lists "Loading..." among the
+                     keywords that call for a ProgressBar instead. Canvas.ZIndex keeps it over the
+                     content it sits above regardless of declaration order. -->
+                <ProgressBar x:Uid="SitemapLoadingBar" x:Name="LoadingIndicator"
+                             IsIndeterminate="False"
+                             Visibility="Collapsed"
+                             VerticalAlignment="Top"
+                             HorizontalAlignment="Stretch"
+                             Canvas.ZIndex="1"/>
 
                 <ScrollViewer x:Name="ContentScrollViewer">
                     <StackPanel x:Name="ContentPanel" RenderTransformOrigin="0.5,0.5">
@@ -715,7 +717,7 @@
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                     <HyperlinkButton x:Name="GitHubLink"
-                                                                     NavigateUri="https://github.com/fort-ind/Fort.ind-UWP"
+                                                                     NavigateUri="https://github.com/fort-ind/uwp"
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE943;" FontSize="12"/>
@@ -723,7 +725,7 @@
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                     <HyperlinkButton x:Name="IssuesLink"
-                                                                     NavigateUri="https://github.com/fort-ind/Fort.ind-UWP/issues"
+                                                                     NavigateUri="https://github.com/fort-ind/uwp/issues"
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
                                                             <FontIcon Glyph="&#xE946;" FontSize="12"/>

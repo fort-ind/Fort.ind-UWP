@@ -9,6 +9,14 @@
     Background="Transparent">
 
     <Page.Resources>
+        <!-- FadeEase is declared BEFORE the storyboard that uses it, not after. A XAML resource
+             reference cannot resolve a forward reference to a key defined lexically later in the
+             same dictionary ("ResourceDictionary and XAML resource references", Forward references
+             within a ResourceDictionary); deferred loading of keyed resources can hide that, but
+             the docs are explicit that it is unsupported and that an unresolved {StaticResource}
+             throws a XAML parse exception at run time - here, on the first Profile visit.
+             MainPage.xaml already orders its ease/storyboard pair this way. -->
+        <CubicEase x:Key="FadeEase" EasingMode="EaseOut"/>
         <Storyboard x:Key="AvatarFadeIn">
             <DoubleAnimation Storyboard.TargetName="AvatarGrid"
                              Storyboard.TargetProperty="Opacity"
@@ -16,7 +24,6 @@
                              Duration="0:0:0.4"
                              EasingFunction="{StaticResource FadeEase}"/>
         </Storyboard>
-        <CubicEase x:Key="FadeEase" EasingMode="EaseOut"/>
     </Page.Resources>
 
     <ScrollViewer HorizontalContentAlignment="Center">

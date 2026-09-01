@@ -6,13 +6,23 @@ namespace Fort.ind_UWP
         {
         }
 
+        // Category KEYS, not display text. They are matched ordinally (SearchItem.GetIconGlyph
+        // picks a glyph by prefix, SitemapService filters the games list the same way) and are
+        // never shown to anyone - SearchItem.Category resolves the key through the resw for that.
+        // Keep the sub-category keys prefixed with their parent so the StartsWith matches hold.
         public const string CategoryMenu = "Menu";
         public const string CategorySettings = "Settings";
         public const string CategoryProfile = "Profile";
         public const string CategoryGames = "Games";
+        public const string CategoryGamesHtml = "Games.Html";
+        public const string CategoryGamesFlash = "Games.Flash";
+        public const string CategoryGamesCodePen = "Games.CodePen";
+        public const string CategoryGamesRetro = "Games.Retro";
+        public const string CategoryGamesMinecraft = "Games.Minecraft";
         public const string CategorySocial = "Social";
         public const string CategoryEmulators = "Emulators";
         public const string CategoryApps = "Apps";
+        public const string CategoryAppsAppStone = "Apps.AppStone";
         public const string CategoryExtras = "Extras";
         public const string CategoryLabsAndBetas = "Labs & Betas";
         public const string CategoryFortWebsite = "fort1nd.com";

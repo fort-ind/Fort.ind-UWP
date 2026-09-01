@@ -20,10 +20,13 @@ namespace Fort.ind_UWP
             {
                 var localSettings = ApplicationData.Current.LocalSettings;
 
+                // ?? on top of ContainsKey: the key can be present with a null value, and ToString()
+                // on that throws - out of the MainPage constructor, which fails the Navigate that
+                // created the page and takes the app down through OnNavigationFailed.
                 string theme = AppConstants.ThemeDefault;
                 if (localSettings.Values.ContainsKey(AppConstants.SettingAppTheme))
                 {
-                    theme = localSettings.Values[AppConstants.SettingAppTheme].ToString();
+                    theme = localSettings.Values[AppConstants.SettingAppTheme]?.ToString() ?? AppConstants.ThemeDefault;
                 }
                 switch (theme)
                 {
@@ -36,7 +39,7 @@ namespace Fort.ind_UWP
                 string tintTag = AppConstants.ThemeDefault;
                 if (localSettings.Values.ContainsKey(AppConstants.SettingAppTintColor))
                 {
-                    tintTag = localSettings.Values[AppConstants.SettingAppTintColor].ToString();
+                    tintTag = localSettings.Values[AppConstants.SettingAppTintColor]?.ToString() ?? AppConstants.ThemeDefault;
                 }
                 TintCustomButton.ClearValue(Control.BackgroundProperty);
                 TintCustomIcon.Visibility = Visibility.Visible;
@@ -53,6 +56,14 @@ namespace Fort.ind_UWP
                 TileBadgeToggle.IsOn = LiveTileService.BadgeEnabled;
 
                 RestoreSettingsPanelStates();
+            }
+            catch (Exception ex)
+            {
+                // This runs from the MainPage constructor, where an escaping exception fails the
+                // Navigate that created the page and takes the whole app down through
+                // OnNavigationFailed - a settings value that will not read is not worth that. The
+                // app comes up with whatever appearance was already applied instead.
+                Debug.WriteLine($"MainPage: LoadAppearanceSettings failed - {ex.Message}");
             }
             finally
             {
@@ -108,6 +119,16 @@ namespace Fort.ind_UWP
 
         private void ApplyTintColor(string colorTag)
         {
+            // Normalise an unusable tag up front, before anything can persist it. The catch below
+            // used to swallow the parse failure and the write at the bottom then stored the bad tag
+            // anyway - so one corrupt value made every subsequent launch fail in exactly the same
+            // way, silently, with the window coming up untinted and no way to notice why.
+            if (!IsUsableTintTag(colorTag))
+            {
+                Debug.WriteLine($"MainPage: tint tag '{colorTag}' is not a colour; using the default surface");
+                colorTag = AppConstants.ThemeDefault;
+            }
+
             try
             {
                 var isDark = IsEffectiveThemeDark();
@@ -154,6 +175,17 @@ namespace Fort.ind_UWP
             {
                 ApplicationData.Current.LocalSettings.Values[AppConstants.SettingAppTintColor] = colorTag;
             }
+        }
+
+        /// <summary>
+        /// True for the sentinel "Default" and for any tag that really parses as a colour.
+        /// </summary>
+        private static bool IsUsableTintTag(string colorTag)
+        {
+            if (string.IsNullOrEmpty(colorTag) || colorTag == AppConstants.ThemeDefault) return true;
+
+            Color ignored;
+            return ColorHelper.TryHexToColor(colorTag, out ignored);
         }
 
         private static bool IsEffectiveThemeDark()
@@ -282,9 +314,16 @@ namespace Fort.ind_UWP
         {
             try
             {
-                var c = IsEffectiveThemeDark()
-                        ? ColorHelper.HexToColor(hex)
-                        : ColorHelper.LightenForLightTheme(ColorHelper.HexToColor(hex));
+                Color parsed;
+                if (!ColorHelper.TryHexToColor(hex, out parsed))
+                {
+                    // Leave the swatch showing its "pick a colour" glyph rather than painting it
+                    // with something arbitrary.
+                    Debug.WriteLine($"MainPage: custom swatch colour '{hex}' is not a colour");
+                    return;
+                }
+
+                var c = IsEffectiveThemeDark() ? parsed : ColorHelper.LightenForLightTheme(parsed);
                 TintCustomButton.Background = new SolidColorBrush(c);
                 TintCustomIcon.Visibility = Visibility.Collapsed;
             }
@@ -336,12 +375,18 @@ namespace Fort.ind_UWP
                         seed = localSettings.Values[AppConstants.SettingAppCustomTintColor]?.ToString() ?? "#1E3A5F";
                     }
 
+                    Color seedColor;
+                    if (!ColorHelper.TryHexToColor(seed, out seedColor))
+                    {
+                        seedColor = ColorHelper.HexToColor("#1E3A5F");
+                    }
+
                     ColorPicker picker = new ColorPicker()
                     {
                         IsAlphaEnabled = false,
                         IsHexInputVisible = true,
                         IsColorChannelTextInputVisible = true,
-                        Color = ColorHelper.HexToColor(seed)
+                        Color = seedColor
                     };
 
                     ContentDialog dialog = new ContentDialog()
