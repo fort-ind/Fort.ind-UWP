@@ -80,6 +80,7 @@ namespace Fort.ind_UWP
                 if (!cancellationToken.IsCancellationRequested)
                 {
                     sender.ItemsSource = results;
+                    AnnounceSearchResultCount(results.Count);
                 }
             }
             catch (OperationCanceledException)
@@ -89,6 +90,34 @@ namespace Fort.ind_UWP
             {
                 Debug.WriteLine($"MainPage: Debounced search failed – {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Speaks the size of the suggestion list. Replacing an AutoSuggestBox's ItemsSource
+        /// raises nothing a screen reader reports, and the empty case is the one that matters:
+        /// without this, typing a query that matches nothing is indistinguishable from typing one
+        /// whose results have not arrived yet.
+        /// </summary>
+        private void AnnounceSearchResultCount(int count)
+        {
+            string message;
+            if (count == 0)
+            {
+                message = LocalizedStrings.Get("SearchResultsNone");
+            }
+            else if (count == 1)
+            {
+                // A separate resource rather than a "1" substituted into the plural string:
+                // languages differ on which counts take which form, and a format string here
+                // would force every translator into the wrong one.
+                message = LocalizedStrings.Get("SearchResultsOne");
+            }
+            else
+            {
+                message = LocalizedStrings.Format("SearchResultsCountFormat", count);
+            }
+
+            AutomationHelper.AnnounceStatus(NavSearchBox, message, "FortIndSearchResults");
         }
 
         private async void NavSearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)

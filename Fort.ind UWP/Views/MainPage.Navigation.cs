@@ -116,6 +116,7 @@ namespace Fort.ind_UWP
                 UpdateAppTitleVisibility(NavView.IsPaneOpen);
 
                 AlignPaneToggleButton();
+                MarkNavigationPaneLandmark();
 
                 LiveTileService.ClearBadge();
 
@@ -140,7 +141,7 @@ namespace Fort.ind_UWP
         {
             if (args.IsSettingsInvoked)
             {
-                ShowContent(AppConstants.NavigationSettings);
+                ShowContent(AppConstants.NavigationSettings, true);
             }
             else
             {
@@ -148,7 +149,7 @@ namespace Fort.ind_UWP
                 if (invokedItem != null)
                 {
                     var tag = invokedItem.Tag?.ToString() ?? AppConstants.NavigationLatestNews;
-                    ShowContent(tag);
+                    ShowContent(tag, true);
                 }
             }
 
@@ -209,10 +210,23 @@ namespace Fort.ind_UWP
             ContentPanel.Padding = new Thickness(inset);
         }
 
-        private void ShowContent(string tag)
+        /// <param name="tag">The nav tag to show; see the Navigation* constants on AppConstants.</param>
+        /// <param name="moveFocus">
+        /// True when the user drove this, false for the startup and session-restore paths. A nav
+        /// gesture that only flips Visibility leaves keyboard focus stranded in the pane and tells
+        /// assistive technology nothing, so a user-initiated switch hands focus to the content
+        /// region; doing the same at startup would be an unrequested context change.
+        /// </param>
+        private void ShowContent(string tag, bool moveFocus = false)
         {
-            NavView.Header = HeaderFor(tag);
+            var header = HeaderFor(tag);
+            NavView.Header = header;
             RememberLastNavTag(tag);
+
+            // The content host is the Main landmark and the focus target, so it carries the
+            // section name - that is what gets read out when focus lands on it.
+            Windows.UI.Xaml.Automation.AutomationProperties.SetName(ContentHost, header);
+            Windows.UI.Xaml.Automation.AutomationProperties.SetName(ContentScrollViewer, header);
 
             switch (tag)
             {
@@ -236,6 +250,68 @@ namespace Fort.ind_UWP
                     ShowInlinePanel(LatestNewsPanel);
                     break;
             }
+
+            if (moveFocus)
+            {
+                FocusContentRegion();
+            }
+        }
+
+        /// <summary>
+        /// Moves keyboard focus out of the nav pane and onto whichever content host is showing.
+        /// Programmatic focus, so no focus rectangle is drawn - the point is where the next Tab
+        /// and the next screen-reader read start from, not a visible highlight.
+        /// </summary>
+        private void FocusContentRegion()
+        {
+            try
+            {
+                if (ContentScrollViewer.Visibility == Visibility.Visible)
+                {
+                    ContentScrollViewer.Focus(FocusState.Programmatic);
+                    return;
+                }
+
+                // Page-backed views: the page itself, when it will take focus. GamesPage and
+                // ProfilePage are ordinary Pages and may decline, which is fine - they hold real
+                // controls a Tab away, and the header has already been retitled.
+                var page = ContentFrame.Content as Control;
+                if (page != null)
+                {
+                    page.Focus(FocusState.Programmatic);
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Failed to focus content region - {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Tags the pane as the Navigation landmark. It has to be done from code against the
+        /// template part: the pane lives inside NavigationView's template, and putting the
+        /// landmark on NavView itself would wrap the content in it too.
+        /// </summary>
+        private void MarkNavigationPaneLandmark()
+        {
+            try
+            {
+                // PaneContentGrid is the platform NavigationView's pane container - see
+                // generic.xaml, the ControlTemplate for Windows.UI.Xaml.Controls.NavigationView.
+                var pane = VisualTreeSearch.FindDescendantByName(NavView, "PaneContentGrid");
+                if (pane == null)
+                {
+                    Debug.WriteLine("MainPage: PaneContentGrid not found; navigation landmark not set.");
+                    return;
+                }
+
+                Windows.UI.Xaml.Automation.AutomationProperties.SetLandmarkType(
+                    pane, Windows.UI.Xaml.Automation.Peers.AutomationLandmarkType.Navigation);
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine($"MainPage: Failed to mark navigation landmark - {ex.Message}");
+            }
         }
 
         internal void NavigateToTag(string tag)
@@ -245,7 +321,7 @@ namespace Fort.ind_UWP
                 if (string.IsNullOrEmpty(tag)) return;
 
                 SelectNavItemForTag(tag);
-                ShowContent(tag);
+                ShowContent(tag, true);
                 ClosePaneUnlessExpanded();
             }
             catch (Exception ex)

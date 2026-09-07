@@ -144,6 +144,18 @@
   <data name="StorageLocationFormat" xml:space="preserve">
     <value>Location: {0}</value>
   </data>
+  <data name="SearchResultsCountFormat" xml:space="preserve">
+    <value>{0} results</value>
+    <comment>Announced to screen readers when the search suggestion list updates. {0} is the number of results, always 2 or more.</comment>
+  </data>
+  <data name="SearchResultsNone" xml:space="preserve">
+    <value>No results</value>
+    <comment>Announced to screen readers when a search query matches nothing.</comment>
+  </data>
+  <data name="SearchResultsOne" xml:space="preserve">
+    <value>1 result</value>
+    <comment>Announced to screen readers when a search query matches exactly one item.</comment>
+  </data>
   <data name="StorageCacheSignedIn" xml:space="preserve">
     <value>You are logged in using fort.social. We cached your login details so we can quickly log you in :p</value>
   </data>

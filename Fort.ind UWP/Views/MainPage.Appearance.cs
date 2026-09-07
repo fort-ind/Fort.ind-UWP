@@ -264,6 +264,67 @@ namespace Fort.ind_UWP
             }
         }
 
+        private Dictionary<Button, FontIcon> _swatchChecks;
+
+        // The selected swatch used to be marked by its border colour alone, which is the one thing
+        // the accessibility checklist says must not carry information by itself. The checkmark is
+        // the second, non-colour cue.
+        private Dictionary<Button, FontIcon> SwatchChecks
+        {
+            get
+            {
+                if (_swatchChecks == null)
+                {
+                    _swatchChecks = new Dictionary<Button, FontIcon>()
+                    {
+                        { TintDefaultButton, TintDefaultCheck },
+                        { TintBlueButton, TintBlueCheck },
+                        { TintPurpleButton, TintPurpleCheck },
+                        { TintGreenButton, TintGreenCheck },
+                        { TintRedButton, TintRedCheck },
+                        { TintSlateButton, TintSlateCheck },
+                        { TintTealButton, TintTealCheck },
+                        { TintBronzeButton, TintBronzeCheck },
+                        { TintRoseButton, TintRoseCheck },
+                        { TintOliveButton, TintOliveCheck },
+                        { TintGraphiteButton, TintGraphiteCheck },
+                        { TintCustomButton, TintCustomCheck },
+                    };
+                }
+                return _swatchChecks;
+            }
+        }
+
+        private void HideSwatchChecks()
+        {
+            foreach (var check in SwatchChecks.Values)
+            {
+                if (check != null) check.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void ShowSwatchCheck(Button swatch)
+        {
+            FontIcon check;
+            if (swatch == null || !SwatchChecks.TryGetValue(swatch, out check) || check == null) return;
+
+            // Called after UpdateSwatchChipColors, so Background is the current theme's chip
+            // colour and the check can be contrasted against what is actually painted.
+            var brush = swatch.Background as SolidColorBrush;
+            if (brush != null)
+            {
+                check.Foreground = new SolidColorBrush(ColorHelper.ContrastingForeground(brush.Color));
+            }
+            else
+            {
+                // The Default chip keeps the theme's own button background, whose paired
+                // foreground already contrasts with it.
+                check.ClearValue(IconElement.ForegroundProperty);
+            }
+
+            check.Visibility = Visibility.Visible;
+        }
+
         private void UpdateTintSelection(string selectedTag)
         {
             selectedTag = string.IsNullOrEmpty(selectedTag) ? AppConstants.ThemeDefault : selectedTag;
@@ -271,6 +332,7 @@ namespace Fort.ind_UWP
             var isDark = IsEffectiveThemeDark();
             var restBrush = isDark ? s_restBrushDark : s_restBrushLight;
             UpdateSwatchChipColors(isDark);
+            HideSwatchChecks();
 
             Button sel = null;
             foreach (var btn in TintPresetSwatches)
@@ -304,6 +366,7 @@ namespace Fort.ind_UWP
             if (sel != null)
             {
                 sel.BorderBrush = isDark ? s_selectedBrushDark : s_selectedBrushLight;
+                ShowSwatchCheck(sel);
                 var selBaseName = Windows.UI.Xaml.Automation.AutomationProperties.GetName(sel);
                 Windows.UI.Xaml.Automation.AutomationProperties.SetName(
                     sel, LocalizedStrings.Format("TintSwatchSelectedSuffixFormat", selBaseName));
@@ -335,7 +398,7 @@ namespace Fort.ind_UWP
 
         private void AppearanceHeader_Tapped(object sender, RoutedEventArgs e)
         {
-            ToggleSettingsRow(AppearanceContent, AppearanceChevronRotation, AppConstants.SettingSettingsAppearanceExpanded);
+            ToggleSettingsRow(AppearanceHeader, AppearanceContent, AppearanceChevronRotation, AppConstants.SettingSettingsAppearanceExpanded);
         }
 
         private void ThemeRadio_Checked(object sender, RoutedEventArgs e)

@@ -97,5 +97,27 @@ namespace Fort.ind_UWP
                                   (byte)Math.Round(255 - (255 - (int)c.G) * keep, MidpointRounding.ToEven),
                                   (byte)Math.Round(255 - (255 - (int)c.B) * keep, MidpointRounding.ToEven));
         }
+
+        /// <summary>
+        /// Black or white, whichever reads better on <paramref name="background"/>. Used for the
+        /// checkmark drawn on the selected tint swatch, which sits on twelve different chip
+        /// colours - a fixed foreground fails half of them.
+        /// </summary>
+        public static Color ContrastingForeground(Color background)
+        {
+            // WCAG relative luminance. The 0.179 threshold is the point where contrast against
+            // black and against white are equal, so it maximises whichever we pick.
+            var luminance = 0.2126 * LinearizeChannel(background.R)
+                            + 0.7152 * LinearizeChannel(background.G)
+                            + 0.0722 * LinearizeChannel(background.B);
+
+            return luminance > 0.179 ? Colors.Black : Colors.White;
+        }
+
+        private static double LinearizeChannel(byte channel)
+        {
+            var v = channel / 255.0;
+            return v <= 0.03928 ? v / 12.92 : Math.Pow((v + 0.055) / 1.055, 2.4);
+        }
     }
 }

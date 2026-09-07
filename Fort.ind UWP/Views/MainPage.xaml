@@ -23,9 +23,9 @@
                             HorizontalAlignment="Center"
                             Spacing="24"
                             Margin="0,8,0,8">
-                    <FontIcon Glyph="&#xE734;" FontSize="32"/>
-                    <FontIcon Glyph="&#xE9A1;" FontSize="32"/>
-                    <FontIcon Glyph="&#xE774;" FontSize="32"/>
+                    <FontIcon Glyph="&#xE734;" FontSize="32" AutomationProperties.AccessibilityView="Raw"/>
+                    <FontIcon Glyph="&#xE9A1;" FontSize="32" AutomationProperties.AccessibilityView="Raw"/>
+                    <FontIcon Glyph="&#xE774;" FontSize="32" AutomationProperties.AccessibilityView="Raw"/>
                 </StackPanel>
 
                 <TextBlock x:Uid="MainWelcomeToTheBeta"
@@ -96,6 +96,7 @@
                 <DataTemplate>
                     <TextBlock Text="{Binding}"
                                Style="{StaticResource TitleTextBlockStyle}"
+                               AutomationProperties.HeadingLevel="Level1"
                                VerticalAlignment="Top"
                                TextTrimming="CharacterEllipsis"
                                Margin="12,0,12,0"/>
@@ -105,6 +106,7 @@
             <NavigationView.AutoSuggestBox>
                 <AutoSuggestBox x:Uid="NavSearchBox" x:Name="NavSearchBox"
                                 QueryIcon="Find"
+                                AutomationProperties.LandmarkType="Search"
                                 MaxSuggestionListHeight="400"
                                 TextChanged="NavSearchBox_TextChanged"
                                 QuerySubmitted="NavSearchBox_QuerySubmitted"
@@ -115,7 +117,8 @@
                                 <FontIcon Glyph="{x:Bind Icon}"
                                           FontSize="16"
                                           VerticalAlignment="Center"
-                                          Opacity="0.8"/>
+                                          Opacity="0.8"
+                                          AutomationProperties.AccessibilityView="Raw"/>
                                 <StackPanel VerticalAlignment="Center">
                                     <TextBlock Text="{x:Bind Title}"/>
                                     <TextBlock Text="{x:Bind Category}"
@@ -161,7 +164,8 @@
                 </NavigationViewItem>
             </NavigationView.MenuItems>
 
-            <Grid Background="Transparent">
+            <Grid x:Name="ContentHost" Background="Transparent"
+                  AutomationProperties.LandmarkType="Main">
                 <Frame x:Name="ContentFrame" Visibility="Collapsed"/>
 
                 <!-- An indeterminate ProgressBar, not a ProgressRing. The sitemap loads in the
@@ -177,7 +181,10 @@
                              HorizontalAlignment="Stretch"
                              Canvas.ZIndex="1"/>
 
-                <ScrollViewer x:Name="ContentScrollViewer">
+                <!-- IsTabStop because generic.xaml's ScrollViewer style sets it False, and this is
+                     the element ShowContent moves focus to after a nav gesture. It also gives the
+                     scrollable region a keyboard stop of its own, so arrow keys scroll it. -->
+                <ScrollViewer x:Name="ContentScrollViewer" IsTabStop="True">
                     <StackPanel x:Name="ContentPanel" RenderTransformOrigin="0.5,0.5">
                         <StackPanel.RenderTransform>
                             <TranslateTransform x:Name="ContentPanelTransform"/>
@@ -205,13 +212,14 @@
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="6"
                                                     Opacity="0.6" Margin="0,0,0,8">
-                                            <FontIcon Glyph="&#xE789;" FontSize="12" VerticalAlignment="Center"/>
+                                            <FontIcon Glyph="&#xE789;" FontSize="12" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw"/>
                                             <TextBlock x:Uid="MainWelcome"
                                                        Style="{StaticResource CaptionTextBlockStyle}"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <TextBlock x:Uid="MainWelcomeToVersion2"
                                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                                   AutomationProperties.HeadingLevel="Level2"
                                                    TextWrapping="Wrap"
                                                    Margin="0,0,0,12"/>
                                         <TextBlock x:Uid="MainThisUpdateFixesMany"
@@ -235,13 +243,14 @@
                                     <StackPanel>
                                         <StackPanel Orientation="Horizontal" Spacing="6"
                                                     Opacity="0.6" Margin="0,0,0,8">
-                                            <FontIcon Glyph="&#xE7FC;" FontSize="12" VerticalAlignment="Center"/>
+                                            <FontIcon Glyph="&#xE7FC;" FontSize="12" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw"/>
                                             <TextBlock x:Uid="MainSoon3"
                                                        Style="{StaticResource CaptionTextBlockStyle}"
                                                        VerticalAlignment="Center"/>
                                         </StackPanel>
                                         <TextBlock x:Uid="MainSoonSoonSoon"
                                                    Style="{StaticResource SubtitleTextBlockStyle}"
+                                                   AutomationProperties.HeadingLevel="Level2"
                                                    TextWrapping="Wrap"
                                                    Margin="0,0,0,12"/>
                                         <TextBlock x:Uid="MainSoonYouWillBe"
@@ -286,12 +295,14 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button x:Uid="MainAppearance" Style="{StaticResource ButtonRevealStyle}"
+                                        <local:ExpanderHeaderButton x:Uid="MainAppearance" x:Name="AppearanceHeader"
+                                                Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
+                                                AutomationProperties.HeadingLevel="Level2"
                                                 Click="AppearanceHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -302,7 +313,8 @@
                                                 <Grid Width="36" Height="36" CornerRadius="2"
                                                       Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                                                     <FontIcon Glyph="&#xE771;" FontSize="16"
-                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                              AutomationProperties.AccessibilityView="Raw"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock x:Uid="MainAppearance2" Style="{StaticResource BaseTextBlockStyle}"/>
@@ -312,6 +324,7 @@
                                                 </StackPanel>
                                                 <FontIcon x:Name="AppearanceChevron" Grid.Column="2" Glyph="&#xE76C;"
                                                           FontSize="12" VerticalAlignment="Center"
+                                                          AutomationProperties.AccessibilityView="Raw"
                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                           RenderTransformOrigin="0.5,0.5">
                                                     <FontIcon.RenderTransform>
@@ -319,7 +332,7 @@
                                                     </FontIcon.RenderTransform>
                                                 </FontIcon>
                                             </Grid>
-                                        </Button>
+                                        </local:ExpanderHeaderButton>
                                         <StackPanel x:Name="AppearanceContent" Visibility="Collapsed"
                                                     Padding="20,0,20,16">
                                             <StackPanel.ChildrenTransitions>
@@ -333,8 +346,9 @@
                                             <StackPanel Spacing="16">
                                                 <StackPanel Spacing="8">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon Glyph="&#xE793;" FontSize="14" Opacity="0.7"/>
-                                                        <TextBlock x:Uid="MainAppTheme" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
+                                                        <FontIcon Glyph="&#xE793;" FontSize="14" Opacity="0.7" AutomationProperties.AccessibilityView="Raw"/>
+                                                        <TextBlock x:Uid="MainAppTheme" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"
+                                                                   AutomationProperties.HeadingLevel="Level3"/>
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" Spacing="16">
                                                         <RadioButton x:Uid="ThemeSystemRadio" x:Name="ThemeSystemRadio"
@@ -350,74 +364,143 @@
                                                 </StackPanel>
                                                 <StackPanel Spacing="8">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon Glyph="&#xE771;" FontSize="14" Opacity="0.7"/>
-                                                        <TextBlock x:Uid="MainBackgroundTint" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
+                                                        <FontIcon Glyph="&#xE771;" FontSize="14" Opacity="0.7" AutomationProperties.AccessibilityView="Raw"/>
+                                                        <TextBlock x:Uid="MainBackgroundTint" Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"
+                                                                   AutomationProperties.HeadingLevel="Level3"/>
                                                     </StackPanel>
                                                     <StackPanel Spacing="8">
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <Button x:Uid="TintDefaultButton" x:Name="TintDefaultButton" Tag="Default"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
+                                                                    HorizontalContentAlignment="Stretch"
+                                                                    VerticalContentAlignment="Stretch"
                                                                     BorderThickness="2" BorderBrush="Transparent">
-                                                                <FontIcon Glyph="&#xE8D8;" FontSize="14"/>
+                                                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                                    <FontIcon Glyph="&#xE8D8;" FontSize="14" AutomationProperties.AccessibilityView="Raw"
+                                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    <FontIcon x:Name="TintDefaultCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                              HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                              Margin="0,0,2,1" Visibility="Collapsed"
+                                                                              AutomationProperties.AccessibilityView="Raw"/>
+                                                                </Grid>
                                                             </Button>
                                                             <Button x:Uid="TintBlueButton" x:Name="TintBlueButton" Tag="#1E3A5F"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1D6FA5" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintBlueCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintPurpleButton" x:Name="TintPurpleButton" Tag="#2D1B69"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#6041B0" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintPurpleCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintGreenButton" x:Name="TintGreenButton" Tag="#0F3D2E"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1B7A4E" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintGreenCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintRedButton" x:Name="TintRedButton" Tag="#3D1515"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B03232" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintRedCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintSlateButton" x:Name="TintSlateButton" Tag="#1A1A2E"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#404080" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintSlateCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                         </StackPanel>
                                                         <StackPanel Orientation="Horizontal" Spacing="8">
                                                             <Button x:Uid="TintTealButton" x:Name="TintTealButton" Tag="#0E3A3A"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#1B8A8A" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintTealCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintBronzeButton" x:Name="TintBronzeButton" Tag="#3D2A0F"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B07D1B" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintBronzeCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintRoseButton" x:Name="TintRoseButton" Tag="#3D1533"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#B03291" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintRoseCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintOliveButton" x:Name="TintOliveButton" Tag="#2E3D0F"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#6E8A1B" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintOliveCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintGraphiteButton" x:Name="TintGraphiteButton" Tag="#232323"
                                                                     Click="TintColorButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
                                                                     Background="#5A5A5A" BorderThickness="2"
-                                                                    BorderBrush="Transparent"/>
+                                                                    BorderBrush="Transparent">
+                                                                <FontIcon x:Name="TintGraphiteCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                          HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                          Margin="0,0,2,1" Visibility="Collapsed"
+                                                                          AutomationProperties.AccessibilityView="Raw"/>
+                                                            </Button>
                                                             <Button x:Uid="TintCustomButton" x:Name="TintCustomButton"
                                                                     Click="CustomTintButton_Click"
                                                                     Width="40" Height="40" Padding="0" MinWidth="40"
+                                                                    HorizontalContentAlignment="Stretch"
+                                                                    VerticalContentAlignment="Stretch"
                                                                     BorderThickness="2" BorderBrush="Transparent">
-                                                                <FontIcon x:Name="TintCustomIcon" Glyph="&#xE790;" FontSize="14"/>
+                                                                <Grid HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+                                                                    <FontIcon x:Name="TintCustomIcon" Glyph="&#xE790;" FontSize="14" AutomationProperties.AccessibilityView="Raw"
+                                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                                    <FontIcon x:Name="TintCustomCheck" Glyph="&#xE73E;" FontSize="12"
+                                                                              HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                                                                              Margin="0,0,2,1" Visibility="Collapsed"
+                                                                              AutomationProperties.AccessibilityView="Raw"/>
+                                                                </Grid>
                                                             </Button>
                                                         </StackPanel>
                                                     </StackPanel>
@@ -430,12 +513,14 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button x:Uid="MainDataStorage" Style="{StaticResource ButtonRevealStyle}"
+                                        <local:ExpanderHeaderButton x:Uid="MainDataStorage" x:Name="StorageHeader"
+                                                Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
+                                                AutomationProperties.HeadingLevel="Level2"
                                                 Click="StorageHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -446,7 +531,8 @@
                                                 <Grid Width="36" Height="36" CornerRadius="2"
                                                       Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                                                     <FontIcon Glyph="&#xEDA2;" FontSize="16"
-                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                              AutomationProperties.AccessibilityView="Raw"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock x:Uid="MainDataStorage2" Style="{StaticResource BaseTextBlockStyle}"/>
@@ -456,6 +542,7 @@
                                                 </StackPanel>
                                                 <FontIcon x:Name="StorageChevron" Grid.Column="2" Glyph="&#xE76C;"
                                                           FontSize="12" VerticalAlignment="Center"
+                                                          AutomationProperties.AccessibilityView="Raw"
                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                           RenderTransformOrigin="0.5,0.5">
                                                     <FontIcon.RenderTransform>
@@ -463,7 +550,7 @@
                                                     </FontIcon.RenderTransform>
                                                 </FontIcon>
                                             </Grid>
-                                        </Button>
+                                        </local:ExpanderHeaderButton>
                                         <StackPanel x:Name="StorageContent" Visibility="Collapsed"
                                                     Padding="20,0,20,16">
                                             <StackPanel.ChildrenTransitions>
@@ -476,9 +563,10 @@
                                                        Opacity="0.08"/>
                                             <StackPanel Spacing="8">
                                                 <StackPanel Orientation="Horizontal" Spacing="8">
-                                                    <FontIcon Glyph="&#xE8B7;" FontSize="14" Opacity="0.7"/>
+                                                    <FontIcon Glyph="&#xE8B7;" FontSize="14" Opacity="0.7" AutomationProperties.AccessibilityView="Raw"/>
                                                     <TextBlock x:Uid="MainLocalCache"
-                                                               Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"/>
+                                                               Style="{StaticResource BodyTextBlockStyle}" FontWeight="SemiBold"
+                                                               AutomationProperties.HeadingLevel="Level3"/>
                                                 </StackPanel>
                                                 <TextBlock x:Uid="CacheDescriptionText" x:Name="CacheDescriptionText"
                                                            Style="{StaticResource CaptionTextBlockStyle}" TextWrapping="Wrap"
@@ -507,12 +595,14 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button x:Uid="MainLiveTile" Style="{StaticResource ButtonRevealStyle}"
+                                        <local:ExpanderHeaderButton x:Uid="MainLiveTile" x:Name="TileHeader"
+                                                Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
+                                                AutomationProperties.HeadingLevel="Level2"
                                                 Click="TileHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -523,7 +613,8 @@
                                                 <Grid Width="36" Height="36" CornerRadius="2"
                                                       Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                                                     <FontIcon Glyph="&#xE77F;" FontSize="16"
-                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                              AutomationProperties.AccessibilityView="Raw"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock x:Uid="MainLiveTile2" Style="{StaticResource BaseTextBlockStyle}"/>
@@ -533,6 +624,7 @@
                                                 </StackPanel>
                                                 <FontIcon x:Name="TileChevron" Grid.Column="2" Glyph="&#xE76C;"
                                                           FontSize="12" VerticalAlignment="Center"
+                                                          AutomationProperties.AccessibilityView="Raw"
                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                           RenderTransformOrigin="0.5,0.5">
                                                     <FontIcon.RenderTransform>
@@ -540,7 +632,7 @@
                                                     </FontIcon.RenderTransform>
                                                 </FontIcon>
                                             </Grid>
-                                        </Button>
+                                        </local:ExpanderHeaderButton>
                                         <StackPanel x:Name="TileContent" Visibility="Collapsed"
                                                     Padding="20,0,20,16">
                                             <StackPanel.ChildrenTransitions>
@@ -561,7 +653,7 @@
                                                         Click="RefreshTileButton_Click"
                                                         Style="{StaticResource ButtonRevealStyle}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                                        <FontIcon Glyph="&#xE72C;" FontSize="14" AutomationProperties.AccessibilityView="Raw"/>
                                                         <TextBlock x:Uid="MainRefreshLiveTile"/>
                                                     </StackPanel>
                                                 </Button>
@@ -569,7 +661,7 @@
                                                         Click="ClearTileButton_Click"
                                                         Style="{StaticResource ButtonRevealStyle}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon Glyph="&#xE74D;" FontSize="14"/>
+                                                        <FontIcon Glyph="&#xE74D;" FontSize="14" AutomationProperties.AccessibilityView="Raw"/>
                                                         <TextBlock x:Uid="MainClearLiveTile"/>
                                                     </StackPanel>
                                                 </Button>
@@ -581,12 +673,14 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button x:Uid="MainWelcomeDialog" Style="{StaticResource ButtonRevealStyle}"
+                                        <local:ExpanderHeaderButton x:Uid="MainWelcomeDialog" x:Name="WelcomeHeader"
+                                                Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
+                                                AutomationProperties.HeadingLevel="Level2"
                                                 Click="WelcomeHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -597,7 +691,8 @@
                                                 <Grid Width="36" Height="36" CornerRadius="2"
                                                       Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                                                     <FontIcon Glyph="&#xEB51;" FontSize="16"
-                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                              AutomationProperties.AccessibilityView="Raw"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock x:Uid="MainWelcomeDialog2" Style="{StaticResource BaseTextBlockStyle}"/>
@@ -607,6 +702,7 @@
                                                 </StackPanel>
                                                 <FontIcon x:Name="WelcomeChevron" Grid.Column="2" Glyph="&#xE76C;"
                                                           FontSize="12" VerticalAlignment="Center"
+                                                          AutomationProperties.AccessibilityView="Raw"
                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                           RenderTransformOrigin="0.5,0.5">
                                                     <FontIcon.RenderTransform>
@@ -614,7 +710,7 @@
                                                     </FontIcon.RenderTransform>
                                                 </FontIcon>
                                             </Grid>
-                                        </Button>
+                                        </local:ExpanderHeaderButton>
                                         <StackPanel x:Name="WelcomeContent" Visibility="Collapsed"
                                                     Padding="20,0,20,16">
                                             <StackPanel.ChildrenTransitions>
@@ -633,7 +729,7 @@
                                                         Click="ResetWelcomeButton_Click"
                                                         Style="{StaticResource ButtonRevealStyle}">
                                                     <StackPanel Orientation="Horizontal" Spacing="8">
-                                                        <FontIcon Glyph="&#xE72C;" FontSize="14"/>
+                                                        <FontIcon Glyph="&#xE72C;" FontSize="14" AutomationProperties.AccessibilityView="Raw"/>
                                                         <TextBlock x:Uid="MainShowWelcomeDialogAgain"/>
                                                     </StackPanel>
                                                 </Button>
@@ -645,12 +741,14 @@
                                 <Border BorderThickness="0,0,0,1"
                                         BorderBrush="{ThemeResource SystemControlForegroundBaseLowBrush}">
                                     <StackPanel>
-                                        <Button x:Uid="MainAbout" Style="{StaticResource ButtonRevealStyle}"
+                                        <local:ExpanderHeaderButton x:Uid="MainAbout" x:Name="AboutHeader"
+                                                Style="{StaticResource ButtonRevealStyle}"
                                                 HorizontalAlignment="Stretch"
                                                 HorizontalContentAlignment="Stretch"
                                                 MinWidth="0"
                                                 CornerRadius="0"
                                                 Padding="16,12"
+                                                AutomationProperties.HeadingLevel="Level2"
                                                 Click="AboutHeader_Tapped">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
@@ -661,7 +759,8 @@
                                                 <Grid Width="36" Height="36" CornerRadius="2"
                                                       Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                                                     <FontIcon Glyph="&#xE946;" FontSize="16"
-                                                              HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                                              HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                              AutomationProperties.AccessibilityView="Raw"/>
                                                 </Grid>
                                                 <StackPanel Grid.Column="1" Margin="16,0,0,0" VerticalAlignment="Center">
                                                     <TextBlock x:Uid="MainAbout2" Style="{StaticResource BaseTextBlockStyle}"/>
@@ -671,6 +770,7 @@
                                                 </StackPanel>
                                                 <FontIcon x:Name="AboutChevron" Grid.Column="2" Glyph="&#xE76C;"
                                                           FontSize="12" VerticalAlignment="Center"
+                                                          AutomationProperties.AccessibilityView="Raw"
                                                           Foreground="{ThemeResource SystemControlForegroundBaseMediumBrush}"
                                                           RenderTransformOrigin="0.5,0.5">
                                                     <FontIcon.RenderTransform>
@@ -678,7 +778,7 @@
                                                     </FontIcon.RenderTransform>
                                                 </FontIcon>
                                             </Grid>
-                                        </Button>
+                                        </local:ExpanderHeaderButton>
                                         <StackPanel x:Name="AboutContent" Visibility="Collapsed"
                                                     Padding="20,0,20,16">
                                             <StackPanel.ChildrenTransitions>
@@ -695,7 +795,8 @@
                                                             Background="{ThemeResource SystemControlBackgroundBaseLowBrush}">
                                                         <FontIcon Glyph="&#xE774;" FontSize="22"
                                                                   HorizontalAlignment="Center"
-                                                                  VerticalAlignment="Center"/>
+                                                                  VerticalAlignment="Center"
+                                                                  AutomationProperties.AccessibilityView="Raw"/>
                                                     </Border>
                                                     <StackPanel VerticalAlignment="Center" Spacing="4">
                                                         <TextBlock x:Uid="MainFortInd" Style="{StaticResource SubtitleTextBlockStyle}"/>
@@ -713,7 +814,7 @@
                                                     <HyperlinkButton NavigateUri="https://fort1nd.com"
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <FontIcon Glyph="&#xE774;" FontSize="12"/>
+                                                            <FontIcon Glyph="&#xE774;" FontSize="12" AutomationProperties.AccessibilityView="Raw"/>
                                                             <TextBlock x:Uid="MainWebsite" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
@@ -721,7 +822,7 @@
                                                                      NavigateUri="https://github.com/fort-ind/uwp"
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <FontIcon Glyph="&#xE943;" FontSize="12"/>
+                                                            <FontIcon Glyph="&#xE943;" FontSize="12" AutomationProperties.AccessibilityView="Raw"/>
                                                             <TextBlock x:Uid="MainSourceCode" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
@@ -729,17 +830,17 @@
                                                                      NavigateUri="https://github.com/fort-ind/uwp/issues"
                                                                      Padding="8,4" Margin="0">
                                                         <StackPanel Orientation="Horizontal" Spacing="6">
-                                                            <FontIcon Glyph="&#xE946;" FontSize="12"/>
+                                                            <FontIcon Glyph="&#xE946;" FontSize="12" AutomationProperties.AccessibilityView="Raw"/>
                                                             <TextBlock x:Uid="MainReportABug" Style="{StaticResource CaptionTextBlockStyle}"/>
                                                         </StackPanel>
                                                     </HyperlinkButton>
                                                 </StackPanel>
 
                                                 <StackPanel Orientation="Horizontal" Spacing="6" Opacity="0.4">
-                                                    <FontIcon Glyph="&#xE734;" FontSize="10" VerticalAlignment="Center"/>
+                                                    <FontIcon Glyph="&#xE734;" FontSize="10" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw"/>
                                                     <TextBlock x:Uid="MainMadeWithLoveBy"
                                                                FontSize="11" VerticalAlignment="Center"/>
-                                                    <FontIcon Glyph="&#xE734;" FontSize="10" VerticalAlignment="Center"/>
+                                                    <FontIcon Glyph="&#xE734;" FontSize="10" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw"/>
                                                 </StackPanel>
 
                                             </StackPanel>

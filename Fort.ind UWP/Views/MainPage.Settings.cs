@@ -139,25 +139,30 @@ namespace Fort.ind_UWP
 
         private void StorageHeader_Tapped(object sender, RoutedEventArgs e)
         {
-            ToggleSettingsRow(StorageContent, StorageChevronRotation, AppConstants.SettingSettingsStorageExpanded);
+            ToggleSettingsRow(StorageHeader, StorageContent, StorageChevronRotation, AppConstants.SettingSettingsStorageExpanded);
         }
 
         private void TileHeader_Tapped(object sender, RoutedEventArgs e)
         {
-            ToggleSettingsRow(TileContent, TileChevronRotation, AppConstants.SettingSettingsTileExpanded);
+            ToggleSettingsRow(TileHeader, TileContent, TileChevronRotation, AppConstants.SettingSettingsTileExpanded);
         }
 
         private void WelcomeHeader_Tapped(object sender, RoutedEventArgs e)
         {
-            ToggleSettingsRow(WelcomeContent, WelcomeChevronRotation, AppConstants.SettingSettingsWelcomeExpanded);
+            ToggleSettingsRow(WelcomeHeader, WelcomeContent, WelcomeChevronRotation, AppConstants.SettingSettingsWelcomeExpanded);
         }
 
         private void AboutHeader_Tapped(object sender, RoutedEventArgs e)
         {
-            ToggleSettingsRow(AboutContent, AboutChevronRotation, AppConstants.SettingSettingsAboutExpanded);
+            ToggleSettingsRow(AboutHeader, AboutContent, AboutChevronRotation, AppConstants.SettingSettingsAboutExpanded);
         }
 
-        private void ToggleSettingsRow(StackPanel content, RotateTransform chevronTransform, string settingKey = null)
+        // The header button is passed in as well as the panel because IsExpanded is what the
+        // ExpandCollapse automation pattern reads. Visibility and the chevron angle are visual
+        // only - neither reaches UI Automation, which is why a screen reader used to hear
+        // "button" and nothing about the section being open or closed.
+        private void ToggleSettingsRow(ExpanderHeaderButton header, StackPanel content,
+                                       RotateTransform chevronTransform, string settingKey = null)
         {
             var isExpanded = content.Visibility == Visibility.Collapsed;
 
@@ -171,6 +176,8 @@ namespace Fort.ind_UWP
                 content.Visibility = Visibility.Collapsed;
                 chevronTransform.Angle = 0;
             }
+
+            header.IsExpanded = isExpanded;
 
             if (!string.IsNullOrEmpty(settingKey))
             {
@@ -189,11 +196,11 @@ namespace Fort.ind_UWP
         {
             try
             {
-                RestorePanelState(AppConstants.SettingSettingsAppearanceExpanded, AppearanceContent, AppearanceChevronRotation);
-                RestorePanelState(AppConstants.SettingSettingsStorageExpanded, StorageContent, StorageChevronRotation);
-                RestorePanelState(AppConstants.SettingSettingsTileExpanded, TileContent, TileChevronRotation);
-                RestorePanelState(AppConstants.SettingSettingsWelcomeExpanded, WelcomeContent, WelcomeChevronRotation);
-                RestorePanelState(AppConstants.SettingSettingsAboutExpanded, AboutContent, AboutChevronRotation);
+                RestorePanelState(AppConstants.SettingSettingsAppearanceExpanded, AppearanceHeader, AppearanceContent, AppearanceChevronRotation);
+                RestorePanelState(AppConstants.SettingSettingsStorageExpanded, StorageHeader, StorageContent, StorageChevronRotation);
+                RestorePanelState(AppConstants.SettingSettingsTileExpanded, TileHeader, TileContent, TileChevronRotation);
+                RestorePanelState(AppConstants.SettingSettingsWelcomeExpanded, WelcomeHeader, WelcomeContent, WelcomeChevronRotation);
+                RestorePanelState(AppConstants.SettingSettingsAboutExpanded, AboutHeader, AboutContent, AboutChevronRotation);
             }
             catch (Exception ex)
             {
@@ -201,7 +208,8 @@ namespace Fort.ind_UWP
             }
         }
 
-        private void RestorePanelState(string settingKey, StackPanel content, RotateTransform chevronTransform)
+        private void RestorePanelState(string settingKey, ExpanderHeaderButton header,
+                                       StackPanel content, RotateTransform chevronTransform)
         {
             try
             {
@@ -227,6 +235,8 @@ namespace Fort.ind_UWP
                     content.Visibility = Visibility.Collapsed;
                     chevronTransform.Angle = 0;
                 }
+
+                header.IsExpanded = isExpanded;
             }
             catch (Exception ex)
             {

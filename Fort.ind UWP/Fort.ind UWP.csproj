@@ -132,6 +132,8 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Controls\ExpanderHeaderButton.cs" />
+    <Compile Include="Helpers\AutomationHelper.cs" />
     <Compile Include="Helpers\ColorHelper.cs" />
     <Compile Include="Helpers\Debouncer.cs" />
     <Compile Include="Helpers\LocalizedStrings.cs" />
