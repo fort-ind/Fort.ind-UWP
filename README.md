@@ -13,3 +13,10 @@ Just run as admin, and you're good to go!
 first install the .cer file to your local machine (otherwise it won't work 3:) click browse and select **trusted people**, NOT trusted root certificates authorities. Click next and Finish, and after that turn on developer mode in Windows. Then run the APPX file and click Install 
 > [!NOTE]
 > If the script doesnt run (ps crashes right when you open it), right-click install.ps1 > properties > unblock file
+# buliding
+its strongly recommended to build this app on windows 10 21H2, the easiest way is to open the .sln file in visual studio and click "build solution" or just click the green play button to actually see the app 
+OR just run this :) dosent make the 
+```bash
+msbuild "Fort.ind UWP\Fort.ind UWP.csproj" /r /p:AppxPackageSigningEnabled=false /p:GenerateAppxPackageOnBuild=false
+```
+for some reason those flags are needed otherwise it explodes :( 
